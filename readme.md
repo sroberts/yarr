@@ -118,6 +118,14 @@ docker buildx build -f etc/dockerfile.once \
 
 Automated builds are also triggered by GitHub Actions when a version tag (`v*`) is pushed or via manual workflow dispatch.
 
+## mobile pwa
+
+yarr works as a Progressive Web App on iOS and Android. Add it to your home screen for an app-like experience.
+
+**Swipe triage:** On mobile/tablet, tap the triage button (stack icon) in the feed toolbar to enter card mode. Swipe through your unread items — swipe left to save to Instapaper, swipe right to mark as read. Tap a card to open the full article.
+
+**Instapaper integration:** Configure your Instapaper username and password in the settings dropdown. Save articles from the item toolbar (inbox icon), the `Shift+I` keyboard shortcut, or by swiping left in triage mode.
+
 See more:
 
 * [Building from source code](doc/build.md)
