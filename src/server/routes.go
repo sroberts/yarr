@@ -57,6 +57,7 @@ func (s *Server) handler() http.Handler {
 	r.For("/api/feeds/:id/icon", s.handleFeedIcon)
 	r.For("/api/feeds/:id", s.handleFeed)
 	r.For("/api/items", s.handleItemList)
+	r.For("/api/items/:id/instapaper", s.handleItemInstapaper)
 	r.For("/api/items/:id", s.handleItem)
 	r.For("/api/settings", s.handleSettings)
 	r.For("/opml/import", s.handleOPMLImport)
@@ -450,6 +451,48 @@ func (s *Server) handleItemList(c *router.Context) {
 	} else {
 		c.Out.WriteHeader(http.StatusMethodNotAllowed)
 	}
+}
+
+func (s *Server) handleItemInstapaper(c *router.Context) {
+	if c.Req.Method != "POST" {
+		c.Out.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	id, err := c.VarInt64("id")
+	if err != nil {
+		c.Out.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	item := s.db.GetItem(id)
+	if item == nil {
+		c.Out.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	username, _ := s.db.GetSettingsValue("instapaper_username").(string)
+	password, _ := s.db.GetSettingsValue("instapaper_password").(string)
+	if username == "" || password == "" {
+		c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Instapaper credentials not configured. Add your username and password in Settings.",
+		})
+		return
+	}
+
+	if err := InstapaperAdd(username, password, item.Link, item.Title); err != nil {
+		log.Print(err)
+		c.JSON(http.StatusBadGateway, map[string]string{
+			"error": "Failed to save to Instapaper.",
+		})
+		return
+	}
+
+	s.db.SetItemInstapaperSaved(id, true)
+	s.db.UpdateItemStatus(id, storage.READ)
+
+	updatedItem := s.db.GetItem(id)
+	c.JSON(http.StatusOK, updatedItem)
 }
 
 func (s *Server) handleSettings(c *router.Context) {
