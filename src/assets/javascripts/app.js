@@ -262,6 +262,11 @@ var vm = new Vue({
 
       'instapaperUsername': s.instapaper_username || '',
       'instapaperPassword': s.instapaper_password || '',
+      'cardMode': false,
+      'cardItems': [],
+      'cardIndex': 0,
+      'cardStats': { read: 0, instapaper: 0 },
+      'cardLoading': false,
       'refreshRateOptions': [
         { title: "0", value: 0 },
         { title: "10m", value: 10 },
@@ -333,6 +338,23 @@ var vm = new Vue({
     refreshRateTitle: function () {
       const entry = this.refreshRateOptions.find(o => o.value === this.refreshRate)
       return entry ? entry.title : '0'
+    },
+    currentCard: function() {
+      if (this.cardIndex < this.cardItems.length) {
+        return this.cardItems[this.cardIndex]
+      }
+      return null
+    },
+    cardDone: function() {
+      return this.cardMode && this.cardIndex >= this.cardItems.length && !this.cardLoading
+    },
+    cardExcerpt: function() {
+      if (!this.currentCard || !this.currentCard.content) return ''
+      var tmp = document.createElement('div')
+      tmp.textContent = ''
+      tmp.insertAdjacentHTML('afterbegin', this.currentCard.content)
+      var text = tmp.textContent || tmp.innerText || ''
+      return text.length > 200 ? text.substring(0, 200) + '…' : text
     },
   },
   watch: {
@@ -739,6 +761,70 @@ var vm = new Vue({
       var update = {}
       update[key] = value
       api.settings.update(update)
+    },
+    enterCardMode: function() {
+      this.cardMode = true
+      this.cardItems = []
+      this.cardIndex = 0
+      this.cardStats = { read: 0, instapaper: 0 }
+      this.cardLoading = true
+      this.loadCardItems(null)
+    },
+    loadCardItems: function(afterId) {
+      var query = { status: 'unread' }
+      if (afterId) query.after = afterId
+      api.items.list(query).then(function(data) {
+        vm.cardItems = vm.cardItems.concat(data.list)
+        if (data.has_more && data.list.length > 0) {
+          vm.loadCardItems(data.list[data.list.length - 1].id)
+        } else {
+          vm.cardLoading = false
+        }
+      }).catch(function() {
+        vm.cardLoading = false
+        if (vm.cardItems.length === 0) {
+          alert('Failed to load items.')
+          vm.cardMode = false
+        }
+      })
+    },
+    exitCardMode: function() {
+      this.cardMode = false
+      this.cardItems = []
+      this.cardIndex = 0
+      this.refreshStats()
+    },
+    cardSwipeLeft: function() {
+      var item = this.currentCard
+      if (!item) return
+      this.cardStats.instapaper += 1
+      api.items.saveToInstapaper(item.id).then(function(resp) {
+        if (resp.ok) {
+          item.instapaper_saved = true
+          item.status = 'read'
+          if (vm.feedStats[item.feed_id] && vm.feedStats[item.feed_id].unread > 0) {
+            vm.feedStats[item.feed_id].unread -= 1
+          }
+        }
+      })
+      this.cardIndex += 1
+    },
+    cardSwipeRight: function() {
+      var item = this.currentCard
+      if (!item) return
+      this.cardStats.read += 1
+      api.items.update(item.id, { status: 'read' }).then(function() {
+        if (vm.feedStats[item.feed_id] && vm.feedStats[item.feed_id].unread > 0) {
+          vm.feedStats[item.feed_id].unread -= 1
+        }
+      })
+      item.status = 'read'
+      this.cardIndex += 1
+    },
+    cardTap: function() {
+      if (this.currentCard && this.currentCard.link) {
+        window.open(this.currentCard.link, '_blank', 'noopener,noreferrer')
+      }
     },
     showSettings: function(settings) {
       this.settings = settings
