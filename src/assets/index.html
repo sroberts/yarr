@@ -159,6 +159,15 @@
             </div>
             <!-- card triage mode -->
             <div id="card-view" class="d-flex flex-column flex-grow-1 border-top" v-if="cardMode">
+                <!-- folder filter -->
+                <div class="card-view-hints px-4 pt-2 pb-0 d-flex justify-content-center">
+                    <select class="card-folder-select text-muted small"
+                            :value="cardFolder"
+                            @change="changeCardFolder($event.target.value)">
+                        <option value="">all folders</option>
+                        <option v-for="folder in folders" :value="folder.id">{{ folder.title }}</option>
+                    </select>
+                </div>
                 <!-- loading state -->
                 <div v-if="cardLoading && cardItems.length === 0" class="flex-grow-1 d-flex align-items-center justify-content-center">
                     <span class="text-muted">Loading unread items...</span>

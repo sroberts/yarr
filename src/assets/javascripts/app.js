@@ -266,6 +266,7 @@ var vm = new Vue({
       'cardIndex': 0,
       'cardStats': { read: 0, instapaper: 0, kept: 0 },
       'cardLoading': false,
+      'cardFolder': '',
       'refreshRateOptions': [
         { title: "0", value: 0 },
         { title: "10m", value: 10 },
@@ -777,11 +778,21 @@ var vm = new Vue({
       this.cardItems = []
       this.cardIndex = 0
       this.cardStats = { read: 0, instapaper: 0, kept: 0 }
+      this.cardFolder = ''
+      this.cardLoading = true
+      this.loadCardItems(null)
+    },
+    changeCardFolder: function(folderId) {
+      this.cardFolder = folderId
+      this.cardItems = []
+      this.cardIndex = 0
+      this.cardStats = { read: 0, instapaper: 0, kept: 0 }
       this.cardLoading = true
       this.loadCardItems(null)
     },
     loadCardItems: function(afterId) {
       var query = { status: 'unread' }
+      if (this.cardFolder) query.folder_id = this.cardFolder
       if (afterId) query.after = afterId
       api.items.list(query).then(function(data) {
         vm.cardItems = vm.cardItems.concat(data.list)

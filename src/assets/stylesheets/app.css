@@ -761,6 +761,8 @@ a,
 
 #card-view {
   background: var(--card-bg, #fff);
+  overflow: hidden;
+  min-height: 0;
 }
 
 .theme-night #card-view {
@@ -873,6 +875,19 @@ a,
 .card-view-hints {
   flex-shrink: 0;
   opacity: 0.4;
+}
+
+.card-folder-select {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0.25rem 0.5rem;
 }
 
 .card-stat-number {
