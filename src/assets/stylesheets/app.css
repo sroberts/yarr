@@ -790,6 +790,8 @@ a,
   padding: 1.25rem;
   position: relative;
   overflow: hidden;
+  justify-content: start !important;
+  padding-top: 15%;
 }
 
 .triage-card {
@@ -834,9 +836,17 @@ a,
   color: var(--card-muted, #888);
 }
 
-.triage-card-hint {
-  margin-top: 1.25rem;
-  text-align: center;
+.triage-card-excerpt {
+  overflow-y: auto;
+}
+
+.triage-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(128,128,128,0.1);
   font-size: 0.75rem;
   opacity: 0.35;
 }
@@ -875,6 +885,9 @@ a,
 .card-view-hints {
   flex-shrink: 0;
   opacity: 0.4;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
 }
 
 .card-folder-select {
@@ -884,6 +897,7 @@ a,
   font: inherit;
   cursor: pointer;
   text-align: center;
+  text-align-last: center;
   outline: none;
   -webkit-appearance: none;
   appearance: none;

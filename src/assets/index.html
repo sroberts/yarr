@@ -174,7 +174,6 @@
                 </div>
                 <!-- card -->
                 <div v-if="currentCard && !cardDone" class="card-view-area flex-grow-1 d-flex flex-column align-items-center justify-content-center" id="card-swipe-area">
-                    <div class="text-muted small mb-2">{{ cardIndex + 1 }} of {{ cardItems.length }}</div>
                     <div class="triage-card" id="triage-card" @click="cardTap()">
                         <div class="triage-card-feed">
                             <span>{{ (feedsById[currentCard.feed_id] || {}).title }}</span>
@@ -182,7 +181,10 @@
                         </div>
                         <div class="triage-card-title">{{ currentCard.title || 'untitled' }}</div>
                         <div class="triage-card-excerpt">{{ cardExcerpt }}</div>
-                        <div class="triage-card-hint">tap to read full article</div>
+                        <div class="triage-card-footer">
+                            <span class="triage-card-hint">tap to read full article</span>
+                            <span class="triage-card-counter">{{ cardIndex + 1 }} / {{ cardItems.length }}</span>
+                        </div>
                     </div>
                 </div>
                 <!-- action indicator -->

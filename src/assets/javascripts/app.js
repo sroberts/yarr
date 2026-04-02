@@ -357,7 +357,7 @@ var vm = new Vue({
       tmp.textContent = ''
       tmp.insertAdjacentHTML('afterbegin', this.currentCard.content)
       var text = tmp.textContent || tmp.innerText || ''
-      return text.length > 200 ? text.substring(0, 200) + '…' : text
+      return text.length > 600 ? text.substring(0, 600) + '…' : text
     },
   },
   watch: {
