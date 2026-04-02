@@ -52,7 +52,6 @@
                 </button>
                 <button class="toolbar-item ml-1 d-none d-card-triage"
                         title="Triage"
-                        :disabled="!filteredTotalStats && filterSelected !== 'unread'"
                         @click="enterCardMode()">
                     <span class="icon">{% inline "layers.svg" %}</span>
                 </button>
@@ -444,7 +443,8 @@
             <div class="card-view-action" id="card-action-indicator"></div>
             <!-- swipe hints -->
             <div v-if="currentCard && !cardDone" class="card-view-hints px-4 pb-3 d-flex justify-content-between text-muted small">
-                <span>← instapaper</span>
+                <span v-if="instapaperUsername">← instapaper</span>
+                <span v-else>← keep unread</span>
                 <span>mark read →</span>
             </div>
             <!-- stats screen -->
@@ -456,9 +456,13 @@
                         <div class="card-stat-number card-stat-read">{{ cardStats.read }}</div>
                         <div class="text-muted small">marked read</div>
                     </div>
-                    <div class="text-center">
+                    <div class="text-center" v-if="instapaperUsername">
                         <div class="card-stat-number card-stat-instapaper">{{ cardStats.instapaper }}</div>
                         <div class="text-muted small">instapaper</div>
+                    </div>
+                    <div class="text-center" v-else>
+                        <div class="card-stat-number card-stat-instapaper">{{ cardStats.kept }}</div>
+                        <div class="text-muted small">kept unread</div>
                     </div>
                 </div>
                 <button class="btn btn-primary" @click="exitCardMode()">Back to feeds</button>

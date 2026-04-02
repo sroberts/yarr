@@ -52,7 +52,8 @@
     // Action pill
     if (Math.abs(dx) > threshold) {
       if (dx < 0) {
-        showPill(indicator, 'action-instapaper', 'Save to Instapaper')
+        var label = vm.instapaperUsername ? 'Save to Instapaper' : 'Keep Unread'
+        showPill(indicator, 'action-instapaper', label)
       } else {
         showPill(indicator, 'action-read', 'Mark Read')
       }

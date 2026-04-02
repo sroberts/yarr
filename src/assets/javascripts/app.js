@@ -265,7 +265,7 @@ var vm = new Vue({
       'cardMode': false,
       'cardItems': [],
       'cardIndex': 0,
-      'cardStats': { read: 0, instapaper: 0 },
+      'cardStats': { read: 0, instapaper: 0, kept: 0 },
       'cardLoading': false,
       'refreshRateOptions': [
         { title: "0", value: 0 },
@@ -797,16 +797,20 @@ var vm = new Vue({
     cardSwipeLeft: function() {
       var item = this.currentCard
       if (!item) return
-      this.cardStats.instapaper += 1
-      api.items.saveToInstapaper(item.id).then(function(resp) {
-        if (resp.ok) {
-          item.instapaper_saved = true
-          item.status = 'read'
-          if (vm.feedStats[item.feed_id] && vm.feedStats[item.feed_id].unread > 0) {
-            vm.feedStats[item.feed_id].unread -= 1
+      if (this.instapaperUsername) {
+        this.cardStats.instapaper += 1
+        api.items.saveToInstapaper(item.id).then(function(resp) {
+          if (resp.ok) {
+            item.instapaper_saved = true
+            item.status = 'read'
+            if (vm.feedStats[item.feed_id] && vm.feedStats[item.feed_id].unread > 0) {
+              vm.feedStats[item.feed_id].unread -= 1
+            }
           }
-        }
-      })
+        })
+      } else {
+        this.cardStats.kept += 1
+      }
       this.cardIndex += 1
     },
     cardSwipeRight: function() {
