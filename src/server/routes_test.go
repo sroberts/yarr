@@ -27,6 +27,22 @@ func TestStatic(t *testing.T) {
 	}
 }
 
+func TestStaticSwipeJS(t *testing.T) {
+	handler := NewServer(nil, "127.0.0.1:8000").handler()
+	url := "/static/javascripts/swipe.js"
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", url, nil)
+	handler.ServeHTTP(recorder, request)
+	if recorder.Result().StatusCode != 200 {
+		t.Fatalf("expected 200 for swipe.js, got %d", recorder.Result().StatusCode)
+	}
+	body, _ := io.ReadAll(recorder.Result().Body)
+	if !strings.Contains(string(body), "touchstart") {
+		t.Error("swipe.js should contain touch event handlers")
+	}
+}
+
 func TestStaticWithBase(t *testing.T) {
 	server := NewServer(nil, "127.0.0.1:8000")
 	server.BasePath = "/sub"

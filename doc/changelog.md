@@ -1,5 +1,8 @@
 # upcoming
 
+- (new) save to Instapaper: save articles to Instapaper via toolbar button or `Shift+I` shortcut
+- (new) swipe triage card view: full-screen card mode for mobile/tablet PWA — swipe left to save to Instapaper, swipe right to mark as read
+- (new) PWA support: service worker, app icons, offline indicator, pull-to-refresh
 - (fix) articles not resetting immediately after feed/filter selection (thank to @scratchmex for the report)
 - (fix) crash on empty article list with article is selected (thanks to @rksvc)
 - (fix) invalid article title in RSS feeds with media containing titles (thanks to @bwwu-git for the report)

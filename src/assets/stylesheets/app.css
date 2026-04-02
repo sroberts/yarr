@@ -713,6 +713,7 @@ a,
   #app.item-selected #col-item {
     display: flex !important;
   }
+
 }
 
 /* styles for both mobile & tablet layout */
@@ -752,5 +753,189 @@ a,
     min-height: 44px;
     display: flex;
     align-items: center;
+  }
+}
+
+/* ── Card triage mode ────────────────────────── */
+
+
+#card-view {
+  background: var(--card-bg, #fff);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.theme-night #card-view {
+  --card-bg: #0e0e0e;
+  --card-surface: #1a1a2e;
+  --card-text: #e0e0e0;
+  --card-muted: #888;
+}
+.theme-sepia #card-view {
+  --card-bg: #f4f0e5;
+  --card-surface: #ede8d8;
+  --card-text: #433422;
+  --card-muted: #8a7a66;
+}
+
+.theme-light #card-view {
+  --card-bg: #f5f5f5;
+  --card-surface: #fff;
+  --card-text: #222;
+  --card-muted: #888;
+}
+
+
+.card-view-area {
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  justify-content: start !important;
+  padding-top: 15%;
+}
+
+.triage-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--card-surface, #fff);
+  color: var(--card-text, #222);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+  will-change: transform;
+  cursor: pointer;
+}
+
+.triage-card-feed {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--card-muted, #888);
+  margin-bottom: 0.75rem;
+}
+
+.triage-card-date {
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.triage-card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 0.75rem;
+}
+
+.triage-card-excerpt {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--card-muted, #888);
+}
+
+.triage-card-excerpt {
+  overflow-y: auto;
+}
+
+.triage-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(128,128,128,0.1);
+  font-size: 0.75rem;
+  opacity: 0.35;
+}
+
+.card-view-action {
+  text-align: center;
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-action-pill {
+  display: inline-block;
+  padding: 0.375rem 1rem;
+  border-radius: 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.card-action-pill.visible {
+  opacity: 1;
+}
+
+.card-action-pill.action-instapaper {
+  background: #ff6600;
+}
+
+.card-action-pill.action-read {
+  background: #0080d4;
+}
+
+.card-view-hints {
+  flex-shrink: 0;
+  opacity: 0.4;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
+}
+
+.card-folder-select {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: center;
+  text-align-last: center;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 0.25rem 0.5rem;
+}
+
+.card-stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.card-stat-read {
+  color: #0080d4;
+}
+
+.card-stat-instapaper {
+  color: #ff6600;
+}
+
+.triage-card.swiping {
+  transition: none;
+}
+
+.triage-card.snapping {
+  transition: transform 0.3s ease;
+}
+
+.triage-card.flying {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Triage button: only show on mobile/tablet */
+.d-card-triage {
+  display: none !important;
+}
+
+@media (max-width: 991.98px) {
+  .d-card-triage {
+    display: inline-block !important;
   }
 }

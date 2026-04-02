@@ -22,7 +22,7 @@
     </script>
 </head>
 <body class="theme-{% .settings.theme_name %}">
-    <div id="app" class="d-flex" :class="{'feed-selected': feedSelected !== null, 'item-selected': itemSelected !== null}" v-cloak>
+    <div id="app" class="d-flex" :class="{'feed-selected': feedSelected !== null, 'item-selected': itemSelected !== null, 'card-mode': cardMode}" v-cloak>
         <!-- feed list -->
         <div id="col-feed-list" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
             <drag :width="feedListWidth" @resize="resizeFeedList"></drag>
@@ -49,6 +49,13 @@
                         title="All"
                         @click="filterSelected = ''">
                     <span class="icon">{% inline "assorted.svg" %}</span>
+                </button>
+                <button class="toolbar-item ml-1 d-none d-card-triage"
+                        :class="{active: filterSelected == 'triage'}"
+                        :aria-pressed="filterSelected == 'triage'"
+                        title="Triage"
+                        @click="filterSelected = 'triage'">
+                    <span class="icon">{% inline "inbox.svg" %}</span>
                 </button>
                 <div class="flex-grow-1"></div>
                 <dropdown class="settings-dropdown" toggle-class="btn btn-link toolbar-item px-2" ref="menuDropdown" drop="right" title="Settings">
@@ -150,7 +157,71 @@
                     </button>
                 </dropdown>
             </div>
-            <div id="feed-list-scroll" class="p-2 overflow-auto scroll-touch border-top flex-grow-1">
+            <!-- card triage mode -->
+            <div id="card-view" class="d-flex flex-column flex-grow-1 border-top" v-if="cardMode">
+                <!-- folder filter -->
+                <div class="card-view-hints px-4 pt-2 pb-0 d-flex justify-content-center">
+                    <select class="card-folder-select text-muted small"
+                            :value="cardFolder"
+                            @change="changeCardFolder($event.target.value)">
+                        <option value="">all folders</option>
+                        <option v-for="folder in folders" :value="folder.id">{{ folder.title }}</option>
+                    </select>
+                </div>
+                <!-- loading state -->
+                <div v-if="cardLoading && cardItems.length === 0" class="flex-grow-1 d-flex align-items-center justify-content-center">
+                    <span class="text-muted">Loading unread items...</span>
+                </div>
+                <!-- card -->
+                <div v-if="currentCard && !cardDone" class="card-view-area flex-grow-1 d-flex flex-column align-items-center justify-content-center" id="card-swipe-area">
+                    <div class="triage-card" id="triage-card" @click="cardTap()">
+                        <div class="triage-card-feed">
+                            <span>{{ (feedsById[currentCard.feed_id] || {}).title }}</span>
+                            <span class="triage-card-date"><relative-time :val="currentCard.date"/></span>
+                        </div>
+                        <div class="triage-card-title">{{ currentCard.title || 'untitled' }}</div>
+                        <div class="triage-card-excerpt">{{ cardExcerpt }}</div>
+                        <div class="triage-card-footer">
+                            <span class="triage-card-hint">tap to read full article</span>
+                            <span class="triage-card-counter">{{ cardIndex + 1 }} / {{ cardItems.length }}</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- action indicator -->
+                <div class="card-view-action" id="card-action-indicator"></div>
+                <!-- swipe hints -->
+                <div v-if="currentCard && !cardDone" class="card-view-hints px-4 pb-3 d-flex justify-content-between text-muted small">
+                    <span v-if="instapaperUsername">← instapaper</span>
+                    <span v-else>← keep unread</span>
+                    <span>mark read →</span>
+                </div>
+                <!-- stats screen -->
+                <div v-if="cardDone" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center">
+                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
+                    <h4 class="mb-4"><b>All caught up!</b></h4>
+                    <div class="d-flex mb-4" style="gap: 2rem;">
+                        <div class="text-center">
+                            <div class="card-stat-number card-stat-read">{{ cardStats.read }}</div>
+                            <div class="text-muted small">marked read</div>
+                        </div>
+                        <div class="text-center" v-if="instapaperUsername">
+                            <div class="card-stat-number card-stat-instapaper">{{ cardStats.instapaper }}</div>
+                            <div class="text-muted small">instapaper</div>
+                        </div>
+                        <div class="text-center" v-else>
+                            <div class="card-stat-number card-stat-instapaper">{{ cardStats.kept }}</div>
+                            <div class="text-muted small">kept unread</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" @click="exitCardMode()">Done</button>
+                </div>
+                <!-- no unreads -->
+                <div v-if="!cardLoading && cardItems.length === 0" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center">
+                    <div class="text-muted mb-3">No unread items</div>
+                    <button class="btn btn-outline-secondary" @click="exitCardMode()">Done</button>
+                </div>
+            </div>
+            <div id="feed-list-scroll" class="p-2 overflow-auto scroll-touch border-top flex-grow-1" v-show="!cardMode">
                 <label class="selectgroup">
                     <input type="radio" name="feed" value="" v-model="feedSelected">
                     <div class="selectgroup-label d-flex align-items-center w-100">
@@ -472,6 +543,7 @@
     <!-- internal -->
     <script src="./static/javascripts/api.js"></script>
     <script src="./static/javascripts/app.js"></script>
+    <script src="./static/javascripts/swipe.js"></script>
     <script src="./static/javascripts/key.js"></script>
 </body>
 </html>

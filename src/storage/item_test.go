@@ -77,12 +77,12 @@ func getItem(db *Storage, guid string) *Item {
 	err := db.db.QueryRow(`
 		select
 			i.id, i.guid, i.feed_id, i.title, i.link, i.content,
-			i.date, i.status, i.media_links
+			i.date, i.status, i.media_links, i.instapaper_saved
 		from items i
 		where i.guid = ?
 	`, guid).Scan(
 		&i.Id, &i.GUID, &i.FeedId, &i.Title, &i.Link, &i.Content,
-		&i.Date, &i.Status, &i.MediaLinks,
+		&i.Date, &i.Status, &i.MediaLinks, &i.InstapaperSaved,
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -270,6 +270,60 @@ func TestMarkItemsRead(t *testing.T) {
 		t.Logf("want: %#v", want)
 		t.Logf("have: %#v", have)
 		t.Fail()
+	}
+}
+
+func TestSetItemInstapaperSaved(t *testing.T) {
+	db := testDB()
+	testItemsSetup(db)
+
+	item := getItem(db, "item111")
+	if item.InstapaperSaved {
+		t.Fatal("expected InstapaperSaved to be false by default")
+	}
+
+	ok := db.SetItemInstapaperSaved(item.Id, true)
+	if !ok {
+		t.Fatal("SetItemInstapaperSaved returned false")
+	}
+
+	item = getItem(db, "item111")
+	if !item.InstapaperSaved {
+		t.Fatal("expected InstapaperSaved to be true after setting")
+	}
+
+	// Verify it also appears correctly via GetItem
+	fetched := db.GetItem(item.Id)
+	if fetched == nil {
+		t.Fatal("GetItem returned nil")
+	}
+	if !fetched.InstapaperSaved {
+		t.Fatal("expected InstapaperSaved to be true via GetItem")
+	}
+
+	// Verify it appears in ListItems
+	unread := UNREAD
+	items := db.ListItems(ItemFilter{Status: &unread}, 10, false, false)
+	found := false
+	for _, li := range items {
+		if li.GUID == "item111" {
+			// item111 was set to instapaper_saved but status is still unread
+			// (SetItemInstapaperSaved doesn't change status)
+			if !li.InstapaperSaved {
+				t.Fatal("expected InstapaperSaved in ListItems result")
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("item111 not found in ListItems results")
+	}
+
+	// Verify unsetting works
+	db.SetItemInstapaperSaved(item.Id, false)
+	item = getItem(db, "item111")
+	if item.InstapaperSaved {
+		t.Fatal("expected InstapaperSaved to be false after unsetting")
 	}
 }
 
