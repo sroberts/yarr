@@ -262,7 +262,6 @@ var vm = new Vue({
 
       'instapaperUsername': s.instapaper_username || '',
       'instapaperPassword': s.instapaper_password || '',
-      'cardMode': false,
       'cardItems': [],
       'cardIndex': 0,
       'cardStats': { read: 0, instapaper: 0, kept: 0 },
@@ -339,6 +338,9 @@ var vm = new Vue({
       const entry = this.refreshRateOptions.find(o => o.value === this.refreshRate)
       return entry ? entry.title : '0'
     },
+    cardMode: function() {
+      return this.filterSelected === 'triage'
+    },
     currentCard: function() {
       if (this.cardIndex < this.cardItems.length) {
         return this.cardItems[this.cardIndex]
@@ -393,6 +395,15 @@ var vm = new Vue({
     },
     'filterSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
+      if (oldVal === 'triage') {
+        this.cardItems = []
+        this.cardIndex = 0
+        this.refreshStats()
+      }
+      if (newVal === 'triage') {
+        this.enterCardMode()
+        return
+      }
       this.itemSelected = null
       this.items = []
       this.itemsHasMore = true
@@ -763,10 +774,9 @@ var vm = new Vue({
       api.settings.update(update)
     },
     enterCardMode: function() {
-      this.cardMode = true
       this.cardItems = []
       this.cardIndex = 0
-      this.cardStats = { read: 0, instapaper: 0 }
+      this.cardStats = { read: 0, instapaper: 0, kept: 0 }
       this.cardLoading = true
       this.loadCardItems(null)
     },
@@ -784,15 +794,12 @@ var vm = new Vue({
         vm.cardLoading = false
         if (vm.cardItems.length === 0) {
           alert('Failed to load items.')
-          vm.cardMode = false
+          vm.filterSelected = ''
         }
       })
     },
     exitCardMode: function() {
-      this.cardMode = false
-      this.cardItems = []
-      this.cardIndex = 0
-      this.refreshStats()
+      this.filterSelected = ''
     },
     cardSwipeLeft: function() {
       var item = this.currentCard

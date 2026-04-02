@@ -15,7 +15,7 @@
   }
 
   function getArea() {
-    return document.getElementById('card-swipe-area')
+    return document.getElementById('card-view')
   }
 
   function getIndicator() {
