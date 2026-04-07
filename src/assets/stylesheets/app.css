@@ -893,6 +893,7 @@ a,
 .card-folder-select {
   background: transparent;
   border: none;
+  border-bottom: 1px dotted currentColor;
   color: inherit;
   font: inherit;
   cursor: pointer;
