@@ -877,12 +877,7 @@ var vm = new Vue({
     },
     computeStats: function() {
       var filter = this.filterSelected
-      if (!filter) {
-        this.filteredFeedStats = {}
-        this.filteredFolderStats = {}
-        this.filteredTotalStats = null
-        return
-      }
+      var statKey = filter || 'unread'
 
       var statsFeeds = {}, statsFolders = {}, statsTotal = 0
 
@@ -890,7 +885,7 @@ var vm = new Vue({
         var feed = this.feeds[i]
         if (!this.feedStats[feed.id]) continue
 
-        var n = vm.feedStats[feed.id][filter] || 0
+        var n = vm.feedStats[feed.id][statKey] || 0
 
         if (!statsFolders[feed.folder_id]) statsFolders[feed.folder_id] = 0
 
@@ -901,7 +896,7 @@ var vm = new Vue({
 
       this.filteredFeedStats = statsFeeds
       this.filteredFolderStats = statsFolders
-      this.filteredTotalStats = statsTotal
+      this.filteredTotalStats = statsTotal || null
     },
     // navigation helper, navigate relative to selected item
     navigateToItem: function(relativePosition) {
