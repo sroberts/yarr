@@ -164,7 +164,7 @@
                     <select class="card-folder-select text-muted small"
                             :value="cardFolder"
                             @change="changeCardFolder($event.target.value)">
-                        <option value="">all folders</option>
+                        <option value="">all folders ▾</option>
                         <option v-for="folder in folders" :value="folder.id">{{ folder.title }}</option>
                     </select>
                 </div>
