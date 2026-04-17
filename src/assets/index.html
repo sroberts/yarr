@@ -55,7 +55,7 @@
                         :aria-pressed="filterSelected == 'triage'"
                         title="Triage"
                         @click="filterSelected = 'triage'">
-                    <span class="icon">{% inline "inbox.svg" %}</span>
+                    <span class="icon">{% inline "copy.svg" %}</span>
                 </button>
                 <div class="flex-grow-1"></div>
                 <dropdown class="settings-dropdown" toggle-class="btn btn-link toolbar-item px-2" ref="menuDropdown" drop="right" title="Settings">
@@ -432,7 +432,7 @@
                         title="Save to Instapaper">
                     <span class="icon" :class="{'icon-loading': loading.instapaper}">
                         <template v-if="itemSelectedDetails.instapaper_saved">{% inline "check.svg" %}</template>
-                        <template v-else>{% inline "inbox.svg" %}</template>
+                        <template v-else>{% inline "bookmark.svg" %}</template>
                     </span>
                 </button>
                 <a class="toolbar-item" :href="itemSelectedDetails.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link">
