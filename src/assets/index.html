@@ -179,6 +179,7 @@
                             <span>{{ (feedsById[currentCard.feed_id] || {}).title }}</span>
                             <span class="triage-card-date"><relative-time :val="currentCard.date"/></span>
                         </div>
+                        <div class="triage-card-domain" v-if="cardDomain">{{ cardDomain }}</div>
                         <div class="triage-card-title">{{ currentCard.title || 'untitled' }}</div>
                         <div class="triage-card-excerpt">{{ cardExcerpt }}</div>
                         <div class="triage-card-footer">

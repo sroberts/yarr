@@ -359,6 +359,15 @@ var vm = new Vue({
       var text = tmp.textContent || tmp.innerText || ''
       return text.length > 600 ? text.substring(0, 600) + '…' : text
     },
+    cardDomain: function() {
+      if (!this.currentCard || !this.currentCard.link) return ''
+      try {
+        var url = new URL(this.currentCard.link)
+        return url.hostname.replace(/^www\./, '')
+      } catch (e) {
+        return ''
+      }
+    },
   },
   watch: {
     'theme': {
