@@ -267,6 +267,7 @@ var vm = new Vue({
       'cardStats': { read: 0, instapaper: 0, kept: 0 },
       'cardLoading': false,
       'cardFolder': '',
+      'previousFilter': '',
       'refreshRateOptions': [
         { title: "0", value: 0 },
         { title: "10m", value: 10 },
@@ -402,6 +403,7 @@ var vm = new Vue({
         this.refreshStats()
       }
       if (newVal === 'triage') {
+        this.previousFilter = oldVal || ''
         this.enterCardMode()
         return
       }
@@ -810,7 +812,7 @@ var vm = new Vue({
       })
     },
     exitCardMode: function() {
-      this.filterSelected = ''
+      this.filterSelected = this.previousFilter
     },
     cardSwipeLeft: function() {
       var item = this.currentCard
