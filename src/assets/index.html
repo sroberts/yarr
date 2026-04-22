@@ -190,9 +190,13 @@
                 <!-- action indicator -->
                 <div class="card-view-action" id="card-action-indicator"></div>
                 <!-- swipe hints -->
-                <div v-if="currentCard && !cardDone" class="card-view-hints px-4 pb-3 d-flex justify-content-between text-muted small">
+                <div v-if="currentCard && !cardDone" class="card-view-hints px-4 pb-3 d-flex justify-content-between align-items-center text-muted small">
                     <span v-if="instapaperUsername">← instapaper</span>
                     <span v-else>← keep unread</span>
+                    <button type="button"
+                            class="triage-undo"
+                            v-if="lastTriageAction"
+                            @click="cardUndo()">undo</button>
                     <span>mark read →</span>
                 </div>
                 <!-- stats screen -->
