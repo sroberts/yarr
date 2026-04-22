@@ -267,6 +267,7 @@ var vm = new Vue({
       'cardStats': { read: 0, instapaper: 0, kept: 0 },
       'cardLoading': false,
       'cardFolder': '',
+      'lastTriageAction': null,
       'refreshRateOptions': [
         { title: "0", value: 0 },
         { title: "10m", value: 10 },
@@ -780,6 +781,7 @@ var vm = new Vue({
       this.cardStats = { read: 0, instapaper: 0, kept: 0 }
       this.cardFolder = ''
       this.cardLoading = true
+      this.lastTriageAction = null
       this.loadCardItems(null)
     },
     changeCardFolder: function(folderId) {
@@ -788,6 +790,7 @@ var vm = new Vue({
       this.cardIndex = 0
       this.cardStats = { read: 0, instapaper: 0, kept: 0 }
       this.cardLoading = true
+      this.lastTriageAction = null
       this.loadCardItems(null)
     },
     loadCardItems: function(afterId) {
@@ -810,6 +813,7 @@ var vm = new Vue({
       })
     },
     exitCardMode: function() {
+      this.lastTriageAction = null
       this.filterSelected = ''
     },
     cardSwipeLeft: function() {
@@ -826,8 +830,10 @@ var vm = new Vue({
             }
           }
         })
+        this.lastTriageAction = { type: 'instapaper', item: item }
       } else {
         this.cardStats.kept += 1
+        this.lastTriageAction = { type: 'kept', item: item }
       }
       this.cardIndex += 1
     },
@@ -841,7 +847,32 @@ var vm = new Vue({
         }
       })
       item.status = 'read'
+      this.lastTriageAction = { type: 'read', item: item }
       this.cardIndex += 1
+    },
+    cardUndo: function() {
+      var action = this.lastTriageAction
+      if (!action) return
+      this.cardIndex -= 1
+      if (action.type === 'read') {
+        this.cardStats.read -= 1
+        api.items.update(action.item.id, { status: 'unread' }).then(function() {
+          action.item.status = 'unread'
+          if (vm.feedStats[action.item.feed_id]) {
+            vm.feedStats[action.item.feed_id].unread += 1
+          }
+        })
+      } else if (action.type === 'instapaper') {
+        this.cardStats.instapaper -= 1
+        action.item.instapaper_saved = false
+        action.item.status = 'unread'
+        if (vm.feedStats[action.item.feed_id]) {
+          vm.feedStats[action.item.feed_id].unread += 1
+        }
+      } else if (action.type === 'kept') {
+        this.cardStats.kept -= 1
+      }
+      this.lastTriageAction = null
     },
     cardTap: function() {
       if (this.currentCard && this.currentCard.link) {
