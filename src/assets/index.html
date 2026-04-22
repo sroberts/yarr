@@ -432,7 +432,7 @@
                         title="Save to Instapaper">
                     <span class="icon" :class="{'icon-loading': loading.instapaper}">
                         <template v-if="itemSelectedDetails.instapaper_saved">{% inline "check.svg" %}</template>
-                        <template v-else>{% inline "inbox.svg" %}</template>
+                        <template v-else>{% inline "bookmark.svg" %}</template>
                     </span>
                 </button>
                 <a class="toolbar-item" :href="itemSelectedDetails.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link">
