@@ -19,8 +19,33 @@ jobs:
       with:
         go-version: '^1.23'
 
-    - name: Run tests
-      run: go test -tags "sqlite_foreign_keys sqlite_json" -race -count=1 ./...
+    - name: Lint
+      uses: golangci/golangci-lint-action@v6
+      with:
+        version: v1.62.2
+        args: --timeout=5m --build-tags="sqlite_foreign_keys sqlite_json"
+
+    - name: Run tests with coverage
+      run: |
+        go test -tags "sqlite_foreign_keys sqlite_json" -race -count=1 \
+          -coverprofile=coverage.out -covermode=atomic ./...
+
+    - name: Coverage gate
+      run: |
+        # Coverage threshold (percent). PRs that drop below this fail CI.
+        THRESHOLD=20
+        COVERAGE=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub("%","",$3); print $3}')
+        echo "Coverage: ${COVERAGE}% (threshold ${THRESHOLD}%)"
+        awk -v c="$COVERAGE" -v t="$THRESHOLD" \
+          'BEGIN { exit (c+0 < t+0) ? 1 : 0 }' \
+          || { echo "::error::coverage ${COVERAGE}% below threshold ${THRESHOLD}%"; exit 1; }
+
+    - name: Upload coverage artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: coverage
+        path: coverage.out
 
     - name: Build binary
       run: make host

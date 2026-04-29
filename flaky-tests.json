@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Tracks tests that have been observed to be flaky (intermittently fail). Updated by .github/workflows/flaky-analysis.yml.",
+  "policy": {
+    "reruns_per_test": 5,
+    "flake_threshold": 1,
+    "stale_after_days": 60
+  },
+  "tests": []
+}

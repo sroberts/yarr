@@ -1,0 +1,40 @@
+name: Nightly Coverage
+
+# Scheduled coverage suite. The PR-time gate catches regressions in
+# changed code; this run catches drift on slow-changing paths and
+# uploads a per-package report.
+
+on:
+  schedule:
+    - cron: '17 7 * * *'  # 07:17 UTC daily — off the top of the hour
+  workflow_dispatch:
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23'
+
+      - name: Run full coverage suite
+        run: |
+          go test -tags "sqlite_foreign_keys sqlite_json" -race -count=1 \
+            -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Per-package coverage summary
+        run: |
+          echo "## Coverage Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          go tool cover -func=coverage.out | tail -40 >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-coverage
+          path: coverage.out
+          retention-days: 30
