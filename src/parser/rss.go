@@ -41,19 +41,6 @@ type rssGuid struct {
 	IsPermaLink string `xml:"isPermaLink,attr"`
 }
 
-type rssLink struct {
-	XMLName xml.Name
-	Data    string `xml:",chardata"`
-	Href    string `xml:"href,attr"`
-	Rel     string `xml:"rel,attr"`
-}
-
-type rssTitle struct {
-	XMLName xml.Name
-	Data    string `xml:",chardata"`
-	Inner   string `xml:",innerxml"`
-}
-
 type rssEnclosure struct {
 	URL    string `xml:"url,attr"`
 	Type   string `xml:"type,attr"`

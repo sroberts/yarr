@@ -69,14 +69,14 @@ func (m MediaLinks) Value() (driver.Value, error) {
 }
 
 type Item struct {
-	Id         int64      `json:"id"`
-	GUID       string     `json:"guid"`
-	FeedId     int64      `json:"feed_id"`
-	Title      string     `json:"title"`
-	Link       string     `json:"link"`
-	Content    string     `json:"content,omitempty"`
-	Date       time.Time  `json:"date"`
-	Status     ItemStatus `json:"status"`
+	Id              int64      `json:"id"`
+	GUID            string     `json:"guid"`
+	FeedId          int64      `json:"feed_id"`
+	Title           string     `json:"title"`
+	Link            string     `json:"link"`
+	Content         string     `json:"content,omitempty"`
+	Date            time.Time  `json:"date"`
+	Status          ItemStatus `json:"status"`
 	MediaLinks      MediaLinks `json:"media_links"`
 	InstapaperSaved bool       `json:"instapaper_saved"`
 }

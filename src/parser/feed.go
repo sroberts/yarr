@@ -25,6 +25,10 @@ type feedProbe struct {
 
 func sniff(lookup string) (out feedProbe) {
 	lookup = strings.TrimSpace(lookup)
+	// Strip leading BOMs (UTF-8 EFBBBF, UTF-16 LE FFFE / BE FEFF) and
+	// stray nulls before sniffing. The bytes are intentionally outside
+	// the UTF-8 range — that's why we feed them as a literal cutset.
+	//nolint:staticcheck // SA1011: cutset is deliberately non-UTF-8 (BOM bytes).
 	lookup = strings.TrimLeft(lookup, "\x00\xEF\xBB\xBF\xFE\xFF")
 
 	if len(lookup) == 0 {

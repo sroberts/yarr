@@ -25,6 +25,12 @@ issues:
   exclude-dirs:
     - vendor
     - out
+  exclude-rules:
+    # Pre-existing test-file gofmt drift is not part of this baseline.
+    # Tests aren't modified except by explicit authorization.
+    - path: _test\.go
+      linters:
+        - gofmt
   # Don't drown PRs in pre-existing findings; tighten as the baseline shrinks.
   max-issues-per-linter: 0
   max-same-issues: 0

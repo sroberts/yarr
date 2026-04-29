@@ -32,10 +32,10 @@ func (s *Server) handler() http.Handler {
 
 	if s.Username != "" && s.Password != "" {
 		a := &auth.Middleware{
-			BasePath: s.BasePath,
-			Username: s.Username,
-			Password: s.Password,
-			Public:   []string{"/static", "/fever", "/manifest.json", "/sw.js", "/up"},
+			BasePath:      s.BasePath,
+			Username:      s.Username,
+			Password:      s.Password,
+			Public:        []string{"/static", "/fever", "/manifest.json", "/sw.js", "/up"},
 			DB:            s.db,
 			SecretKeyBase: s.SecretKeyBase,
 			SecureCookie:  s.SecureCookie,
@@ -633,9 +633,9 @@ func (s *Server) handleLogout(c *router.Context) {
 func (s *Server) handleHealth(c *router.Context) {
 	if err := s.db.Ping(); err != nil {
 		c.Out.WriteHeader(http.StatusServiceUnavailable)
-		c.Out.Write([]byte("ERROR"))
+		_, _ = c.Out.Write([]byte("ERROR"))
 		return
 	}
 	c.Out.WriteHeader(http.StatusOK)
-	c.Out.Write([]byte("OK"))
+	_, _ = c.Out.Write([]byte("OK"))
 }
