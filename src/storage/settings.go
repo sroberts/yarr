@@ -7,17 +7,17 @@ import (
 
 func settingsDefaults() map[string]interface{} {
 	return map[string]interface{}{
-		"filter":            "",
-		"feed":              "",
-		"feed_list_width":   300,
-		"item_list_width":   300,
-		"sort_newest_first": true,
-		"theme_name":        "light",
-		"theme_font":        "",
-		"theme_size":        1,
-		"refresh_rate":          0,
-		"instapaper_username":  "",
-		"instapaper_password":  "",
+		"filter":              "",
+		"feed":                "",
+		"feed_list_width":     300,
+		"item_list_width":     300,
+		"sort_newest_first":   true,
+		"theme_name":          "light",
+		"theme_font":          "",
+		"theme_size":          1,
+		"refresh_rate":        0,
+		"instapaper_username": "",
+		"instapaper_password": "",
 	}
 }
 
@@ -27,7 +27,7 @@ func (s *Storage) GetSettingsValue(key string) interface{} {
 		return settingsDefaults()[key]
 	}
 	var val []byte
-	row.Scan(&val)
+	_ = row.Scan(&val)
 	if len(val) == 0 {
 		return nil
 	}
@@ -61,7 +61,7 @@ func (s *Storage) GetSettings() map[string]interface{} {
 		var val []byte
 		var valDecoded interface{}
 
-		rows.Scan(&key, &val)
+		_ = rows.Scan(&key, &val)
 		if err = json.Unmarshal([]byte(val), &valDecoded); err != nil {
 			log.Print(err)
 			continue

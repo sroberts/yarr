@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 )
@@ -37,7 +36,7 @@ func Template(path string) *template.Template {
 				}
 				defer svgfile.Close()
 
-				content, err := ioutil.ReadAll(svgfile)
+				content, err := io.ReadAll(svgfile)
 				// should never happen
 				if err != nil {
 					log.Fatal(err)
@@ -54,7 +53,7 @@ func Template(path string) *template.Template {
 
 func Render(path string, writer io.Writer, data interface{}) {
 	tmpl := Template(path)
-	tmpl.Execute(writer, data)
+	_ = tmpl.Execute(writer, data)
 }
 
 func init() {

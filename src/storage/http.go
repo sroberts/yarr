@@ -48,7 +48,7 @@ func (s *Storage) GetHTTPState(feedID int64) *HTTPState {
 	}
 
 	var state HTTPState
-	row.Scan(
+	_ = row.Scan(
 		&state.FeedID,
 		&state.LastRefreshed,
 		&state.LastModified,

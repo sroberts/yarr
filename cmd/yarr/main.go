@@ -33,7 +33,7 @@ func opt(envVar, defaultValue string) string {
 
 func parseAuthfile(authfile io.Reader) (username, password string, err error) {
 	scanner := bufio.NewScanner(authfile)
-	for scanner.Scan() {
+	if scanner.Scan() {
 		line := scanner.Text()
 		parts := strings.SplitN(line, ":", 2)
 		if len(parts) != 2 {
@@ -41,13 +41,12 @@ func parseAuthfile(authfile io.Reader) (username, password string, err error) {
 		}
 		username = parts[0]
 		password = parts[1]
-		break
 	}
 	return username, password, nil
 }
 
 func main() {
-	platform.FixConsoleIfNeeded()
+	_ = platform.FixConsoleIfNeeded()
 
 	var addr, db, authfile, auth, certfile, keyfile, basepath, logfile string
 	var ver, open bool
@@ -170,7 +169,9 @@ func main() {
 
 	log.Printf("starting server at %s", srv.GetAddr())
 	if open {
-		platform.Open(srv.GetAddr())
+		if err := platform.Open(srv.GetAddr()); err != nil {
+			log.Printf("failed to open browser: %v", err)
+		}
 	}
 	platform.Start(srv)
 }
