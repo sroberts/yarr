@@ -45,13 +45,13 @@ func migrate(db *sql.DB) error {
 		log.Printf("[migration:%d] starting", v)
 
 		if trickyAlteration {
-			db.Exec("pragma foreign_keys=off;")
+			_, _ = db.Exec("pragma foreign_keys=off;")
 		}
 
 		err := migrateVersion(v, db)
 
 		if trickyAlteration {
-			db.Exec("pragma foreign_keys=on;")
+			_, _ = db.Exec("pragma foreign_keys=on;")
 		}
 
 		if err != nil {
@@ -73,12 +73,12 @@ func migrateVersion(v int64, db *sql.DB) error {
 	}
 	if err = migratefunc(tx); err != nil {
 		log.Printf("[migration:%d] failed to migrate", v)
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 	if _, err = tx.Exec(fmt.Sprintf("pragma user_version = %d", v)); err != nil {
 		log.Printf("[migration:%d] failed to bump version", v)
-		tx.Rollback()
+		_ = tx.Rollback()
 		return err
 	}
 	if err = tx.Commit(); err != nil {

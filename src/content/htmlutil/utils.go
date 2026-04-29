@@ -13,14 +13,14 @@ var whitespaceRegex = regexp.MustCompile(`[\s]+`)
 
 func HTML(node *html.Node) string {
 	writer := strings.Builder{}
-	html.Render(&writer, node)
+	_ = html.Render(&writer, node)
 	return writer.String()
 }
 
 func InnerHTML(node *html.Node) string {
 	writer := strings.Builder{}
 	for c := node.FirstChild; c != nil; c = c.NextSibling {
-		html.Render(&writer, c)
+		_ = html.Render(&writer, c)
 	}
 	return writer.String()
 }

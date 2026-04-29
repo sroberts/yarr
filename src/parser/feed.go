@@ -122,7 +122,7 @@ func ParseAndFix(r io.Reader, baseURL, fallbackEncoding string) (*Feed, error) {
 	if err != nil {
 		return nil, err
 	}
-	feed.TranslateURLs(baseURL)
+	_ = feed.TranslateURLs(baseURL)
 	feed.SetMissingDatesTo(time.Now())
 	feed.SetMissingGUIDs()
 	return feed, nil

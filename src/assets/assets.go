@@ -53,7 +53,7 @@ func Template(path string) *template.Template {
 
 func Render(path string, writer io.Writer, data interface{}) {
 	tmpl := Template(path)
-	tmpl.Execute(writer, data)
+	_ = tmpl.Execute(writer, data)
 }
 
 func init() {

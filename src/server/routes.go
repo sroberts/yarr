@@ -141,7 +141,7 @@ func (s *Server) handleServiceWorker(c *router.Context) {
 	c.Out.Header().Set("Content-Type", "application/javascript")
 	c.Out.Header().Set("Service-Worker-Allowed", s.BasePath+"/")
 	c.Out.Header().Set("Cache-Control", "no-cache")
-	io.Copy(c.Out, f)
+	_, _ = io.Copy(c.Out, f)
 }
 
 func (s *Server) handleStatus(c *router.Context) {
@@ -261,7 +261,7 @@ func (s *Server) handleFeedIcon(c *router.Context) {
 
 	c.Out.Header().Set("Content-Type", icon.ctype)
 	c.Out.Header().Set("Etag", icon.etag)
-	c.Out.Write(icon.bytes)
+	_, _ = c.Out.Write(icon.bytes)
 }
 
 func (s *Server) handleFeedList(c *router.Context) {
@@ -585,7 +585,7 @@ func (s *Server) handleOPMLExport(c *router.Context) {
 			doc.Folders = append(doc.Folders, opmlfolder)
 		}
 
-		c.Out.Write([]byte(doc.OPML()))
+		_, _ = c.Out.Write([]byte(doc.OPML()))
 	}
 }
 

@@ -361,7 +361,7 @@ func (s *Storage) FeedStats() []FeedStat {
 	}
 	for rows.Next() {
 		stat := FeedStat{}
-		rows.Scan(&stat.FeedId, &stat.UnreadCount, &stat.StarredCount)
+		_ = rows.Scan(&stat.FeedId, &stat.UnreadCount, &stat.StarredCount)
 		result = append(result, stat)
 	}
 	return result
@@ -381,7 +381,7 @@ func (s *Storage) SyncSearch() {
 	items := make([]Item, 0)
 	for rows.Next() {
 		var item Item
-		rows.Scan(&item.Id, &item.Title, &item.Content)
+		_ = rows.Scan(&item.Id, &item.Title, &item.Content)
 		items = append(items, item)
 	}
 
@@ -396,7 +396,7 @@ func (s *Storage) SyncSearch() {
 		}
 		if numrows, err := result.RowsAffected(); err == nil && numrows == 1 {
 			if rowId, err := result.LastInsertId(); err == nil {
-				s.db.Exec(
+				_, _ = s.db.Exec(
 					`update items set search_rowid = ? where id = ?`,
 					rowId, item.Id,
 				)
@@ -437,7 +437,7 @@ func (s *Storage) DeleteOldItems() {
 	feedLimits := make(map[int64]int64, 0)
 	for rows.Next() {
 		var feedId, limit int64
-		rows.Scan(&feedId, &limit, nil)
+		_ = rows.Scan(&feedId, &limit, nil)
 		feedLimits[feedId] = limit
 	}
 

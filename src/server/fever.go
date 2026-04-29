@@ -95,7 +95,7 @@ func formHasValue(values url.Values, value string) bool {
 }
 
 func (s *Server) handleFever(c *router.Context) {
-	c.Req.ParseForm()
+	_ = c.Req.ParseForm()
 	if !s.feverAuth(c) {
 		c.JSON(http.StatusOK, map[string]interface{}{
 			"api_version":            3,
