@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Per-category acceptance rates for AI-agent-authored PRs in this repo. Updated by .github/workflows/acceptance-tracking.yml. Consumed by L4 self-tuning workflows that adjust agent guidance when a category drops below its threshold.",
+  "policy": {
+    "lookback_days": 30,
+    "min_samples": 5,
+    "block_below": 0.5,
+    "warn_below": 0.7
+  },
+  "categories": {
+    "feed-parser": {
+      "merged": 0,
+      "closed_unmerged": 0,
+      "rate": null,
+      "last_updated": null
+    },
+    "storage": {
+      "merged": 0,
+      "closed_unmerged": 0,
+      "rate": null,
+      "last_updated": null
+    },
+    "server-handlers": {
+      "merged": 0,
+      "closed_unmerged": 0,
+      "rate": null,
+      "last_updated": null
+    },
+    "ui-assets": {
+      "merged": 0,
+      "closed_unmerged": 0,
+      "rate": null,
+      "last_updated": null
+    },
+    "ci-build": {
+      "merged": 0,
+      "closed_unmerged": 0,
+      "rate": null,
+      "last_updated": null
+    },
+    "docs": {
+      "merged": 0,
+      "closed_unmerged": 0,
+      "rate": null,
+      "last_updated": null
+    }
+  }
+}

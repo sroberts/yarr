@@ -1,0 +1,24 @@
+{
+  "name": "yarr-dev",
+  "image": "mcr.microsoft.com/devcontainers/go:1.23",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "postCreateCommand": "go mod download && make test",
+  "containerEnv": {
+    "CGO_ENABLED": "1"
+  },
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "anthropic.claude-code"
+      ]
+    }
+  },
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-go-build,target=/home/vscode/.cache/go-build,type=volume",
+    "source=${localWorkspaceFolderBasename}-go-mod,target=/go/pkg/mod,type=volume"
+  ]
+}

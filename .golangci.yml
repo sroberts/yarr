@@ -1,0 +1,38 @@
+# golangci-lint config for yarr.
+#
+# Kept conservative on purpose: this is a long-lived codebase that
+# predates the linters, so we enable a minimal default set rather than
+# whacking the whole tree. Tighten over time.
+
+run:
+  timeout: 5m
+  build-tags:
+    - sqlite_foreign_keys
+    - sqlite_json
+  modules-download-mode: vendor
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gofmt
+
+issues:
+  exclude-dirs:
+    - vendor
+    - out
+  # Don't drown PRs in pre-existing findings; tighten as the baseline shrinks.
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+linters-settings:
+  errcheck:
+    # Skip standard "we know this can't fail" patterns.
+    exclude-functions:
+      - (io.Closer).Close
+      - fmt.Fprintf
+      - fmt.Fprintln

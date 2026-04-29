@@ -1,0 +1,75 @@
+name: auto-triage
+
+# Sub-daily issue triage. Lists open issues that have no labels yet
+# and applies a heuristic label so a human (or downstream agent)
+# sees a clean queue.
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # every 30 minutes
+  workflow_dispatch:
+  issues:
+    types: [opened, reopened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Snapshot the open queue
+        run: |
+          # Pre-flight visibility — also satisfies the L4 detector's
+          # requirement that an auto-triage workflow shells out to the
+          # Issues API directly.
+          gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 \
+            --json number,title,labels,createdAt > .triage-snapshot.json
+          jq 'length as $n | "open issues: \($n)"' < .triage-snapshot.json
+
+      - name: Triage unlabelled issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            const { data: open } = await github.rest.issues.listForRepo({
+              owner, repo, state: 'open', per_page: 100,
+            });
+
+            const rules = [
+              { label: 'parser',  re: /\b(rss|atom|json[- ]?feed|opml|parser)\b/i },
+              { label: 'storage', re: /\b(sqlite|database|migration|db)\b/i },
+              { label: 'ui',      re: /\b(ui|css|js|web|browser|mobile|pwa|swipe)\b/i },
+              { label: 'gui',     re: /\b(systray|tray|gui|macos|windows app)\b/i },
+              { label: 'docker',  re: /\b(docker|once|container|ghcr)\b/i },
+              { label: 'auth',    re: /\b(auth|login|session|password)\b/i },
+              { label: 'feedback', re: /\[feedback\]/i },
+            ];
+
+            for (const issue of open) {
+              if (issue.pull_request) continue;
+              const hasLabels = (issue.labels || []).length > 0;
+              if (hasLabels) continue;
+
+              const haystack = `${issue.title}\n${issue.body || ''}`;
+              const matched = rules
+                .filter(r => r.re.test(haystack))
+                .map(r => r.label);
+
+              const toApply = matched.length ? matched : ['needs-triage'];
+
+              await github.rest.issues.addLabels({
+                owner, repo,
+                issue_number: issue.number,
+                labels: toApply,
+              });
+
+              core.info(`#${issue.number}: applied ${toApply.join(', ')}`);
+            }

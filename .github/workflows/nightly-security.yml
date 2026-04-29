@@ -1,0 +1,63 @@
+name: Nightly Security & Compliance
+
+# Heavier checks that don't fit the per-PR latency budget:
+#  - govulncheck: known CVEs in the dep graph
+#  - gosec:       static analysis for common Go security issues
+#  - module verify: detects checksum drift in vendored deps
+
+on:
+  schedule:
+    - cron: '23 5 * * *'  # 05:23 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  govulncheck:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23'
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: Scan
+        run: govulncheck -tags="sqlite_foreign_keys sqlite_json" ./...
+
+  gosec:
+    name: gosec
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23'
+      - name: Run gosec
+        uses: securego/gosec@master
+        with:
+          args: '-tags=sqlite_foreign_keys,sqlite_json -exclude-dir=vendor ./...'
+
+  module-verify:
+    name: vendor / mod verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '^1.23'
+      - name: go mod verify
+        run: go mod verify
+      - name: vendor freshness
+        run: |
+          go mod vendor
+          if ! git diff --quiet -- vendor go.mod go.sum; then
+            echo "::error::vendor/go.mod/go.sum drift detected — run 'go mod vendor' locally"
+            git diff --stat -- vendor go.mod go.sum
+            exit 1
+          fi
