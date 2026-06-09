@@ -25,6 +25,9 @@ type Server struct {
 
 	BasePath string
 
+	// build
+	Version string
+
 	// auth
 	Username string
 	Password string
