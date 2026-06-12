@@ -72,3 +72,13 @@ JavaScript bundler — edit the `.js`/`.css` directly.
 - Docs: `readme.md`, `doc/`
 - CI: `.github/workflows/`
 - Build: `makefile`
+
+## Design Context
+
+Frontend design work is anchored by `PRODUCT.md` at the repo root (strategic:
+register, users, brand personality, anti-references, design principles). The
+register is **product**; the personality is *quiet, fast, utilitarian*, and the
+core loop is feed triage (read / star / save / next) on desk and phone. Read it
+before changing the web UI in `src/assets/`. A `DESIGN.md` (visual tokens, the
+light/sepia/night themes, typography, components) can be generated with
+`/impeccable document` when needed.
