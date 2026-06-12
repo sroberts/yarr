@@ -19,6 +19,7 @@
         window.app = window.app || {}
         window.app.settings = {% .settings %}
         window.app.authenticated = {% .authenticated %}
+        window.app.version = "{% .version %}"
     </script>
 </head>
 <body class="theme-{% .settings.theme_name %}">
@@ -150,6 +151,9 @@
                         <span class="icon mr-1">{% inline "help-circle.svg" %}</span>
                         Shortcuts
                     </button>
+                    <div class="dropdown-item text-muted small cursor-default" v-if="version">
+                        Version {{ version }}
+                    </div>
                     <div class="dropdown-divider" v-if="authenticated"></div>
                     <button class="dropdown-item" v-if="authenticated" @click="logout()">
                         <span class="icon mr-1">{% inline "log-out.svg" %}</span>

@@ -73,6 +73,7 @@ func (s *Server) handleIndex(c *router.Context) {
 	c.HTML(http.StatusOK, assets.Template("index.html"), map[string]interface{}{
 		"settings":      s.db.GetSettings(),
 		"authenticated": s.Username != "" && s.Password != "",
+		"version":       s.Version,
 	})
 }
 

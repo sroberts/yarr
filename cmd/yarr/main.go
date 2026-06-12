@@ -149,6 +149,7 @@ func main() {
 
 	worker.SetVersion(Version)
 	srv := server.NewServer(store, addr)
+	srv.Version = Version
 
 	if basepath != "" {
 		srv.BasePath = "/" + strings.Trim(basepath, "/")

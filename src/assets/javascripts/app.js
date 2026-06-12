@@ -258,6 +258,7 @@ var vm = new Vue({
       },
       'refreshRate': s.refresh_rate,
       'authenticated': app.authenticated,
+      'version': app.version || '',
       'feed_errors': {},
 
       'instapaperUsername': s.instapaper_username || '',
