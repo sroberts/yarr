@@ -295,7 +295,9 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .toolbar-item {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: transparent;
   text-decoration: none;
   user-select: none;
