@@ -64,6 +64,25 @@ JavaScript bundler — edit the `.js`/`.css` directly.
   `local.db`.
 - Always run `gofmt`, `go vet`, and `make test` before saying a change
   is ready.
+- Land every change through a pull request to `master` — never push
+  feature work straight to `master`.
+
+## Releasing
+
+- Cut a new release after every merged PR that ships a code change
+  (skip docs-only or CI-only PRs).
+- Steps: bump `VERSION` in `makefile` to the next `X.Y`, commit as
+  `release: bump VERSION to X.Y for vX.Ys`, then push a matching
+  annotated tag `vX.Ys` (the `s` suffix marks this fork).
+- The tag push is what ships: `build.yml` builds the macOS/Windows/Linux
+  artifacts and drafts a GitHub release, while `build-docker.yml` and
+  `build-docker-once.yml` publish multi-arch images to
+  `ghcr.io/sroberts/yarr`. A `workflow_dispatch` run is **not** a
+  substitute — those jobs derive the version from the tag name.
+- Claude Code web sessions cannot push tag refs (the git proxy only
+  accepts branch pushes), so from web the release commit is pushed to
+  `master` and the human pushes the `vX.Ys` tag (or drafts the release
+  in the GitHub UI) to trigger the build.
 
 ## Where to look
 
