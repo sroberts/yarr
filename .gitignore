@@ -8,3 +8,11 @@
 versioninfo.rc
 .DS_Store
 .superpowers/
+
+# nix
+/result
+/result-*
+.direnv/
+
+# impeccable local critique snapshots (design.json is tracked; these aren't)
+.impeccable/critique/
