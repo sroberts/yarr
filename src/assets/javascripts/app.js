@@ -267,6 +267,7 @@ var vm = new Vue({
       'cardIndex': 0,
       'cardStats': { read: 0, instapaper: 0, kept: 0 },
       'cardLoading': false,
+      'cardUndo': null,
       'cardFolder': '',
       'previousFilter': '',
       'refreshRateOptions': [
@@ -370,6 +371,12 @@ var vm = new Vue({
         return ''
       }
     },
+    cardUndoLabel: function() {
+      if (!this.cardUndo) return ''
+      if (this.cardUndo.action === 'instapaper') return 'Saved to Instapaper'
+      if (this.cardUndo.action === 'read') return 'Marked read'
+      return 'Kept unread'
+    },
   },
   watch: {
     'theme': {
@@ -408,6 +415,7 @@ var vm = new Vue({
     'filterSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
       if (oldVal === 'triage') {
+        this.flushCardAction()
         this.cardItems = []
         this.cardIndex = 0
         this.refreshStats()
@@ -795,6 +803,7 @@ var vm = new Vue({
       this.loadCardItems(null)
     },
     changeCardFolder: function(folderId) {
+      this.flushCardAction()
       this.cardFolder = folderId
       this.cardItems = []
       this.cardIndex = 0
@@ -827,33 +836,92 @@ var vm = new Vue({
     cardSwipeLeft: function() {
       var item = this.currentCard
       if (!item) return
+      this.flushCardAction()
+      var index = this.cardIndex
       if (this.instapaperUsername) {
+        this.applyCardRead(item)
+        item.instapaper_saved = true
         this.cardStats.instapaper += 1
-        api.items.saveToInstapaper(item.id).then(function(resp) {
-          if (resp.ok) {
-            item.instapaper_saved = true
-            item.status = 'read'
-            if (vm.feedStats[item.feed_id] && vm.feedStats[item.feed_id].unread > 0) {
-              vm.feedStats[item.feed_id].unread -= 1
-            }
-          }
-        })
+        this.scheduleCardUndo(item, 'instapaper', index)
       } else {
         this.cardStats.kept += 1
+        this.scheduleCardUndo(item, 'kept', index)
       }
       this.cardIndex += 1
     },
     cardSwipeRight: function() {
       var item = this.currentCard
       if (!item) return
+      this.flushCardAction()
+      var index = this.cardIndex
+      this.applyCardRead(item)
       this.cardStats.read += 1
-      api.items.update(item.id, { status: 'read' }).then(function() {
-        if (vm.feedStats[item.feed_id] && vm.feedStats[item.feed_id].unread > 0) {
-          vm.feedStats[item.feed_id].unread -= 1
-        }
-      })
-      item.status = 'read'
+      this.scheduleCardUndo(item, 'read', index)
       this.cardIndex += 1
+    },
+    // Optimistically mark a card read locally; the server write is deferred
+    // until the undo window closes (see flushCardAction).
+    applyCardRead: function(item) {
+      item.status = 'read'
+      if (this.feedStats[item.feed_id] && this.feedStats[item.feed_id].unread > 0) {
+        this.feedStats[item.feed_id].unread -= 1
+      }
+    },
+    revertCardRead: function(item) {
+      item.status = 'unread'
+      if (this.feedStats[item.feed_id]) {
+        this.feedStats[item.feed_id].unread += 1
+      }
+    },
+    scheduleCardUndo: function(item, action, index) {
+      var timer = setTimeout(function() {
+        vm.flushCardAction()
+      }, 4000)
+      this.cardUndo = { item: item, action: action, index: index, timer: timer }
+    },
+    // Reverse the most recent swipe before its server write fires. Because the
+    // write is deferred, nothing has to be undone on the server.
+    undoCardAction: function() {
+      var pending = this.cardUndo
+      if (!pending) return
+      clearTimeout(pending.timer)
+      if (pending.action === 'instapaper' || pending.action === 'read') {
+        this.revertCardRead(pending.item)
+      }
+      if (pending.action === 'instapaper') {
+        pending.item.instapaper_saved = false
+        this.cardStats.instapaper -= 1
+      } else if (pending.action === 'read') {
+        this.cardStats.read -= 1
+      } else {
+        this.cardStats.kept -= 1
+      }
+      this.cardIndex = pending.index
+      this.cardUndo = null
+    },
+    // Commit the pending swipe: fire the deferred server write and clear undo.
+    flushCardAction: function() {
+      var pending = this.cardUndo
+      if (!pending) return
+      clearTimeout(pending.timer)
+      this.cardUndo = null
+      var item = pending.item
+      if (pending.action === 'read') {
+        api.items.update(item.id, { status: 'read' })
+      } else if (pending.action === 'instapaper') {
+        api.items.saveToInstapaper(item.id).then(function(resp) {
+          if (!resp.ok) vm.reconcileFailedInstapaper(item)
+        }).catch(function() {
+          vm.reconcileFailedInstapaper(item)
+        })
+      }
+    },
+    // The Instapaper save we counted optimistically failed; correct the count
+    // and restore the item to unread.
+    reconcileFailedInstapaper: function(item) {
+      item.instapaper_saved = false
+      this.revertCardRead(item)
+      if (this.cardStats.instapaper > 0) this.cardStats.instapaper -= 1
     },
     cardTap: function() {
       if (this.currentCard && this.currentCard.link) {

@@ -73,13 +73,20 @@
     }, 300)
   }
 
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }
+
   function flyAway(card, area, indicator, direction) {
+    var reduce = prefersReducedMotion()
     card.classList.remove('swiping')
-    card.classList.add('flying')
-    var flyX = direction < 0 ? '-120%' : '120%'
-    var flyRotate = direction < 0 ? -15 : 15
-    card.style.transform = 'translateX(' + flyX + ') rotate(' + flyRotate + 'deg)'
-    card.style.opacity = '0'
+    if (!reduce) {
+      card.classList.add('flying')
+      var flyX = direction < 0 ? '-120%' : '120%'
+      var flyRotate = direction < 0 ? -15 : 15
+      card.style.transform = 'translateX(' + flyX + ') rotate(' + flyRotate + 'deg)'
+      card.style.opacity = '0'
+    }
     area.style.background = ''
     clearPill(indicator)
 
@@ -92,7 +99,7 @@
       } else {
         vm.cardSwipeRight()
       }
-    }, 300)
+    }, reduce ? 0 : 300)
   }
 
   document.addEventListener('touchstart', function(e) {
