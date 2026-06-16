@@ -1,4 +1,4 @@
-var CACHE_NAME = 'yarr-v1';
+var CACHE_NAME = 'yarr-v2';
 var STATIC_ASSETS = [
   './static/stylesheets/bootstrap.min.css',
   './static/stylesheets/app.css',
@@ -34,28 +34,21 @@ self.addEventListener('activate', function(event) {
   self.clients.claim();
 });
 
+// Network-first with cache fallback. Keeping the freshly served HTML and the
+// JS/CSS it depends on in lockstep avoids "fresh HTML + stale cached JS"
+// mismatches across deploys, while the cache fallback preserves offline use.
 self.addEventListener('fetch', function(event) {
-  var url = new URL(event.request.url);
-
-  // Cache-first for static assets
-  if (url.pathname.indexOf('/static/') !== -1) {
-    event.respondWith(
-      caches.match(event.request).then(function(cached) {
-        return cached || fetch(event.request).then(function(response) {
-          var clone = response.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(event.request, clone);
-          });
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  // Network-first for everything else
   event.respondWith(
-    fetch(event.request).catch(function() {
+    fetch(event.request).then(function(response) {
+      var url = new URL(event.request.url);
+      if (url.pathname.indexOf('/static/') !== -1) {
+        var clone = response.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(event.request, clone);
+        });
+      }
+      return response;
+    }).catch(function() {
       return caches.match(event.request);
     })
   );
