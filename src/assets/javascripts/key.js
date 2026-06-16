@@ -119,14 +119,26 @@ var codebindings = {
   "Digit3": shortcutFunctions.showAll,
 }
 
+// Card triage mode runs its own keyboard map: the swipe loop, by keyboard.
+// Mirrors the touch gestures in swipe.js (left = instapaper/keep, right = read).
+var triageBindings = {
+  "ArrowRight": function() { vm.cardSwipeRight() },
+  "ArrowLeft":  function() { vm.cardSwipeLeft() },
+  "Enter":      function() { vm.cardTap() },
+  "u":          function() { vm.undoCardAction() },
+  "Escape":     function() { vm.exitCardMode() },
+}
+
 function isTextBox(element) {
   var tagName = element.tagName.toLowerCase()
   // Input elements that aren't text
   var inputBlocklist = ['button','checkbox','color','file','hidden','image','radio','range','reset','search','submit']
+  // An input with no type attribute reports null here; treat it as 'text'.
+  var inputType = (element.getAttribute('type') || 'text').toLowerCase()
 
   return tagName === 'textarea' ||
     ( tagName === 'input'
-      && inputBlocklist.indexOf(element.getAttribute('type').toLowerCase()) == -1
+      && inputBlocklist.indexOf(inputType) == -1
     )
 }
 
@@ -134,6 +146,15 @@ document.addEventListener('keydown',function(event) {
   // Ignore while focused on text or
   // when using modifier keys (to not clash with browser behaviour)
   if (isTextBox(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
+    return
+  }
+  // In triage card mode the list/reader shortcuts don't apply; use the card map.
+  if (vm.cardMode) {
+    var triageFunction = triageBindings[event.key]
+    if (triageFunction) {
+      event.preventDefault()
+      triageFunction()
+    }
     return
   }
   var keybindFunction = keybindings[event.key] || codebindings[event.code]

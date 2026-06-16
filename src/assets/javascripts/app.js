@@ -909,19 +909,22 @@ var vm = new Vue({
       if (pending.action === 'read') {
         api.items.update(item.id, { status: 'read' })
       } else if (pending.action === 'instapaper') {
+        // Capture the stats object so a late failure adjusts the session that
+        // owned this swipe, never a fresh one started by enter/changeCardFolder.
+        var stats = this.cardStats
         api.items.saveToInstapaper(item.id).then(function(resp) {
-          if (!resp.ok) vm.reconcileFailedInstapaper(item)
+          if (!resp.ok) vm.reconcileFailedInstapaper(item, stats)
         }).catch(function() {
-          vm.reconcileFailedInstapaper(item)
+          vm.reconcileFailedInstapaper(item, stats)
         })
       }
     },
     // The Instapaper save we counted optimistically failed; correct the count
     // and restore the item to unread.
-    reconcileFailedInstapaper: function(item) {
+    reconcileFailedInstapaper: function(item, stats) {
       item.instapaper_saved = false
       this.revertCardRead(item)
-      if (this.cardStats.instapaper > 0) this.cardStats.instapaper -= 1
+      if (stats && stats.instapaper > 0) stats.instapaper -= 1
     },
     cardTap: function() {
       if (this.currentCard && this.currentCard.link) {
@@ -1071,7 +1074,7 @@ vm.$mount('#app')
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function(err) {
-    console.log('SW registration failed:', err);
+    console.warn('SW registration failed:', err);
   });
 }
 
