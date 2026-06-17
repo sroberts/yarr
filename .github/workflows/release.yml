@@ -7,13 +7,13 @@ name: Release
 # docker workflows against that tag — reproducing exactly what a manual
 # tag push does.
 #
-# Two ways to trigger:
-#   * push the `release` branch (fast-forward it to the commit you want to
-#     ship) — works from web sessions, which can push branches but not tags
+# Triggers:
+#   * automatically on every push to `master` — the run is idempotent, so
+#     ordinary merges (where VERSION is unchanged and vX.Ys already exists)
+#     skip, and a release is cut only when a `release: bump VERSION` commit
+#     lands. This is the primary path: bump VERSION in a PR, merge, ship.
+#   * push the `release` branch, to force a (re-)release from a web session
 #   * Actions tab → Release → Run workflow (workflow_dispatch)
-#
-# Either way, bump VERSION in the makefile (via PR) and merge first. The
-# run is idempotent: if vX.Ys already exists it skips.
 #
 # Mechanism note: a tag pushed with GITHUB_TOKEN does not auto-trigger the
 # `on: push: tags` workflows (GitHub's anti-recursion rule), so this job
@@ -24,6 +24,7 @@ on:
   workflow_dispatch:
   push:
     branches:
+      - master
       - release
 
 permissions:
