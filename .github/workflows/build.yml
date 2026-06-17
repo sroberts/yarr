@@ -137,7 +137,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-          draft: true
-          prerelease: true
+          # release.yml owns release creation; this only attaches the binary
+          # artifacts to the existing release. draft:false keeps it published.
+          draft: false
+          prerelease: false
           files: |
             out/*.zip
