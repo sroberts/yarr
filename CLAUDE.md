@@ -71,18 +71,21 @@ JavaScript bundler — edit the `.js`/`.css` directly.
 
 - Cut a new release after every merged PR that ships a code change
   (skip docs-only or CI-only PRs).
-- Steps: bump `VERSION` in `makefile` to the next `X.Y`, commit as
-  `release: bump VERSION to X.Y for vX.Ys`, then push a matching
-  annotated tag `vX.Ys` (the `s` suffix marks this fork).
-- The tag push is what ships: `build.yml` builds the macOS/Windows/Linux
-  artifacts and drafts a GitHub release, while `build-docker.yml` and
-  `build-docker-once.yml` publish multi-arch images to
-  `ghcr.io/sroberts/yarr`. A `workflow_dispatch` run is **not** a
-  substitute — those jobs derive the version from the tag name.
-- Claude Code web sessions cannot push tag refs (the git proxy only
-  accepts branch pushes), so from web the release commit is pushed to
-  `master` and the human pushes the `vX.Ys` tag (or drafts the release
-  in the GitHub UI) to trigger the build.
+- Releases are automatic on a VERSION bump. Open a PR that bumps
+  `VERSION` in `makefile` to the next `X.Y` and commits as
+  `release: bump VERSION to X.Y for vX.Ys` (the `s` suffix marks this
+  fork); merging it is all that's needed.
+- On the push to `master`, `.github/workflows/release.yml` reads
+  `VERSION`, creates the matching `vX.Ys` tag, and dispatches the build
+  workflows on it. The job is idempotent: ordinary merges (VERSION
+  unchanged, tag already exists) skip, so only the bump ships a release.
+- The tagged build runs `build.yml` (macOS/Windows/Linux artifacts +
+  draft GitHub release) and `build-docker.yml` / `build-docker-once.yml`
+  (multi-arch images to `ghcr.io/sroberts/yarr`).
+- Manual overrides (re-release, or shipping without a bump): push the
+  `release` branch — works from web sessions, which can push branches but
+  not tags — or run the Release workflow from the Actions tab. Both reuse
+  the same idempotent job.
 
 ## Where to look
 
