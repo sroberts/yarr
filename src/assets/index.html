@@ -202,8 +202,7 @@
                 </div>
                 <!-- stats screen -->
                 <div v-if="cardDone" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center">
-                    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
-                    <h4 class="mb-4"><b>All caught up!</b></h4>
+                    <h4 class="mb-4">All caught up</h4>
                     <div class="d-flex mb-4" style="gap: 2rem;">
                         <div class="text-center">
                             <div class="card-stat-number card-stat-read">{{ cardStats.read }}</div>
@@ -225,6 +224,13 @@
                     <div class="text-muted mb-3">No unread items</div>
                     <button class="btn btn-outline-secondary" @click="exitCardMode()">Done</button>
                 </div>
+                <!-- undo last swipe -->
+                <transition name="undo">
+                    <div class="card-undo-toast" v-if="cardUndo">
+                        <span class="card-undo-label">{{ cardUndoLabel }}</span>
+                        <button type="button" class="card-undo-btn" @click="undoCardAction()">Undo</button>
+                    </div>
+                </transition>
             </div>
             <div id="feed-list-scroll" class="p-2 overflow-auto scroll-touch border-top flex-grow-1" v-show="!cardMode">
                 <label class="selectgroup">
@@ -244,8 +250,14 @@
                         <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id">
                         <div class="selectgroup-label d-flex align-items-center w-100" v-if="folder.id">
                             <span class="icon mr-2"
+                                  role="button"
+                                  tabindex="0"
                                   :class="{expanded: folder.is_expanded}"
-                                  @click.prevent="toggleFolderExpanded(folder)">
+                                  :aria-expanded="folder.is_expanded ? 'true' : 'false'"
+                                  :aria-label="(folder.is_expanded ? 'Collapse ' : 'Expand ') + folder.title"
+                                  @click.prevent.stop="toggleFolderExpanded(folder)"
+                                  @keydown.enter.prevent.stop="toggleFolderExpanded(folder)"
+                                  @keydown.space.prevent.stop="toggleFolderExpanded(folder)">
                                 {% inline "chevron-right.svg" %}
                             </span>
                             <span class="flex-fill text-left text-truncate">{{ folder.title }}</span>
@@ -539,6 +551,14 @@
                     <tr><td><kbd>I</kbd></td>               <td>save to Instapaper</td></tr>
                     <tr><td><kbd>f</kbd> <kbd>b</kbd></td>  <td>scroll content forward / backward</td>
                     </tr>
+
+                    <tr><td colspan=2>&nbsp;</td></tr>
+                    <tr><td colspan=2 class="text-muted">Triage (card mode)</td></tr>
+                    <tr><td><kbd>←</kbd></td>               <td>save to Instapaper / keep unread</td></tr>
+                    <tr><td><kbd>→</kbd></td>               <td>mark read</td></tr>
+                    <tr><td><kbd>Enter</kbd></td>           <td>open full article</td></tr>
+                    <tr><td><kbd>u</kbd></td>               <td>undo last swipe</td></tr>
+                    <tr><td><kbd>Esc</kbd></td>             <td>exit triage</td></tr>
                 </table>
             </div>
         </modal>

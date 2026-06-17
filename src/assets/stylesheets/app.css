@@ -772,12 +772,14 @@ a,
   --card-surface: #1a1a2e;
   --card-text: #e0e0e0;
   --card-muted: #888;
+  --card-excerpt: #aaa;
 }
 .theme-sepia #card-view {
   --card-bg: #f4f0e5;
   --card-surface: #ede8d8;
   --card-text: #433422;
   --card-muted: #8a7a66;
+  --card-excerpt: #5c4a33;
 }
 
 .theme-light #card-view {
@@ -785,6 +787,7 @@ a,
   --card-surface: #fff;
   --card-text: #222;
   --card-muted: #888;
+  --card-excerpt: #595959;
 }
 
 
@@ -845,7 +848,7 @@ a,
 .triage-card-excerpt {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--card-muted, #888);
+  color: var(--card-excerpt, #595959);
 }
 
 .triage-card-excerpt {
@@ -950,5 +953,89 @@ a,
 @media (max-width: 991.98px) {
   .d-card-triage {
     display: inline-block !important;
+  }
+}
+
+/* swipe undo toast (thumb zone) */
+.card-undo-toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100% - 2rem);
+  padding: 0 0.25rem 0 1rem;
+  border-radius: 1.5rem;
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.card-undo-label {
+  white-space: nowrap;
+}
+
+.card-undo-btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 1.25rem;
+  background: transparent;
+  color: #4db4ff;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.undo-enter-active, .undo-leave-active {
+  transition: opacity .2s ease;
+}
+.undo-enter, .undo-leave-to {
+  opacity: 0;
+}
+
+/* ── Keyboard focus ──────────────────────────────
+   The accent doubles as the focus ring across all three themes; pointer
+   interactions stay quiet, only keyboard/AT focus surfaces a ring. */
+.toolbar-item:focus-visible,
+.toolbar-search:focus-visible,
+.btn:focus-visible,
+.btn-link:focus-visible,
+a:focus-visible,
+.card-folder-select:focus-visible,
+.card-undo-btn:focus-visible,
+.form-control:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid #0080d4;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* inset rings inside clipped/scrolling containers so they aren't cropped */
+.settings-dropdown .dropdown-item:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 2px solid #0080d4;
+  outline-offset: -2px;
+}
+
+.selectgroup input:focus-visible + .selectgroup-label {
+  outline: 2px solid #0080d4;
+  outline-offset: -2px;
+}
+
+/* Respect reduced-motion: collapse all motion to effectively instant. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
