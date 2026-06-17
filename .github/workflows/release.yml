@@ -3,25 +3,28 @@ name: Release
 # Cut a tagged release from environments that cannot push tag refs
 # directly (e.g. Claude Code web sessions, whose git proxy only accepts
 # branch pushes). Reads the version from the makefile, creates the
-# matching vX.Ys tag on the chosen ref, and dispatches the build and
+# matching vX.Ys tag on the released commit, and dispatches the build and
 # docker workflows against that tag — reproducing exactly what a manual
 # tag push does.
 #
-# Usage: bump VERSION in the makefile (via PR) and merge, then run this
-# workflow (Actions tab → Release → Run workflow, or the Actions API).
+# Two ways to trigger:
+#   * push the `release` branch (fast-forward it to the commit you want to
+#     ship) — works from web sessions, which can push branches but not tags
+#   * Actions tab → Release → Run workflow (workflow_dispatch)
 #
-# Mechanism note: a tag pushed with GITHUB_TOKEN does not auto-trigger
-# the `on: push: tags` workflows (GitHub's anti-recursion rule), so this
-# job dispatches them explicitly. workflow_dispatch is an explicit
-# exception to that rule and is allowed with GITHUB_TOKEN.
+# Either way, bump VERSION in the makefile (via PR) and merge first. The
+# run is idempotent: if vX.Ys already exists it skips.
+#
+# Mechanism note: a tag pushed with GITHUB_TOKEN does not auto-trigger the
+# `on: push: tags` workflows (GitHub's anti-recursion rule), so this job
+# dispatches them explicitly. workflow_dispatch is an explicit exception to
+# that rule and is allowed with GITHUB_TOKEN.
 
 on:
   workflow_dispatch:
-    inputs:
-      ref:
-        description: Branch or commit to tag
-        required: false
-        default: master
+  push:
+    branches:
+      - release
 
 permissions:
   contents: write
@@ -36,7 +39,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
       - name: Derive version and tag
@@ -52,16 +55,20 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "Release tag: $tag"
 
-      - name: Guard against existing tag
+      - name: Check whether tag already exists
+        id: guard
         run: |
           set -euo pipefail
           tag="${{ steps.ver.outputs.tag }}"
           if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
-            echo "::error::tag $tag already exists on origin — bump VERSION in the makefile first"
-            exit 1
+            echo "::notice::tag $tag already exists on origin — nothing to release"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create and push tag
+        if: steps.guard.outputs.skip == 'false'
         run: |
           set -euo pipefail
           tag="${{ steps.ver.outputs.tag }}"
@@ -71,6 +78,7 @@ jobs:
           git push origin "refs/tags/$tag"
 
       - name: Dispatch build and docker workflows on the tag
+        if: steps.guard.outputs.skip == 'false'
         run: |
           set -euo pipefail
           tag="${{ steps.ver.outputs.tag }}"
@@ -82,8 +90,14 @@ jobs:
       - name: Summary
         run: |
           {
-            echo "## Release ${{ steps.ver.outputs.tag }}"
-            echo
-            echo "Tag pushed and build/docker workflows dispatched on the tag."
-            echo "A draft pre-release will appear under Releases once \`build.yml\` finishes."
+            if [ "${{ steps.guard.outputs.skip }}" = "true" ]; then
+              echo "## Release skipped"
+              echo
+              echo "Tag \`${{ steps.ver.outputs.tag }}\` already exists — bump VERSION in the makefile to cut a new release."
+            else
+              echo "## Release ${{ steps.ver.outputs.tag }}"
+              echo
+              echo "Tag pushed and build/docker workflows dispatched on the tag."
+              echo "A draft pre-release will appear under Releases once \`build.yml\` finishes."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
