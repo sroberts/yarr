@@ -559,6 +559,52 @@ a,
   border-right-color: transparent;
 }
 
+/* scrollbars: quiet, terminal-style, themed in all three themes.
+   color-scheme keeps native UI (form controls, overlay fallbacks) in step;
+   scrollbar-color/-width drive Firefox + modern Chromium, the ::-webkit-*
+   rules cover Safari. The thumb is a single muted token per theme — never
+   the accent — so the chrome stays out of the way. */
+.theme-light {
+  color-scheme: light;
+  --scrollbar-thumb: #c2c2c2;
+  --scrollbar-thumb-hover: #a3a3a3;
+}
+.theme-sepia {
+  color-scheme: light;
+  --scrollbar-thumb: #cdbf9c;
+  --scrollbar-thumb-hover: #b7a87f;
+}
+.theme-night {
+  color-scheme: dark;
+  --scrollbar-thumb: #3a3a3a;
+  --scrollbar-thumb-hover: #4f4f4f;
+}
+
+.theme-light,
+.theme-sepia,
+.theme-night {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+}
+
 /* offline banner */
 .offline-banner {
   position: fixed;
