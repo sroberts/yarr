@@ -126,10 +126,19 @@ yarr works as a Progressive Web App on iOS and Android. Add it to your home scre
 
 **Instapaper integration:** Configure your Instapaper username and password in the settings dropdown. Save articles from the item toolbar (inbox icon), the `Shift+I` keyboard shortcut, or by swiping left in triage mode.
 
+## mcp server
+
+Connect Claude (Claude Code / Claude Desktop) to yarr over the
+[Model Context Protocol](https://modelcontextprotocol.io) and browse and triage
+your articles in natural language. The server runs at `POST /mcp`, authenticated
+with a bearer token derived from your `--auth` credentials. See
+[doc/mcp.md](doc/mcp.md) for setup and the available tools.
+
 See more:
 
 * [Building from source code](doc/build.md)
 * [Fever API support](doc/fever.md)
+* [MCP server](doc/mcp.md)
 
 ## credits
 

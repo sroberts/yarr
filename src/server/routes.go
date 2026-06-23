@@ -35,7 +35,7 @@ func (s *Server) handler() http.Handler {
 			BasePath:      s.BasePath,
 			Username:      s.Username,
 			Password:      s.Password,
-			Public:        []string{"/static", "/fever", "/manifest.json", "/sw.js", "/up"},
+			Public:        []string{"/static", "/fever", "/mcp", "/manifest.json", "/sw.js", "/up"},
 			DB:            s.db,
 			SecretKeyBase: s.SecretKeyBase,
 			SecureCookie:  s.SecureCookie,
@@ -65,6 +65,7 @@ func (s *Server) handler() http.Handler {
 	r.For("/page", s.handlePageCrawl)
 	r.For("/logout", s.handleLogout)
 	r.For("/fever/", s.handleFever)
+	r.For("/mcp", s.handleMCP)
 
 	return r
 }
