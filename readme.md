@@ -131,8 +131,22 @@ yarr works as a Progressive Web App on iOS and Android. Add it to your home scre
 Connect Claude (Claude Code / Claude Desktop) to yarr over the
 [Model Context Protocol](https://modelcontextprotocol.io) and browse and triage
 your articles in natural language. The server runs at `POST /mcp`, authenticated
-with a bearer token derived from your `--auth` credentials. See
-[doc/mcp.md](doc/mcp.md) for setup and the available tools.
+with a bearer token derived from your `--auth` credentials.
+
+Add it to Claude Code:
+
+```sh
+TOKEN=$(printf '%s' 'user:pass' | md5)   # md5sum on Linux
+claude mcp add --transport http yarr http://127.0.0.1:7070/mcp \
+  --header "Authorization: Bearer $TOKEN"
+```
+
+Then just ask: *"What's unread in my feeds?"*, *"Summarize the latest
+articles about Go and star the good ones"*, or *"Save that one to Instapaper."*
+Claude can list feeds, read and search articles, mark read/unread, star, save
+to Instapaper, and mark whole feeds or folders read. See [doc/mcp.md](doc/mcp.md)
+for the bearer-token derivation, Claude Desktop setup, the full tool list, and
+how to drive the endpoint directly.
 
 See more:
 
