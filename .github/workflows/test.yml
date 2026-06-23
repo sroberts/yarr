@@ -48,4 +48,6 @@ jobs:
         path: coverage.out
 
     - name: Build binary
-      run: make host
+      run: |
+        go build -tags "sqlite_foreign_keys sqlite_json" \
+          -o out/yarr ./cmd/yarr
