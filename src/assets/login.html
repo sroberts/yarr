@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>yarr!</title>
+    <link rel="preload" href="./static/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./static/stylesheets/bootstrap.min.css">
     <link rel="stylesheet" href="./static/stylesheets/app.css">
     <link rel="icon" href="./static/graphicarts/favicon.svg" type="image/svg+xml">
@@ -22,7 +23,8 @@
         }
     </style>
 </head>
-<body class="theme-{% .settings.theme_name %}">
+<body class="theme-{% if or (eq .settings.theme_name "night") (eq .settings.theme_name "dark") %}dark{% else %}light{% end %}"
+      data-accent="{% .settings.theme_accent %}">
     <form action="" method="post">
         <img src="./static/graphicarts/anchor.svg" alt="">
         {% if .error %}

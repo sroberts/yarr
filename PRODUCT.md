@@ -44,8 +44,9 @@ that happens to have a screen: instant, predictable, unsurprising.
   is the whole product.
 - **The generic AI-cream aesthetic:** no warm-neutral paper/sand body
   backgrounds, no tracked-uppercase eyebrows above sections, no identical
-  icon-heading-text card grids. yarr's existing light/sepia/night themes are
-  the identity — don't drift them toward trend-of-the-month neutrals.
+  icon-heading-text card grids. yarr's calm light + dark themes (one semantic
+  token layer, a user-selectable accent) are the identity — don't drift them
+  toward trend-of-the-month neutrals.
 - More broadly: no bloated dashboard chrome, no hero metrics, no surfaces that
   exist to look busy rather than to do a job.
 
@@ -58,9 +59,12 @@ that happens to have a screen: instant, predictable, unsurprising.
    mouse must be doable from the keyboard, and the fast path is assumed.
 3. **Triage is the core loop.** Read / star / save / next should be the
    lowest-friction actions in the app, on desk and on phone alike.
-4. **Three themes, one system.** Light, sepia, and night are equal citizens.
-   Any new surface must look deliberate and legible in all three — never
-   designed for light and patched for the others.
+4. **Two themes, one system.** Light and dark are co-equal citizens, generated
+   from a single semantic token layer (`--surface-*`, `--text-*`, `--accent`…);
+   components reference roles, never raw colors. A user-selectable accent (seven
+   options, blue default) and the reading fonts are independent axes. Any new
+   surface must look deliberate and legible in both themes and every accent —
+   never designed for light and patched for dark.
 5. **Local-first, always.** No telemetry, no remote logging, no network
    dependency beyond the user's own feeds. The UI assumes it may be offline.
 
@@ -69,8 +73,9 @@ that happens to have a screen: instant, predictable, unsurprising.
 - **Keyboard-first** is the headline requirement: full keyboard navigation is a
   primary path (the app already ships `key.js`), and new UI must be reachable
   and operable without a pointer. Visible focus states are required.
-- Contrast must hold in all three themes (light / sepia / night); treat WCAG AA
-  for body text as the working floor even though it wasn't called out as a hard
-  gate.
+- Contrast must hold in both themes (light / dark) across every accent; body
+  text targets WCAG AAA (7:1) and all interactive/UI text clears AA (4.5:1) as
+  the floor. No meaning by color alone — unread and status pair color with
+  weight, icon, or label (verify in grayscale).
 - Respect `prefers-reduced-motion` for the swipe cards, pull-to-refresh, and
   loaders when adding or revising motion.

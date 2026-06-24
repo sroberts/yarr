@@ -211,7 +211,7 @@ var vm = new Vue({
     api.feeds.list_errors().then(function(errors) {
       vm.feed_errors = errors
     })
-    this.updateMetaTheme(app.settings.theme_name)
+    this.updateMetaTheme(this.theme.name)
   },
   data: function() {
     var s = app.settings
@@ -247,14 +247,17 @@ var vm = new Vue({
       'fonts': ['', 'serif', 'monospace'],
       'feedStats': {},
       'theme': {
-        'name': s.theme_name,
+        // legacy values: night -> dark, sepia -> light
+        'name': ({night: 'dark', sepia: 'light', light: 'light', dark: 'dark'})[s.theme_name] || 'light',
         'font': s.theme_font,
         'size': s.theme_size,
+        'accent': s.theme_accent || 'blue',
+        'density': s.theme_density || 'comfortable',
+        'motion': s.theme_motion || 'system',
       },
       'themeColors': {
-        'night': '#0e0e0e',
-        'sepia': '#f4f0e5',
-        'light': '#fff',
+        'light': '#FFFFFF',
+        'dark': '#0E1116',
       },
       'refreshRate': s.refresh_rate,
       'authenticated': app.authenticated,
@@ -384,10 +387,16 @@ var vm = new Vue({
       handler: function(theme) {
         this.updateMetaTheme(theme.name)
         document.body.classList.value = 'theme-' + theme.name
+        document.body.dataset.accent = theme.accent
+        document.body.dataset.density = theme.density
+        document.body.dataset.motion = theme.motion
         api.settings.update({
           theme_name: theme.name,
           theme_font: theme.font,
           theme_size: theme.size,
+          theme_accent: theme.accent,
+          theme_density: theme.density,
+          theme_motion: theme.motion,
         })
       },
     },
@@ -481,7 +490,7 @@ var vm = new Vue({
   },
   methods: {
     updateMetaTheme: function(theme) {
-      document.querySelector("meta[name='theme-color']").content = this.themeColors[theme]
+      document.querySelector("meta[name='theme-color']").content = this.themeColors[theme] || this.themeColors.light
     },
     refreshStats: function(loopMode) {
       return api.status().then(function(data) {

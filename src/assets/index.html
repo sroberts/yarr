@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>yarr!</title>
+    <link rel="preload" href="./static/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./static/stylesheets/bootstrap.min.css">
     <link rel="stylesheet" href="./static/stylesheets/app.css">
     <link rel="icon" href="./static/graphicarts/favicon.svg" type="image/svg+xml">
@@ -22,7 +23,10 @@
         window.app.version = "{% .version %}"
     </script>
 </head>
-<body class="theme-{% .settings.theme_name %}">
+<body class="theme-{% if or (eq .settings.theme_name "night") (eq .settings.theme_name "dark") %}dark{% else %}light{% end %}"
+      data-accent="{% .settings.theme_accent %}"
+      data-density="{% .settings.theme_density %}"
+      data-motion="{% .settings.theme_motion %}">
     <div id="app" class="d-flex" :class="{'feed-selected': feedSelected !== null, 'item-selected': itemSelected !== null, 'card-mode': cardMode}" v-cloak>
         <!-- feed list -->
         <div id="col-feed-list" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
@@ -77,15 +81,41 @@
                     <div class="dropdown-divider"></div>
 
                     <header class="dropdown-header" role="heading" aria-level="2">Theme</header>
-                    <div class="row text-center m-0">
-                        <button class="btn btn-link col-4 px-0 rounded-0"
-                                :class="'theme-'+t"
+                    <div class="d-flex text-center">
+                        <button class="dropdown-item px-0"
                                 :aria-label="t"
                                 :aria-pressed="theme.name == t"
+                                :class="{active: theme.name == t}"
                                 @click.stop="theme.name = t"
-                                v-for="t in ['light', 'sepia', 'night']">
-                            <span class="icon" v-if="theme.name == t">{% inline "check.svg" %}</span>
-                        </button>
+                                v-for="t in ['light', 'dark']">{{ t }}</button>
+                    </div>
+
+                    <div class="dropdown-divider"></div>
+
+                    <header class="dropdown-header" role="heading" aria-level="2">Accent</header>
+                    <div class="accent-swatches">
+                        <button class="accent-swatch"
+                                :class="'swatch-'+a"
+                                :aria-label="a"
+                                :aria-pressed="theme.accent == a"
+                                @click.stop="theme.accent = a"
+                                v-for="a in ['blue','teal','green','violet','rose','amber','slate']"></button>
+                    </div>
+
+                    <div class="dropdown-divider"></div>
+
+                    <header class="dropdown-header" role="heading" aria-level="2">Density</header>
+                    <div class="d-flex text-center">
+                        <button class="dropdown-item px-0" :aria-pressed="theme.density == 'comfortable'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
+                        <button class="dropdown-item px-0" :aria-pressed="theme.density == 'compact'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
+                    </div>
+
+                    <div class="dropdown-divider"></div>
+
+                    <header class="dropdown-header" role="heading" aria-level="2">Motion</header>
+                    <div class="d-flex text-center">
+                        <button class="dropdown-item px-0" :aria-pressed="theme.motion == 'system'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
+                        <button class="dropdown-item px-0" :aria-pressed="theme.motion == 'reduce'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
                     </div>
 
                     <div class="dropdown-divider"></div>

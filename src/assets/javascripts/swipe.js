@@ -40,11 +40,12 @@
 
     var progress = Math.min(Math.abs(dx) / threshold, 1)
 
-    // Background tint
+    // Background tint — follows the active accent (read) / Instapaper tokens
+    var tint = (progress * 15).toFixed(1)
     if (dx < 0) {
-      area.style.background = 'linear-gradient(90deg, rgba(255,102,0,' + (progress * 0.15) + ') 0%, transparent 60%)'
+      area.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--instapaper) ' + tint + '%, transparent) 0%, transparent 60%)'
     } else if (dx > 0) {
-      area.style.background = 'linear-gradient(90deg, transparent 40%, rgba(0,128,212,' + (progress * 0.15) + ') 100%)'
+      area.style.background = 'linear-gradient(90deg, transparent 40%, color-mix(in srgb, var(--accent) ' + tint + '%, transparent) 100%)'
     } else {
       area.style.background = ''
     }
