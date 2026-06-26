@@ -6,8 +6,119 @@ html {
   font-size: 15px !important;
 }
 
+/* ============================================================
+   Design tokens — one semantic layer, two co-equal themes.
+   Components reference ROLES only (--surface-*, --text-*, --accent…),
+   never raw colors. Accent is a separate, theme-independent axis
+   selected via [data-accent] on <body>. (UI Design Spec v1.0 §3.)
+   ============================================================ */
+
+/* Self-hosted variable fonts (SIL OFL — see fonts/LICENSE-*). */
+@font-face {
+  font-family: 'InterVar';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/inter.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Source Serif 4 Var';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../fonts/source-serif-4.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono Var';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('../fonts/jetbrains-mono.woff2') format('woff2');
+}
+
+:root {
+  --font-sans: 'InterVar', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: 'Source Serif 4 Var', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono Var', SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius: 6px;
+
+  /* reading view (article pane) */
+  --article-h1-leading: 1.2;
+  --article-body-leading: 1.6;
+
+  /* the single fixed brand action color (Instapaper), both themes */
+  --instapaper: #FF6600;
+
+  /* accent derivations — identical formula in both themes */
+  --accent-hover: color-mix(in oklab, var(--accent) 82%, var(--text-primary));
+  --focus-ring: var(--accent);
+
+  /* blue fallback if [data-accent] is somehow absent */
+  --accent: #2563EB;
+  --on-accent: #FFFFFF;
+}
+
+.theme-light {
+  color-scheme: light;
+  --surface-base: #FFFFFF;
+  --surface-raised: #F7F8FA;
+  --surface-hover: #EEF1F5;
+  --border-subtle: #E2E6EC;
+  --border-strong: #C7CDD6;
+  --text-primary: #16191D;   /* ~15.8:1 on base — AAA */
+  --text-secondary: #4A515B; /* ~8.3:1 — AAA */
+  --text-tertiary: #6B7280;  /* ~5.1:1 — AA  */
+  --status-success: #15803D;
+  --status-attention: #B45309;
+  --status-error: #DC2626;
+  --scrollbar-thumb: #C7CDD6;
+  --scrollbar-thumb-hover: #A9B1BC;
+}
+
+.theme-dark {
+  color-scheme: dark;
+  --surface-base: #0E1116;
+  --surface-raised: #161B22;
+  --surface-hover: #1F2630;
+  --border-subtle: #262D38;
+  --border-strong: #38414F;
+  --text-primary: #E6EAF0;   /* ~13.5:1 on base — AAA */
+  --text-secondary: #A4ADBA; /* ~7.4:1 — AAA */
+  --text-tertiary: #6E7889;  /* ~4.6:1 — AA  */
+  --status-success: #4ADE80;
+  --status-attention: #FBBF24;
+  --status-error: #F87171;
+  --scrollbar-thumb: #38414F;
+  --scrollbar-thumb-hover: #4F5A6B;
+  /* accent fallback for dark when no [data-accent] is present */
+  --accent: #5B8DEF;
+  --on-accent: #0E1116;
+}
+
+/* Selectable accent (Spec §3.5). Each option: a light value + a dark
+   override; --on-accent flips (deep light accents take white, bright dark
+   accents take near-black). Every pair clears contrast in both themes. */
+[data-accent="blue"]               { --accent: #2563EB; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="blue"]    { --accent: #5B8DEF; --on-accent: #0E1116; }
+[data-accent="teal"]               { --accent: #0F766E; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="teal"]    { --accent: #2DD4BF; --on-accent: #0E1116; }
+[data-accent="green"]              { --accent: #15803D; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="green"]   { --accent: #4ADE80; --on-accent: #0E1116; }
+[data-accent="violet"]             { --accent: #7C3AED; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="violet"]  { --accent: #A78BFA; --on-accent: #0E1116; }
+[data-accent="rose"]               { --accent: #BE123C; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="rose"]    { --accent: #FB7185; --on-accent: #0E1116; }
+[data-accent="amber"]              { --accent: #B45309; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="amber"]   { --accent: #FBBF24; --on-accent: #0E1116; }
+[data-accent="slate"]              { --accent: #475569; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="slate"]   { --accent: #94A3B8; --on-accent: #0E1116; }
+
 body {
   overscroll-behavior: none;
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
 }
 
 /* PWA standalone: safe area insets for notched devices */
@@ -118,11 +229,11 @@ select.form-control:not([multiple]):not([size]) {
 /* custom elements */
 
 .font-serif {
-  font-family: Georgia, serif;
+  font-family: var(--font-serif);
 }
 
 .font-monospace {
-  font-family: SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 .icon {
@@ -203,9 +314,10 @@ select.form-control:not([multiple]):not([size]) {
 
 .toolbar-item:hover,
 .toolbar-search:hover,
+.toolbar-search:focus,
 .selectgroup-label:hover,
 .dropdown-item:hover {
-  background-color: #f0f0f0;
+  background-color: var(--surface-hover);
 }
 
 .expanded {
@@ -231,7 +343,7 @@ select.form-control:not([multiple]):not([size]) {
 
 .loading::after {
   animation: rotate .5s infinite linear;
-  border: .1rem solid #6c757d;
+  border: .1rem solid var(--text-tertiary);
   border-radius: 50%;
   border-right-color: transparent;
   border-top-color: transparent;
@@ -253,40 +365,32 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .btn-default {
-  border: 1px solid #ced4da;
-  border-radius: .25rem;
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .btn-default:active {
-  background: #f5f7f9;
+  background: var(--surface-hover);
   box-shadow: none;
 }
 
 .btn-outline {
-  border: 1px solid #ced4da;
-  border-radius: .25rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
 }
 
 .btn-outline:hover {
-  background-color: #f8f9fa;
+  background-color: var(--surface-hover);
 }
 
 /* column dividers: border starts below the toolbar, not at window top */
 #col-feed-list,
 #col-item-list {
   border-right: 1px solid;
-  border-image: linear-gradient(to bottom, transparent 2rem, #dee2e6 2rem) 1;
-}
-
-.theme-sepia #col-feed-list,
-.theme-sepia #col-item-list {
-  border-image: linear-gradient(to bottom, transparent 2rem, #e0d6ba 2rem) 1;
-}
-
-.theme-night #col-feed-list,
-.theme-night #col-item-list {
-  border-image: linear-gradient(to bottom, transparent 2rem, #1a1a1a 2rem) 1;
+  border-image: linear-gradient(to bottom, transparent 2rem, var(--border-subtle) 2rem) 1;
 }
 
 .toolbar {
@@ -369,7 +473,6 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .toolbar-search:hover, .toolbar-search:focus {
-  background-color: #f3f3f3;
   outline: none;
 }
 
@@ -387,13 +490,16 @@ select.form-control:not([multiple]):not([size]) {
 
 /* content */
 
+/* Reading view: comfort-optimized. The article font-size is driven by the
+   user's size control (inline rem on .content); headings use em so they scale
+   with it. Measure is capped to a comfortable line length regardless of width. */
 .content {
   overflow-wrap: break-word;
-  line-height: 1.5;
+  line-height: var(--article-body-leading);
 }
 
 .content-wrapper {
-  max-width: 60rem;
+  max-width: 70ch;
   margin: 0 auto;
 }
 
@@ -432,8 +538,9 @@ select.form-control:not([multiple]):not([size]) {
 .content pre {
   overflow-x: auto;
   color: inherit;
-  border: 1px solid #dee2e6;
-  border-radius: 3px;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
   margin-left: -0.5rem;
   margin-right: -0.5rem;
   padding: 0.5rem;
@@ -445,23 +552,26 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .content blockquote {
-  border-left: 3px solid #22262a;
+  border-left: 3px solid var(--border-strong);
   padding-left: 1rem;
+  color: var(--text-secondary);
 }
 
+/* em-relative so headings scale with the reading size control */
 .content h1 {
-  font-size: 1.8rem;
+  font-size: 1.6em;
+  line-height: var(--article-h1-leading);
 }
 .content h2 {
-  font-size: 1.5rem;
+  font-size: 1.4em;
 }
 .content h3 {
-  font-size: 1.17rem;
+  font-size: 1.2em;
 }
 .content h4,
 .content h5,
 .content h6 {
-  font-size: 1rem;
+  font-size: 1em;
 }
 
 .content p {
@@ -469,120 +579,62 @@ select.form-control:not([multiple]):not([size]) {
   margin-bottom: 1rem;
 }
 
-/* theme: light */
+/* ── Surfaces & components (token-driven, theme-agnostic) ──────── */
 
-button.theme-light {
-  background-color: #fff !important;
+/* raised surfaces: menus and modals sit a step above the page */
+.dropdown-menu,
+.modal-content {
+  background-color: var(--surface-raised);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
+/* inputs and search field sit on the base surface */
+.form-control,
+.toolbar-search {
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+}
+
+/* night-mode dropdown items inherit the menu surface explicitly so the
+   bootstrap default light text/background never leaks through */
+.dropdown-item {
+  color: var(--text-primary);
+}
+
+/* links + the accent-filled selected/active states */
 a,
 .btn-link:hover {
-  color: #0080d4;
+  color: var(--accent);
 }
 
 .toolbar-item.active,
 .dropdown-item.active,
 .dropdown-item:active,
 .selectgroup input:checked + .selectgroup-label {
-  color: #fff;
-  background-color: #0080d4 !important;
+  color: var(--on-accent);
+  background-color: var(--accent) !important;
 }
 
 .btn-default:focus,
 .form-control:focus {
-  border-color: #0080d4;
+  border-color: var(--accent);
 }
 
-/* theme: sepia */
-
-.theme-sepia,
-.theme-sepia .btn-default,
-.theme-sepia .dropdown-menu,
-.theme-sepia .form-control,
-.theme-sepia .modal-content,
-.theme-sepia .toolbar-search {
-  background-color: #f4f0e5 !important;
-}
-.theme-sepia .content hr,
-.theme-sepia .content pre,
-.theme-sepia .border-right,
-.theme-sepia .border-top {
-  border-color: #e0d6ba !important;
-}
-.theme-sepia .selectgroup-label:hover,
-.theme-sepia .toolbar-item:hover,
-.theme-sepia .toolbar-search:hover,
-.theme-sepia .dropdown-item:hover,
-.theme-sepia .toolbar-search:focus {
-  background-color: #e0d6ba;
+/* hairline borders */
+.content hr,
+.border-right,
+.border-top,
+.dropdown-divider {
+  border-color: var(--border-subtle) !important;
 }
 
-/* theme: night */
-
-.theme-night,
-.theme-night .btn-default,
-.theme-night .dropdown-menu,
-.theme-night .dropdown-item,
-.theme-night .form-control,
-.theme-night .modal-content,
-.theme-night .toolbar-search {
-  color: #d1d1d1;
-  background-color: #0e0e0e;
-}
-.theme-night .content hr,
-.theme-night .content pre,
-.theme-night .border-right,
-.theme-night .border-top,
-.theme-night .dropdown-divider {
-  border-color: #1a1a1a !important;
-}
-.theme-night .selectgroup-label:hover,
-.theme-night .dropdown-item:hover,
-.theme-night .toolbar-item:hover,
-.theme-night .toolbar-search:hover,
-.theme-night .toolbar-search:focus {
-  background-color: #1a1a1a;
-}
-
-.theme-night .dropdown-menu,
-.theme-night .modal-content {
-  border-color: #1a1a1a;
-}
-
-.theme-night .offline-banner {
-  background-color: #c0392b;
-}
-
-.theme-night .pull-to-refresh-spinner {
-  border-color: #555;
-  border-top-color: transparent;
-  border-right-color: transparent;
-}
-
-/* scrollbars: quiet, terminal-style, themed in all three themes.
-   color-scheme keeps native UI (form controls, overlay fallbacks) in step;
-   scrollbar-color/-width drive Firefox + modern Chromium, the ::-webkit-*
-   rules cover Safari. The thumb is a single muted token per theme — never
-   the accent — so the chrome stays out of the way. */
-.theme-light {
-  color-scheme: light;
-  --scrollbar-thumb: #c2c2c2;
-  --scrollbar-thumb-hover: #a3a3a3;
-}
-.theme-sepia {
-  color-scheme: light;
-  --scrollbar-thumb: #cdbf9c;
-  --scrollbar-thumb-hover: #b7a87f;
-}
-.theme-night {
-  color-scheme: dark;
-  --scrollbar-thumb: #3a3a3a;
-  --scrollbar-thumb-hover: #4f4f4f;
-}
-
+/* scrollbars: quiet, terminal-style, driven by a muted per-theme token —
+   never the accent — so the chrome stays out of the way. color-scheme keeps
+   native UI in step; scrollbar-color/-width drive Firefox + Chromium, the
+   ::-webkit-* rules cover Safari. */
 .theme-light,
-.theme-sepia,
-.theme-night {
+.theme-dark {
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
 }
@@ -612,7 +664,7 @@ a,
   left: 0;
   right: 0;
   z-index: 1000;
-  background-color: #e74c3c;
+  background-color: #C2362C;  /* fixed deep red, white text clears AA in both themes */
   color: #fff;
   text-align: center;
   padding: .375rem;
@@ -649,7 +701,7 @@ a,
 .pull-to-refresh-spinner {
   width: 1.25rem;
   height: 1.25rem;
-  border: .15rem solid #6c757d;
+  border: .15rem solid var(--text-tertiary);
   border-radius: 50%;
   border-top-color: transparent;
   border-right-color: transparent;
@@ -776,15 +828,7 @@ a,
   }
   #col-feed-list,
   #col-item-list {
-    border-image: linear-gradient(to bottom, transparent 3rem, #dee2e6 3rem) 1;
-  }
-  .theme-sepia #col-feed-list,
-  .theme-sepia #col-item-list {
-    border-image: linear-gradient(to bottom, transparent 3rem, #e0d6ba 3rem) 1;
-  }
-  .theme-night #col-feed-list,
-  .theme-night #col-item-list {
-    border-image: linear-gradient(to bottom, transparent 3rem, #1a1a1a 3rem) 1;
+    border-image: linear-gradient(to bottom, transparent 3rem, var(--border-subtle) 3rem) 1;
   }
   .toolbar-item,
   .toolbar-search {
@@ -808,34 +852,10 @@ a,
 
 
 #card-view {
-  background: var(--card-bg, #fff);
+  background: var(--surface-base);
   overflow: hidden;
   min-height: 0;
 }
-
-.theme-night #card-view {
-  --card-bg: #0e0e0e;
-  --card-surface: #1a1a2e;
-  --card-text: #e0e0e0;
-  --card-muted: #888;
-  --card-excerpt: #aaa;
-}
-.theme-sepia #card-view {
-  --card-bg: #f4f0e5;
-  --card-surface: #ede8d8;
-  --card-text: #433422;
-  --card-muted: #8a7a66;
-  --card-excerpt: #5c4a33;
-}
-
-.theme-light #card-view {
-  --card-bg: #f5f5f5;
-  --card-surface: #fff;
-  --card-text: #222;
-  --card-muted: #888;
-  --card-excerpt: #595959;
-}
-
 
 .card-view-area {
   padding: 1.25rem;
@@ -848,8 +868,9 @@ a,
 .triage-card {
   width: 100%;
   max-width: 400px;
-  background: var(--card-surface, #fff);
-  color: var(--card-text, #222);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
@@ -865,7 +886,7 @@ a,
   justify-content: space-between;
   align-items: center;
   font-size: 0.8rem;
-  color: var(--card-muted, #888);
+  color: var(--text-tertiary);
   margin-bottom: 0.75rem;
 }
 
@@ -876,7 +897,7 @@ a,
 
 .triage-card-domain {
   font-size: 0.75rem;
-  color: var(--card-muted, #888);
+  color: var(--text-tertiary);
   margin-top: -0.5rem;
   margin-bottom: 0.75rem;
   overflow: hidden;
@@ -894,7 +915,7 @@ a,
 .triage-card-excerpt {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--card-excerpt, #595959);
+  color: var(--text-secondary);
 }
 
 .triage-card-excerpt {
@@ -936,11 +957,12 @@ a,
 }
 
 .card-action-pill.action-instapaper {
-  background: #ff6600;
+  background: var(--instapaper);
 }
 
 .card-action-pill.action-read {
-  background: #0080d4;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .card-view-hints {
@@ -972,11 +994,11 @@ a,
 }
 
 .card-stat-read {
-  color: #0080d4;
+  color: var(--accent);
 }
 
 .card-stat-instapaper {
-  color: #ff6600;
+  color: var(--instapaper);
 }
 
 .triage-card.swiping {
@@ -1033,7 +1055,8 @@ a,
   border: none;
   border-radius: 1.25rem;
   background: transparent;
-  color: #4db4ff;
+  /* the toast is always dark; lighten the chosen accent for legibility on it */
+  color: color-mix(in oklab, var(--accent), white 35%);
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -1047,7 +1070,7 @@ a,
 }
 
 /* ── Keyboard focus ──────────────────────────────
-   The accent doubles as the focus ring across all three themes; pointer
+   The accent doubles as the focus ring in both themes; pointer
    interactions stay quiet, only keyboard/AT focus surfaces a ring. */
 .toolbar-item:focus-visible,
 .toolbar-search:focus-visible,
@@ -1059,7 +1082,7 @@ a:focus-visible,
 .form-control:focus-visible,
 [role="button"]:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid #0080d4;
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 3px;
 }
@@ -1067,21 +1090,96 @@ a:focus-visible,
 /* inset rings inside clipped/scrolling containers so they aren't cropped */
 .settings-dropdown .dropdown-item:focus-visible,
 .dropdown-item:focus-visible {
-  outline: 2px solid #0080d4;
+  outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
 }
 
 .selectgroup input:focus-visible + .selectgroup-label {
-  outline: 2px solid #0080d4;
+  outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
 }
 
-/* Respect reduced-motion: collapse all motion to effectively instant. */
+/* Respect reduced-motion: collapse all motion to effectively instant.
+   Honors the OS preference AND the in-app toggle (body[data-motion="reduce"]),
+   so users can force it on regardless of system setting (Spec §1.4, §7). */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+}
+body[data-motion="reduce"] *,
+body[data-motion="reduce"] *::before,
+body[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ── Compact density ──────────────────────────────
+   Tighten the feed/item rows on fine pointers only; coarse-pointer (touch)
+   keeps the 44px targets enforced in the responsive block (Spec §2, §9). */
+@media (pointer: fine) {
+  body[data-density="compact"] .selectgroup-label {
+    padding-top: .15rem;
+    padding-bottom: .15rem;
+  }
+  body[data-density="compact"] #item-list-scroll .selectgroup-label {
+    line-height: 1.25;
+  }
+  body[data-density="compact"] .settings-dropdown .dropdown-item,
+  body[data-density="compact"] .settings-dropdown .dropdown-header {
+    padding-top: .2rem;
+    padding-bottom: .2rem;
+  }
+}
+
+/* ── Settings: accent picker & segmented toggles ───────
+   The accent picker is the one place chroma appears in the chrome on
+   purpose; swatches preview each option's light value. */
+.accent-swatches {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  padding: .25rem 1rem .5rem;
+}
+
+.accent-swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--swatch);
+}
+
+.accent-swatch[aria-pressed="true"] {
+  border-color: var(--text-primary);
+}
+
+.accent-swatch:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.swatch-blue   { --swatch: #2563EB; }
+.swatch-teal   { --swatch: #0F766E; }
+.swatch-green  { --swatch: #15803D; }
+.swatch-violet { --swatch: #7C3AED; }
+.swatch-rose   { --swatch: #BE123C; }
+.swatch-amber  { --swatch: #B45309; }
+.swatch-slate  { --swatch: #475569; }
+
+/* coarse-pointer: keep accent swatches a comfortable tap target */
+@media (pointer: coarse) {
+  .accent-swatch {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
   }
 }
