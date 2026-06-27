@@ -868,6 +868,11 @@ a,
 .triage-card {
   width: 100%;
   max-width: 400px;
+  /* never exceed the swipe area: the excerpt scrolls inside, the footer
+     stays pinned, and the bottom rounded corners are never clipped */
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
   background: var(--surface-raised);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
@@ -916,9 +921,11 @@ a,
   font-size: 0.9rem;
   line-height: 1.6;
   color: var(--text-secondary);
-}
-
-.triage-card-excerpt {
+  /* the one growable region: takes the slack and scrolls when content is
+     long, so the card itself stays within bounds (min-height:0 lets it
+     shrink below content size inside the flex column) */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
 }
 
