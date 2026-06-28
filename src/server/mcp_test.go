@@ -288,3 +288,128 @@ func TestMCPErrorCodes(t *testing.T) {
 		})
 	}
 }
+
+func TestMCPToolsListIncludesManagement(t *testing.T) {
+	srv, _, _ := mcpTestServer(t)
+	resp := decode(t, rpcCall(t, srv, "", `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`))
+	tools, _ := resultMap(t, resp)["tools"].([]interface{})
+	got := map[string]bool{}
+	for _, tt := range tools {
+		td, _ := tt.(map[string]interface{})
+		got[td["name"].(string)] = true
+	}
+	for _, want := range []string{"subscribe", "unsubscribe", "rename_feed", "move_feed",
+		"create_folder", "rename_folder", "delete_folder", "refresh_feeds", "list_feed_errors"} {
+		if !got[want] {
+			t.Fatalf("missing management tool %q", want)
+		}
+	}
+}
+
+func TestMCPFolderLifecycle(t *testing.T) {
+	srv, feed, _ := mcpTestServer(t)
+
+	// create
+	text, isErr := callTextResult(t, srv, "create_folder", `{"title":"Tech"}`)
+	if isErr {
+		t.Fatalf("create_folder error: %s", text)
+	}
+	folders := srv.db.ListFolders()
+	if len(folders) != 1 || folders[0].Title != "Tech" {
+		t.Fatalf("folder not created: %+v", folders)
+	}
+	fid := folders[0].Id
+
+	// rename
+	if _, isErr := callTextResult(t, srv, "rename_folder", fmt.Sprintf(`{"folder_id":%d,"title":"News"}`, fid)); isErr {
+		t.Fatal("rename_folder returned error")
+	}
+	if srv.db.ListFolders()[0].Title != "News" {
+		t.Fatal("folder not renamed")
+	}
+
+	// move feed into folder
+	if _, isErr := callTextResult(t, srv, "move_feed", fmt.Sprintf(`{"feed_id":%d,"folder_id":%d}`, feed.Id, fid)); isErr {
+		t.Fatal("move_feed returned error")
+	}
+	if got := srv.db.GetFeed(feed.Id); got.FolderId == nil || *got.FolderId != fid {
+		t.Fatalf("feed not moved into folder: %+v", got)
+	}
+
+	// move feed out (omit folder_id)
+	if _, isErr := callTextResult(t, srv, "move_feed", fmt.Sprintf(`{"feed_id":%d}`, feed.Id)); isErr {
+		t.Fatal("move_feed (out) returned error")
+	}
+	if got := srv.db.GetFeed(feed.Id); got.FolderId != nil {
+		t.Fatalf("feed still in a folder: %+v", got)
+	}
+
+	// delete folder
+	if _, isErr := callTextResult(t, srv, "delete_folder", fmt.Sprintf(`{"folder_id":%d}`, fid)); isErr {
+		t.Fatal("delete_folder returned error")
+	}
+	if len(srv.db.ListFolders()) != 0 {
+		t.Fatal("folder not deleted")
+	}
+}
+
+func TestMCPRenameFeed(t *testing.T) {
+	srv, feed, _ := mcpTestServer(t)
+	if _, isErr := callTextResult(t, srv, "rename_feed", fmt.Sprintf(`{"feed_id":%d,"title":"Renamed"}`, feed.Id)); isErr {
+		t.Fatal("rename_feed returned error")
+	}
+	if srv.db.GetFeed(feed.Id).Title != "Renamed" {
+		t.Fatal("feed not renamed")
+	}
+}
+
+func TestMCPUnsubscribe(t *testing.T) {
+	srv, feed, _ := mcpTestServer(t)
+	if _, isErr := callTextResult(t, srv, "unsubscribe", fmt.Sprintf(`{"feed_id":%d}`, feed.Id)); isErr {
+		t.Fatal("unsubscribe returned error")
+	}
+	if srv.db.GetFeed(feed.Id) != nil {
+		t.Fatal("feed not deleted")
+	}
+}
+
+func TestMCPManagementValidation(t *testing.T) {
+	srv, feed, _ := mcpTestServer(t)
+	cases := []struct{ name, args string }{
+		{"subscribe", `{}`},                  // missing url
+		{"unsubscribe", `{"feed_id":99999}`}, // missing feed
+		{"rename_feed", fmt.Sprintf(`{"feed_id":%d,"title":""}`, feed.Id)},      // empty title
+		{"move_feed", fmt.Sprintf(`{"feed_id":%d,"folder_id":99999}`, feed.Id)}, // missing folder
+		{"rename_folder", `{"folder_id":99999,"title":"x"}`},                    // missing folder
+		{"delete_folder", `{"folder_id":99999}`},                                // missing folder
+		{"create_folder", `{"title":""}`},                                       // empty title
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, isErr := callTextResult(t, srv, tc.name, tc.args)
+			if !isErr {
+				t.Fatalf("%s expected isError for args %s", tc.name, tc.args)
+			}
+		})
+	}
+}
+
+func TestMCPListFeedErrorsEmpty(t *testing.T) {
+	srv, _, _ := mcpTestServer(t)
+	text, isErr := callTextResult(t, srv, "list_feed_errors", `{}`)
+	if isErr || text != "no feed errors" {
+		t.Fatalf("got isErr=%v text=%q", isErr, text)
+	}
+}
+
+func TestMCPRefreshFeedsEmptyDB(t *testing.T) {
+	// empty DB so RefreshFeeds is a no-op (no network)
+	log.SetOutput(io.Discard)
+	db, _ := storage.New(":memory:")
+	log.SetOutput(os.Stderr)
+	srv := NewServer(db, "127.0.0.1:8000")
+	text, isErr := callTextResult(t, srv, "refresh_feeds", `{}`)
+	if isErr || !strings.Contains(text, "refresh") {
+		t.Fatalf("got isErr=%v text=%q", isErr, text)
+	}
+}

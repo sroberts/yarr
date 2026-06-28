@@ -144,9 +144,10 @@ claude mcp add --transport http yarr http://127.0.0.1:7070/mcp \
 Then just ask: *"What's unread in my feeds?"*, *"Summarize the latest
 articles about Go and star the good ones"*, or *"Save that one to Instapaper."*
 Claude can list feeds, read and search articles, mark read/unread, star, save
-to Instapaper, and mark whole feeds or folders read. See [doc/mcp.md](doc/mcp.md)
-for the bearer-token derivation, Claude Desktop setup, the full tool list, and
-how to drive the endpoint directly.
+to Instapaper, mark whole feeds or folders read, and manage your library
+(subscribe, unsubscribe, rename, organize into folders, refresh). See
+[doc/mcp.md](doc/mcp.md) for the bearer-token derivation, Claude Desktop setup,
+the full tool list, and how to drive the endpoint directly.
 
 See more:
 

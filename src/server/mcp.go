@@ -14,6 +14,7 @@ import (
 	"github.com/nkanaev/yarr/src/server/auth"
 	"github.com/nkanaev/yarr/src/server/router"
 	"github.com/nkanaev/yarr/src/storage"
+	"github.com/nkanaev/yarr/src/worker"
 )
 
 // yarr exposes a Model Context Protocol (MCP) server over Streamable HTTP at
@@ -194,6 +195,35 @@ var mcpTools = []toolDef{
 		"feed_id":   map[string]interface{}{"type": "integer", "description": "limit to this feed"},
 		"folder_id": map[string]interface{}{"type": "integer", "description": "limit to this folder"},
 	})},
+
+	// --- library management ---
+	{"subscribe", "Subscribe to a feed by URL. The URL may point at a feed or a web page (the feed is auto-discovered). If the page exposes several feeds, the candidates are returned so you can subscribe to a specific one.", obj(map[string]interface{}{
+		"url":       map[string]interface{}{"type": "string", "description": "feed or web page URL"},
+		"folder_id": map[string]interface{}{"type": "integer", "description": "optional folder to file the feed under"},
+	}, "url")},
+	{"unsubscribe", "Delete a feed and all its articles.", obj(map[string]interface{}{
+		"feed_id": map[string]interface{}{"type": "integer", "description": "feed id"},
+	}, "feed_id")},
+	{"rename_feed", "Rename a feed.", obj(map[string]interface{}{
+		"feed_id": map[string]interface{}{"type": "integer", "description": "feed id"},
+		"title":   map[string]interface{}{"type": "string", "description": "new title"},
+	}, "feed_id", "title")},
+	{"move_feed", "Move a feed into a folder, or to no folder (omit folder_id).", obj(map[string]interface{}{
+		"feed_id":   map[string]interface{}{"type": "integer", "description": "feed id"},
+		"folder_id": map[string]interface{}{"type": "integer", "description": "destination folder id; omit to remove from any folder"},
+	}, "feed_id")},
+	{"create_folder", "Create a folder.", obj(map[string]interface{}{
+		"title": map[string]interface{}{"type": "string", "description": "folder title"},
+	}, "title")},
+	{"rename_folder", "Rename a folder.", obj(map[string]interface{}{
+		"folder_id": map[string]interface{}{"type": "integer", "description": "folder id"},
+		"title":     map[string]interface{}{"type": "string", "description": "new title"},
+	}, "folder_id", "title")},
+	{"delete_folder", "Delete a folder. Its feeds are kept and moved to no folder.", obj(map[string]interface{}{
+		"folder_id": map[string]interface{}{"type": "integer", "description": "folder id"},
+	}, "folder_id")},
+	{"refresh_feeds", "Trigger a background refresh of all feeds now.", obj(nil)},
+	{"list_feed_errors", "List feeds that failed to fetch, with their error messages.", obj(nil)},
 }
 
 func textResult(text string, isError bool) map[string]interface{} {
@@ -234,6 +264,24 @@ func (s *Server) mcpToolsCall(id, params json.RawMessage) rpcResponse {
 		result = s.toolSaveToInstapaper(call.Arguments)
 	case "mark_all_read":
 		result = s.toolMarkAllRead(call.Arguments)
+	case "subscribe":
+		result = s.toolSubscribe(call.Arguments)
+	case "unsubscribe":
+		result = s.toolUnsubscribe(call.Arguments)
+	case "rename_feed":
+		result = s.toolRenameFeed(call.Arguments)
+	case "move_feed":
+		result = s.toolMoveFeed(call.Arguments)
+	case "create_folder":
+		result = s.toolCreateFolder(call.Arguments)
+	case "rename_folder":
+		result = s.toolRenameFolder(call.Arguments)
+	case "delete_folder":
+		result = s.toolDeleteFolder(call.Arguments)
+	case "refresh_feeds":
+		result = s.toolRefreshFeeds()
+	case "list_feed_errors":
+		result = s.toolListFeedErrors()
 	default:
 		return rpcErr(id, -32602, "unknown tool: "+call.Name)
 	}
@@ -439,4 +487,169 @@ func (s *Server) toolMarkAllRead(args json.RawMessage) map[string]interface{} {
 	default:
 		return textResult("marked all articles as read", false)
 	}
+}
+
+// --- library management tools ---
+
+func (s *Server) folderExists(id int64) bool {
+	for _, f := range s.db.ListFolders() {
+		if f.Id == id {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Server) toolSubscribe(args json.RawMessage) map[string]interface{} {
+	var a struct {
+		URL      string `json:"url"`
+		FolderID *int64 `json:"folder_id"`
+	}
+	if json.Unmarshal(args, &a) != nil || strings.TrimSpace(a.URL) == "" {
+		return textResult("invalid arguments: 'url' (string) is required", true)
+	}
+	if a.FolderID != nil && !s.folderExists(*a.FolderID) {
+		return textResult(fmt.Sprintf("folder %d not found", *a.FolderID), true)
+	}
+
+	result, err := worker.DiscoverFeed(a.URL)
+	if err != nil {
+		return textResult("could not find a feed at "+a.URL+": "+err.Error(), true)
+	}
+	if len(result.Sources) > 0 {
+		var b strings.Builder
+		fmt.Fprintf(&b, "%s exposes multiple feeds — call subscribe again with one of these URLs:\n", a.URL)
+		for _, src := range result.Sources {
+			fmt.Fprintf(&b, "- %s — %s\n", src.Title, src.Url)
+		}
+		return textResult(strings.TrimRight(b.String(), "\n"), false)
+	}
+	if result.Feed == nil {
+		return textResult("no feed found at "+a.URL, true)
+	}
+
+	feed := s.db.CreateFeed(result.Feed.Title, "", result.Feed.SiteURL, result.FeedLink, a.FolderID)
+	items := worker.ConvertItems(result.Feed.Items, *feed)
+	if len(items) > 0 {
+		s.db.CreateItems(items)
+		s.db.SetFeedSize(feed.Id, len(items))
+		s.db.SyncSearch()
+	}
+	s.worker.FindFeedFavicon(*feed)
+	return textResult(fmt.Sprintf("subscribed to feed %d: %s (%s)", feed.Id, feed.Title, feed.FeedLink), false)
+}
+
+func (s *Server) toolUnsubscribe(args json.RawMessage) map[string]interface{} {
+	var a struct {
+		FeedID int64 `json:"feed_id"`
+	}
+	if json.Unmarshal(args, &a) != nil || a.FeedID == 0 {
+		return textResult("invalid arguments: 'feed_id' (integer) is required", true)
+	}
+	feed := s.db.GetFeed(a.FeedID)
+	if feed == nil {
+		return textResult(fmt.Sprintf("feed %d not found", a.FeedID), true)
+	}
+	s.db.DeleteFeed(a.FeedID)
+	return textResult(fmt.Sprintf("unsubscribed from feed %d: %s", a.FeedID, feed.Title), false)
+}
+
+func (s *Server) toolRenameFeed(args json.RawMessage) map[string]interface{} {
+	var a struct {
+		FeedID int64  `json:"feed_id"`
+		Title  string `json:"title"`
+	}
+	if json.Unmarshal(args, &a) != nil || a.FeedID == 0 || strings.TrimSpace(a.Title) == "" {
+		return textResult("invalid arguments: 'feed_id' (integer) and 'title' (non-empty string) are required", true)
+	}
+	if s.db.GetFeed(a.FeedID) == nil {
+		return textResult(fmt.Sprintf("feed %d not found", a.FeedID), true)
+	}
+	s.db.RenameFeed(a.FeedID, a.Title)
+	return textResult(fmt.Sprintf("renamed feed %d to %q", a.FeedID, a.Title), false)
+}
+
+func (s *Server) toolMoveFeed(args json.RawMessage) map[string]interface{} {
+	var a struct {
+		FeedID   int64  `json:"feed_id"`
+		FolderID *int64 `json:"folder_id"`
+	}
+	if json.Unmarshal(args, &a) != nil || a.FeedID == 0 {
+		return textResult("invalid arguments: 'feed_id' (integer) is required", true)
+	}
+	if s.db.GetFeed(a.FeedID) == nil {
+		return textResult(fmt.Sprintf("feed %d not found", a.FeedID), true)
+	}
+	if a.FolderID != nil && !s.folderExists(*a.FolderID) {
+		return textResult(fmt.Sprintf("folder %d not found", *a.FolderID), true)
+	}
+	s.db.UpdateFeedFolder(a.FeedID, a.FolderID)
+	if a.FolderID != nil {
+		return textResult(fmt.Sprintf("moved feed %d to folder %d", a.FeedID, *a.FolderID), false)
+	}
+	return textResult(fmt.Sprintf("removed feed %d from its folder", a.FeedID), false)
+}
+
+func (s *Server) toolCreateFolder(args json.RawMessage) map[string]interface{} {
+	var a struct {
+		Title string `json:"title"`
+	}
+	if json.Unmarshal(args, &a) != nil || strings.TrimSpace(a.Title) == "" {
+		return textResult("invalid arguments: 'title' (non-empty string) is required", true)
+	}
+	folder := s.db.CreateFolder(a.Title)
+	if folder == nil {
+		return textResult("could not create folder (a folder with that title may already exist)", true)
+	}
+	return textResult(fmt.Sprintf("created folder %d: %s", folder.Id, folder.Title), false)
+}
+
+func (s *Server) toolRenameFolder(args json.RawMessage) map[string]interface{} {
+	var a struct {
+		FolderID int64  `json:"folder_id"`
+		Title    string `json:"title"`
+	}
+	if json.Unmarshal(args, &a) != nil || a.FolderID == 0 || strings.TrimSpace(a.Title) == "" {
+		return textResult("invalid arguments: 'folder_id' (integer) and 'title' (non-empty string) are required", true)
+	}
+	if !s.folderExists(a.FolderID) {
+		return textResult(fmt.Sprintf("folder %d not found", a.FolderID), true)
+	}
+	s.db.RenameFolder(a.FolderID, a.Title)
+	return textResult(fmt.Sprintf("renamed folder %d to %q", a.FolderID, a.Title), false)
+}
+
+func (s *Server) toolDeleteFolder(args json.RawMessage) map[string]interface{} {
+	var a struct {
+		FolderID int64 `json:"folder_id"`
+	}
+	if json.Unmarshal(args, &a) != nil || a.FolderID == 0 {
+		return textResult("invalid arguments: 'folder_id' (integer) is required", true)
+	}
+	if !s.folderExists(a.FolderID) {
+		return textResult(fmt.Sprintf("folder %d not found", a.FolderID), true)
+	}
+	s.db.DeleteFolder(a.FolderID)
+	return textResult(fmt.Sprintf("deleted folder %d", a.FolderID), false)
+}
+
+func (s *Server) toolRefreshFeeds() map[string]interface{} {
+	s.worker.RefreshFeeds()
+	return textResult("started a background refresh of all feeds", false)
+}
+
+func (s *Server) toolListFeedErrors() map[string]interface{} {
+	errors := s.db.GetFeedErrors()
+	if len(errors) == 0 {
+		return textResult("no feed errors", false)
+	}
+	titles := make(map[int64]string)
+	for _, f := range s.db.ListFeeds() {
+		titles[f.Id] = f.Title
+	}
+	var b strings.Builder
+	for id, msg := range errors {
+		fmt.Fprintf(&b, "[%d] %s — %s\n", id, titles[id], msg)
+	}
+	return textResult(strings.TrimRight(b.String(), "\n"), false)
 }
