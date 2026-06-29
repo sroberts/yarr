@@ -36,8 +36,9 @@ host:
 	go build $(GO_FLAGS) -o out/yarr ./cmd/yarr
 
 darwin_amd64:
-	# cross-compilation not supported: CC="zig cc -target x86_64-macos-none"
-	GOOS=darwin GOARCH=arm64 go build $(GO_FLAGS) -o out/$@/yarr ./cmd/yarr
+	# Go cross-compiles darwin/amd64 with CGO via clang -arch x86_64 (set
+	# automatically on darwin hosts), so this works on Apple-Silicon runners.
+	GOOS=darwin GOARCH=amd64 go build $(GO_FLAGS) -o out/$@/yarr ./cmd/yarr
 
 darwin_arm64:
 	# cross-compilation not supported: CC="zig cc -target aarch64-macos-none"
