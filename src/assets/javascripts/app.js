@@ -42,21 +42,26 @@ var debounce = function(callback, wait) {
   }
 }
 
-Vue.directive('scroll', {
-  inserted: function(el, binding) {
+// Vue 3: create the app from the root options (defined below; the function
+// declaration is hoisted), register directives/components on it, then mount
+// at the bottom.
+var vueApp = Vue.createApp(rootComponent())
+
+vueApp.directive('scroll', {
+  mounted: function(el, binding) {
     el.addEventListener('scroll', debounce(function(event) {
       binding.value(event, el)
     }, 200))
   },
 })
 
-Vue.directive('focus', {
-  inserted: function(el) {
+vueApp.directive('focus', {
+  mounted: function(el) {
     el.focus()
   }
 })
 
-Vue.component('drag', {
+vueApp.component('drag', {
   props: ['width'],
   template: '<div class="drag"></div>',
   mounted: function() {
@@ -81,13 +86,15 @@ Vue.component('drag', {
   },
 })
 
-Vue.component('dropdown', {
-  props: ['class', 'toggle-class', 'ref', 'drop', 'title'],
+vueApp.component('dropdown', {
+  // Vue 3: `class`/`ref` are reserved and can't be props; a passed class now
+  // auto-merges onto the root element, so we drop the explicit :class binding.
+  props: ['toggle-class', 'drop', 'title'],
   data: function() {
     return {open: false}
   },
   template: `
-    <div class="dropdown" :class="$attrs.class">
+    <div class="dropdown">
       <button ref="btn" @click="toggle" :class="btnToggleClass" :title="$props.title"><slot name="button"></slot></button>
       <div ref="menu" class="dropdown-menu" :class="{show: open}"><slot v-if="open"></slot></div>
     </div>
@@ -134,8 +141,9 @@ Vue.component('dropdown', {
   },
 })
 
-Vue.component('modal', {
+vueApp.component('modal', {
   props: ['open'],
+  emits: ['hide'],
   template: `
     <div class="modal custom-modal" tabindex="-1" v-if="$props.open">
       <div class="modal-dialog">
@@ -190,7 +198,7 @@ function dateRepr(d) {
   return out
 }
 
-Vue.component('relative-time', {
+vueApp.component('relative-time', {
   props: ['val'],
   data: function() {
     var d = new Date(this.val)
@@ -206,12 +214,12 @@ Vue.component('relative-time', {
       this.formatted = dateRepr(this.date)
     }.bind(this), 600000)  // every 10 minutes
   },
-  destroyed: function() {
+  unmounted: function() {
     clearInterval(this.interval)
   },
 })
 
-var vm = new Vue({
+function rootComponent() { return {
   created: function() {
     this.refreshStats()
       .then(this.refreshFeeds.bind(this))
@@ -1086,9 +1094,10 @@ var vm = new Vue({
         && (!this.itemSelectedDetails || this.itemSelectedDetails.feed_id != feed.id)
     },
   }
-})
+} }
 
-vm.$mount('#app')
+// directives + components are registered above; mount now that they exist.
+var vm = vueApp.mount('#app')
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function(err) {
