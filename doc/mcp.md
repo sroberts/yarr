@@ -71,6 +71,10 @@ work well:
   `save_to_instapaper` then `mark_all_read` with a `feed_id`
 - *"Triage my Tech folder: list unread, I'll tell you which to keep."* →
   `list_folders` + `list_articles` with `folder_id`, then `star` / `mark_read`
+- *"Subscribe to apenwarr.ca and file it under a new 'Blogs' folder."* →
+  `create_folder` then `subscribe` with the new `folder_id`
+- *"Which feeds are failing, and unsubscribe from the dead one."* →
+  `list_feed_errors` then `unsubscribe`
 
 Articles are referred to by the numeric **id** shown in `list_articles`
 (`[42] Some headline …`). Statuses are exclusive — an article is `unread`,
@@ -78,6 +82,8 @@ Articles are referred to by the numeric **id** shown in `list_articles`
 `read`.
 
 ## Tools
+
+### Read & triage
 
 | Tool | Description |
 |------|-------------|
@@ -89,6 +95,20 @@ Articles are referred to by the numeric **id** shown in `list_articles`
 | `star` / `unstar` | Star / remove star |
 | `save_to_instapaper` | Save an article to Instapaper (requires Instapaper credentials in Settings) |
 | `mark_all_read` | Mark everything read, optionally limited to a `feed_id` or `folder_id` |
+
+### Library management
+
+| Tool | Description |
+|------|-------------|
+| `subscribe` | Subscribe to a feed by `url` (auto-discovers the feed from a web page; returns candidates if a page exposes several), optional `folder_id` |
+| `unsubscribe` | Delete a feed and its articles by `feed_id` |
+| `rename_feed` | Rename a feed (`feed_id`, `title`) |
+| `move_feed` | Move a feed into a `folder_id`, or out of any folder (omit `folder_id`) |
+| `create_folder` / `rename_folder` / `delete_folder` | Manage folders (deleting keeps the feeds, moved to no folder) |
+| `refresh_feeds` | Trigger a background refresh of all feeds |
+| `list_feed_errors` | List feeds that failed to fetch, with their error messages |
+
+Settings and credentials are intentionally **not** exposed over MCP.
 
 ## Driving it directly
 
