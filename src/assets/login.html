@@ -24,7 +24,16 @@
     </style>
 </head>
 <body class="theme-{% if or (eq .settings.theme_name "night") (eq .settings.theme_name "dark") %}dark{% else %}light{% end %}"
+      data-theme-pref="{% .settings.theme_name %}"
       data-accent="{% .settings.theme_accent %}">
+    <script>
+        (function () {
+            if (document.body.getAttribute('data-theme-pref') === 'auto') {
+                var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+                document.body.className = 'theme-' + (dark ? 'dark' : 'light')
+            }
+        })()
+    </script>
     <form action="" method="post">
         <img src="./static/graphicarts/anchor.svg" alt="">
         {% if .error %}

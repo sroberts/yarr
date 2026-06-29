@@ -2,6 +2,15 @@
 
 var TITLE = document.title
 
+// Resolve a stored theme preference to a concrete theme. 'auto' (the first-run
+// default) follows the OS; legacy values map night -> dark, sepia -> light.
+function resolveThemeName(pref) {
+  if (pref === 'dark' || pref === 'night') return 'dark'
+  if (pref === 'light' || pref === 'sepia') return 'light'
+  var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  return dark ? 'dark' : 'light'
+}
+
 function scrollto(target, scroll) {
   var padding = 10
   var targetRect = target.getBoundingClientRect()
@@ -247,8 +256,8 @@ var vm = new Vue({
       'fonts': ['', 'serif', 'monospace'],
       'feedStats': {},
       'theme': {
-        // legacy values: night -> dark, sepia -> light
-        'name': ({night: 'dark', sepia: 'light', light: 'light', dark: 'dark'})[s.theme_name] || 'light',
+        // 'auto' follows the OS; legacy night -> dark, sepia -> light
+        'name': resolveThemeName(s.theme_name),
         'font': s.theme_font,
         'size': s.theme_size,
         'accent': s.theme_accent || 'blue',

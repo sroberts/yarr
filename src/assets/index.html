@@ -24,9 +24,20 @@
     </script>
 </head>
 <body class="theme-{% if or (eq .settings.theme_name "night") (eq .settings.theme_name "dark") %}dark{% else %}light{% end %}"
+      data-theme-pref="{% .settings.theme_name %}"
       data-accent="{% .settings.theme_accent %}"
       data-density="{% .settings.theme_density %}"
       data-motion="{% .settings.theme_motion %}">
+    <script>
+        // First-run default: when no explicit theme is chosen ("auto"), follow
+        // the OS. Runs before #app paints (which is v-cloak-hidden) to avoid a flash.
+        (function () {
+            if (document.body.getAttribute('data-theme-pref') === 'auto') {
+                var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+                document.body.className = 'theme-' + (dark ? 'dark' : 'light')
+            }
+        })()
+    </script>
     <div id="app" class="d-flex" :class="{'feed-selected': feedSelected !== null, 'item-selected': itemSelected !== null, 'card-mode': cardMode}" v-cloak>
         <!-- feed list -->
         <div id="col-feed-list" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
