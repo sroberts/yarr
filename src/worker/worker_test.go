@@ -1,7 +1,11 @@
 package worker
 
 import (
+	"io"
+	"log"
 	"net/http"
+	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -158,4 +162,136 @@ func TestSetVersion(t *testing.T) {
 	}
 	// Restore default
 	SetVersion("1.0")
+}
+
+// --- network paths (httptest) ---
+
+const testRSS = `<?xml version="1.0"?>
+<rss version="2.0"><channel>
+<title>Test Feed</title>
+<link>http://example.com</link>
+<item><title>Item 1</title><link>http://example.com/1</link><guid>g1</guid></item>
+<item><title>Item 2</title><link>http://example.com/2</link><guid>g2</guid></item>
+</channel></rss>`
+
+func newTestStorage(t *testing.T) *storage.Storage {
+	t.Helper()
+	log.SetOutput(io.Discard)
+	db, err := storage.New(":memory:")
+	log.SetOutput(os.Stderr)
+	if err != nil {
+		t.Fatalf("storage.New: %v", err)
+	}
+	return db
+}
+
+func TestGetBody(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("hello body"))
+	}))
+	defer srv.Close()
+	body, err := GetBody(srv.URL)
+	if err != nil {
+		t.Fatalf("GetBody: %v", err)
+	}
+	if body != "hello body" {
+		t.Fatalf("got %q", body)
+	}
+}
+
+func TestDiscoverFeed_Direct(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/rss+xml")
+		w.Write([]byte(testRSS))
+	}))
+	defer srv.Close()
+	res, err := DiscoverFeed(srv.URL)
+	if err != nil {
+		t.Fatalf("DiscoverFeed: %v", err)
+	}
+	if res.Feed == nil || res.FeedLink != srv.URL {
+		t.Fatalf("expected direct feed, got %+v", res)
+	}
+	if len(res.Feed.Items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(res.Feed.Items))
+	}
+}
+
+func TestDiscoverFeed_MultipleSources(t *testing.T) {
+	var base string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head>
+			<link rel="alternate" type="application/rss+xml" title="Feed A" href="` + base + `/a">
+			<link rel="alternate" type="application/atom+xml" title="Feed B" href="` + base + `/b">
+			</head><body>hi</body></html>`))
+	}))
+	defer srv.Close()
+	base = srv.URL
+	res, err := DiscoverFeed(srv.URL)
+	if err != nil {
+		t.Fatalf("DiscoverFeed: %v", err)
+	}
+	if len(res.Sources) != 2 {
+		t.Fatalf("expected 2 sources, got %d (%+v)", len(res.Sources), res.Sources)
+	}
+}
+
+func TestDiscoverFeed_Error(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+	if _, err := DiscoverFeed(srv.URL); err == nil {
+		t.Fatal("expected error on 404")
+	}
+}
+
+func TestListItems(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/rss+xml")
+		w.Write([]byte(testRSS))
+	}))
+	defer srv.Close()
+	db := newTestStorage(t)
+	feed := db.CreateFeed("Test", "", "http://example.com", srv.URL, nil)
+	items, err := listItems(*feed, db)
+	if err != nil {
+		t.Fatalf("listItems: %v", err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items, got %d", len(items))
+	}
+}
+
+func TestRefreshFeeds_EndToEnd(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/rss+xml")
+		w.Write([]byte(testRSS))
+	}))
+	defer srv.Close()
+	db := newTestStorage(t)
+	feed := db.CreateFeed("Test", "", "http://example.com", srv.URL, nil)
+
+	log.SetOutput(io.Discard)
+	defer log.SetOutput(os.Stderr)
+	w := NewWorker(db)
+	w.RefreshFeeds()
+
+	// wait for the async refresher to drain
+	deadline := time.Now().Add(5 * time.Second)
+	for w.FeedsPending() > 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("refresh did not finish in time")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	items := db.ListItems(storage.ItemFilter{FeedID: &feed.Id}, 10, true, false)
+	if len(items) != 2 {
+		t.Fatalf("expected 2 items after refresh, got %d", len(items))
+	}
+	if errs := db.GetFeedErrors(); len(errs) != 0 {
+		t.Fatalf("unexpected feed errors: %v", errs)
+	}
 }
