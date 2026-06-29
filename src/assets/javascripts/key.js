@@ -77,6 +77,9 @@ var shortcutFunctions = {
   showStarred() {
     vm.filterSelected = 'starred'
   },
+  showShortcuts: function() {
+    vm.showSettings('shortcuts')
+  },
 }
 
 // If you edit, make sure you update the help modal
@@ -98,6 +101,7 @@ var keybindings = {
   "1": shortcutFunctions.showUnread,
   "2": shortcutFunctions.showStarred,
   "3": shortcutFunctions.showAll,
+  "?": shortcutFunctions.showShortcuts,
 }
 
 var codebindings = {
