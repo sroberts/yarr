@@ -342,7 +342,10 @@
                 <div class="input-icon flex-grow-1">
                     <span class="icon">{% inline "search.svg" %}</span>
                     <!-- id used by keybindings -->
-                    <input id="searchbar" type="" class="d-block toolbar-search" v-model="itemSearch" @keydown.enter="$event.target.blur()">
+                    <input id="searchbar" type="search" placeholder="Search articles" class="d-block toolbar-search" v-model="itemSearch" @keydown.enter="$event.target.blur()" @keydown.esc="itemSearch = ''">
+                    <button class="search-clear" v-if="itemSearch" @click="itemSearch = ''" title="Clear search" aria-label="Clear search">
+                        <span class="icon">{% inline "x.svg" %}</span>
+                    </button>
                 </div>
                 <button class="toolbar-item ml-2"
                         @click="markItemsRead()"
@@ -424,6 +427,12 @@
                     </button>
                 </dropdown>
             </div>
+            <div class="px-3 py-2 border-top text-danger text-break" v-if="current.type == 'feed' && feed_errors[current.feed.id]">
+                {{ feed_errors[current.feed.id] }}
+            </div>
+            <div class="px-3 py-1 border-top text-muted small" v-if="itemSearch">
+                {{ items.length }}{{ itemsHasMore ? '+' : '' }} result{{ items.length == 1 ? '' : 's' }} for "{{ itemSearch }}"
+            </div>
             <div id="item-list-scroll" class="p-2 overflow-auto scroll-touch border-top flex-grow-1" v-scroll="loadMoreItems" ref="itemlist">
                 <label v-for="item in items" :key="item.id"
                        class="selectgroup">
@@ -443,9 +452,6 @@
                     </div>
                 </label>
                 <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore"></button>
-            </div>
-            <div class="px-3 py-2 border-top text-danger text-break" v-if="feed_errors[current.feed.id]">
-                {{ feed_errors[current.feed.id] }}
             </div>
         </div>
         <!-- item show -->
