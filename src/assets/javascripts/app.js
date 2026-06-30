@@ -162,7 +162,7 @@ vueApp.component('modal', {
   template: `
     <div class="modal custom-modal" tabindex="-1" v-if="$props.open">
       <div class="modal-dialog">
-        <div class="modal-content" ref="content">
+        <div class="modal-content" ref="content" tabindex="-1">
           <div class="modal-body">
             <slot v-if="$props.open"></slot>
           </div>
@@ -177,11 +177,18 @@ vueApp.component('modal', {
     'open': function(newVal) {
       if (newVal) {
         this.opening = true
+        this._prevFocus = document.activeElement
         document.addEventListener('click', this.handleClick)
         document.addEventListener('keydown', this.handleKey)
+        // move focus into the dialog for keyboard/screen-reader users
+        this.$nextTick(function() {
+          if (this.$refs.content) this.$refs.content.focus()
+        }.bind(this))
       } else {
         document.removeEventListener('click', this.handleClick)
         document.removeEventListener('keydown', this.handleKey)
+        // restore focus to whatever opened the modal
+        if (this._prevFocus && this._prevFocus.focus) this._prevFocus.focus()
       }
     },
   },

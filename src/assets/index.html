@@ -441,7 +441,7 @@
                  :class="{'font-serif': theme.font == 'serif', 'font-monospace': theme.font == 'monospace'}"
                  :style="{'font-size': theme.size + 'rem'}">
                 <div class="content-wrapper" :key="itemSelected">
-                    <h1><b>{{ itemSelectedDetails.title || 'untitled' }}</b></h1>
+                    <h1 class="content-title"><b>{{ itemSelectedDetails.title || 'untitled' }}</b></h1>
                     <div class="text-muted">
                         <div>
                             <span class="cursor-pointer" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">
@@ -482,7 +482,9 @@
                 <div class="settings-section">
                     <label class="settings-label">Accent</label>
                     <div class="accent-swatches">
-                        <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="theme.accent == a" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']"></button>
+                        <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="theme.accent == a" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
+                            <span class="accent-check" v-if="theme.accent == a">{% inline "check.svg" %}</span>
+                        </button>
                     </div>
                 </div>
 
@@ -570,7 +572,7 @@
                             </div>
                         </label>
                     </div>
-                    <button class="btn btn-block btn-default mt-3" :class="{loading: loading.newfeed}" type="submit">Add</button>
+                    <button class="btn btn-block btn-default mt-3" :class="{loading: loading.newfeed}" :disabled="loading.newfeed" type="submit">Add</button>
                 </form>
             </div>
             <div v-else-if="settings=='shortcuts'">

@@ -69,3 +69,17 @@ test('empty states: first-run feed CTA + empty reader hint', async ({ page }) =>
   await expect(page.getByRole('button', { name: 'Add your first feed' })).toBeVisible()
   await expect(page.getByText('Select an article to read')).toBeVisible()
 })
+
+test('accent selection shows a check (not color-only) and modal takes focus', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  // the modal received focus
+  const focusedInModal = await page.evaluate(() => !!document.activeElement.closest('.modal-content'))
+  expect(focusedInModal).toBe(true)
+  // selected accent shows a check mark
+  await page.getByRole('button', { name: 'violet', exact: true }).click()
+  const violetHasCheck = await page.evaluate(() =>
+    !!document.querySelector('.accent-swatch.swatch-violet .accent-check'))
+  expect(violetHasCheck).toBe(true)
+})
