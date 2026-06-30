@@ -1254,3 +1254,23 @@ body[data-motion="reduce"] *::after {
   color: var(--text-tertiary);
   margin-bottom: .35rem;
 }
+
+/* ── Purposeful motion ─────────────────────────────────
+   Smooth the high-frequency state changes (hover/selection) and gently
+   fade a freshly opened article in. Both collapse under the reduced-motion
+   media query / [data-motion="reduce"] above. */
+.selectgroup-label,
+.toolbar-item,
+.dropdown-item,
+.btn,
+.accent-swatch {
+  transition: background-color .12s ease, color .12s ease, border-color .12s ease;
+}
+
+.content-wrapper {
+  animation: article-in .18s ease both;
+}
+@keyframes article-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
