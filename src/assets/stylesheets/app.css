@@ -1190,3 +1190,26 @@ body[data-motion="reduce"] *::after {
     min-width: 2rem;
   }
 }
+
+/* ── App toast (lightweight action confirmation) ───────
+   Always-dark pill, bottom-center, auto-dismissing. Reuses the undo-toast
+   look; used for actions whose result isn't already visible in the list
+   (e.g. Save to Instapaper). */
+.app-toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  z-index: 1100;
+  max-width: calc(100% - 2rem);
+  padding: 0.5rem 1rem;
+  border-radius: 1.5rem;
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.toast-enter-active, .toast-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 0.5rem); }

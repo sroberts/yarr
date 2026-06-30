@@ -317,6 +317,7 @@ function rootComponent() { return {
       'cardStats': { read: 0, instapaper: 0, kept: 0 },
       'cardLoading': false,
       'cardUndo': null,
+      'toast': null,
       'cardFolder': '',
       'previousFilter': '',
       'refreshRateOptions': [
@@ -636,7 +637,14 @@ function rootComponent() { return {
       if (this.itemListCloseToBottom()) return this.refreshItems(true)
       if (this.itemSelected && this.itemSelected === this.items[this.items.length - 1].id) return this.refreshItems(true)
     },
+    showToast: function(text) {
+      var self = this
+      this.toast = {text: text}
+      clearTimeout(this._toastTimer)
+      this._toastTimer = setTimeout(function() { self.toast = null }, 2500)
+    },
     markItemsRead: function() {
+      if (!confirm('Mark all articles in this view as read?')) return
       var query = this.getItemsQuery()
       api.items.mark_read(query).then(function() {
         vm.items = []
@@ -824,6 +832,7 @@ function rootComponent() { return {
           })
         }
         return resp.json().then(function(data) {
+          vm.showToast('Saved to Instapaper')
           vm.itemSelectedDetails.instapaper_saved = true
           vm.itemSelectedDetails.status = 'read'
           var itemInList = vm.items.find(function(i) { return i.id == item.id })
