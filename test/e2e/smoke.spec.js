@@ -61,3 +61,9 @@ test('search has placeholder, clear button, and result count', async ({ page }) 
   await page.getByRole('button', { name: 'Clear search' }).click()
   await expect(search).toHaveValue('')
 })
+
+test('empty states: first-run feed CTA + empty reader hint', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('button', { name: 'Add your first feed' })).toBeVisible()
+  await expect(page.getByText('Select an article to read')).toBeVisible()
+})

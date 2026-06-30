@@ -324,6 +324,11 @@
                         </label>
                     </div>
                 </div>
+                <div class="empty-hint" v-if="feeds.length === 0">
+                    <p class="mb-2">No feeds yet.</p>
+                    <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
+                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu. Press <kbd>?</kbd> for keyboard shortcuts.</p>
+                </div>
             </div>
             <div class="p-2 toolbar d-flex align-items-center border-top flex-shrink-0" v-if="loading.feeds">
                 <span class="icon loading mx-2"></span>
@@ -456,6 +461,11 @@
         </div>
         <!-- item show -->
         <div id="col-item" class="vh-100 d-flex flex-column w-100" style="min-width: 0;">
+            <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted" v-if="!itemSelectedDetails">
+                <span class="icon mb-2" style="opacity:.5">{% inline "book-open.svg" %}</span>
+                <p class="mb-1">Select an article to read</p>
+                <p class="small mb-0"><kbd>j</kbd> / <kbd>k</kbd> to move, <kbd>?</kbd> for shortcuts</p>
+            </div>
             <div class="toolbar px-2 d-flex align-items-center" v-if="itemSelectedDetails">
                 <button class="toolbar-item mr-1 d-block d-md-none"
                         @click="itemSelected = null"
