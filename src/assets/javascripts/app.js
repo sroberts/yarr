@@ -2,13 +2,23 @@
 
 var TITLE = document.title
 
-// Resolve a stored theme preference to a concrete theme. 'auto' (the first-run
-// default) follows the OS; legacy values map night -> dark, sepia -> light.
-function resolveThemeName(pref) {
-  if (pref === 'dark' || pref === 'night') return 'dark'
-  if (pref === 'light' || pref === 'sepia') return 'light'
+// Theme preference is one of auto/light/dark (persisted as theme_name).
+// 'auto' follows the OS; legacy values map night -> dark, sepia -> light.
+function normalizeThemePref(pref) {
+  if (pref === 'night') return 'dark'
+  if (pref === 'sepia') return 'light'
+  if (pref === 'light' || pref === 'dark' || pref === 'auto') return pref
+  return 'auto'
+}
+
+function systemTheme() {
   var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   return dark ? 'dark' : 'light'
+}
+
+// Resolve a preference to a concrete theme (auto -> the OS theme).
+function resolveTheme(pref) {
+  return pref === 'auto' ? systemTheme() : pref
 }
 
 function scrollto(target, scroll) {
@@ -128,15 +138,20 @@ vueApp.component('dropdown', {
       }
 
       document.addEventListener('click', this.clickHandler)
+      document.addEventListener('keydown', this.keyHandler)
     },
     hide: function() {
       this.open = false
       document.removeEventListener('click', this.clickHandler)
+      document.removeEventListener('keydown', this.keyHandler)
     },
     clickHandler: function(e) {
       var dropdown = e.target.closest('.dropdown')
       if (dropdown == null || dropdown != this.$el) return this.hide()
       if (e.target.closest('.dropdown-item') != null) return this.hide()
+    },
+    keyHandler: function(e) {
+      if (e.key === 'Escape') { this.hide(); this.$refs.btn.focus() }
     }
   },
 })
@@ -163,8 +178,10 @@ vueApp.component('modal', {
       if (newVal) {
         this.opening = true
         document.addEventListener('click', this.handleClick)
+        document.addEventListener('keydown', this.handleKey)
       } else {
         document.removeEventListener('click', this.handleClick)
+        document.removeEventListener('keydown', this.handleKey)
       }
     },
   },
@@ -175,6 +192,9 @@ vueApp.component('modal', {
         return
       }
       if (e.target.closest('.modal-content') == null) this.$emit('hide')
+    },
+    handleKey: function(e) {
+      if (e.key === 'Escape') this.$emit('hide')
     },
   },
 })
@@ -228,7 +248,16 @@ function rootComponent() { return {
     api.feeds.list_errors().then(function(errors) {
       vm.feed_errors = errors
     })
-    this.updateMetaTheme(this.theme.name)
+    this.updateMetaTheme(resolveTheme(this.theme.name))
+    // when following the OS, react to OS theme changes live
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+        if (vm.theme.name !== 'auto') return
+        var resolved = systemTheme()
+        vm.updateMetaTheme(resolved)
+        document.body.classList.value = 'theme-' + resolved
+      })
+    }
   },
   data: function() {
     var s = app.settings
@@ -265,7 +294,7 @@ function rootComponent() { return {
       'feedStats': {},
       'theme': {
         // 'auto' follows the OS; legacy night -> dark, sepia -> light
-        'name': resolveThemeName(s.theme_name),
+        'name': normalizeThemePref(s.theme_name),
         'font': s.theme_font,
         'size': s.theme_size,
         'accent': s.theme_accent || 'blue',
@@ -402,8 +431,9 @@ function rootComponent() { return {
     'theme': {
       deep: true,
       handler: function(theme) {
-        this.updateMetaTheme(theme.name)
-        document.body.classList.value = 'theme-' + theme.name
+        var resolved = resolveTheme(theme.name)
+        this.updateMetaTheme(resolved)
+        document.body.classList.value = 'theme-' + resolved
         document.body.dataset.accent = theme.accent
         document.body.dataset.density = theme.density
         document.body.dataset.motion = theme.motion

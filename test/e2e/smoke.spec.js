@@ -32,3 +32,21 @@ test('? opens the keyboard-shortcuts modal', async ({ page }) => {
   await page.keyboard.press('?')
   await expect(page.getByText('Keyboard Shortcuts', { exact: true })).toBeVisible()
 })
+
+test('Esc closes the shortcuts modal', async ({ page }) => {
+  await page.goto('/')
+  await page.keyboard.press('?')
+  await expect(page.getByText('Keyboard Shortcuts', { exact: true })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByText('Keyboard Shortcuts', { exact: true })).toBeHidden()
+})
+
+test('theme has an Auto option that follows the OS', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Settings' }).click()
+  await page.getByRole('button', { name: 'dark', exact: true }).click()
+  await expect(page.locator('body')).toHaveClass(/theme-dark/)
+  // Auto resolves to the emulated OS scheme (Playwright defaults to light)
+  await page.getByRole('button', { name: 'auto', exact: true }).click()
+  await expect(page.locator('body')).toHaveClass(/theme-light/)
+})
