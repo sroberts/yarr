@@ -1274,3 +1274,32 @@ body[data-motion="reduce"] *::after {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: none; }
 }
+
+/* ── Hardening: real feeds inject arbitrary HTML ──────── */
+/* wide tables scroll instead of breaking the column */
+.content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+/* long unbroken title words wrap instead of overflowing */
+.content-title {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  text-wrap: balance;
+}
+/* the dialog is programmatically focused on open; don't show a ring for it */
+.modal-content:focus { outline: none; }
+
+/* accent selection cue that survives grayscale / colorblindness */
+.accent-swatch { position: relative; }
+.accent-check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-accent);
+}
+.accent-check > svg { width: .9rem; height: .9rem; }
