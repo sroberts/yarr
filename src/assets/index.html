@@ -609,6 +609,9 @@
                 </table>
             </div>
         </modal>
+        <transition name="toast">
+            <div class="app-toast" v-if="toast" role="status" aria-live="polite">{{ toast.text }}</div>
+        </transition>
     </div>
     <!-- external -->
     <script src="./static/javascripts/vue.global.prod.js"></script>
