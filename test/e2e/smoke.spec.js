@@ -15,7 +15,8 @@ test('app shell renders', async ({ page }) => {
 
 test('theme + accent switch applies to the body', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Settings' }).click()
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
 
   await page.getByRole('button', { name: 'dark', exact: true }).click()
   await expect(page.locator('body')).toHaveClass(/theme-dark/)
@@ -43,7 +44,8 @@ test('Esc closes the shortcuts modal', async ({ page }) => {
 
 test('theme has an Auto option that follows the OS', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: 'Settings' }).click()
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
   await page.getByRole('button', { name: 'dark', exact: true }).click()
   await expect(page.locator('body')).toHaveClass(/theme-dark/)
   // Auto resolves to the emulated OS scheme (Playwright defaults to light)

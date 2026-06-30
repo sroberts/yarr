@@ -1245,3 +1245,12 @@ body[data-motion="reduce"] *::after {
   height: 2rem;
 }
 .reader-empty .icon > svg { width: 2rem; height: 2rem; }
+
+/* ── Settings modal panel ──────────────────────────── */
+.settings-panel .settings-section { margin-bottom: 1.25rem; }
+.settings-panel .settings-label {
+  display: block;
+  font-size: .8rem;
+  color: var(--text-tertiary);
+  margin-bottom: .35rem;
+}

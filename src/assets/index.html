@@ -74,7 +74,7 @@
                     <span class="icon">{% inline "copy.svg" %}</span>
                 </button>
                 <div class="flex-grow-1"></div>
-                <dropdown class="settings-dropdown" toggle-class="btn btn-link toolbar-item px-2" ref="menuDropdown" drop="right" title="Settings">
+                <dropdown class="settings-dropdown" toggle-class="btn btn-link toolbar-item px-2" ref="menuDropdown" drop="right" title="Menu">
                     <template v-slot:button>
                         <span class="icon">{% inline "more-horizontal.svg" %}</span>
                     </template>
@@ -90,103 +90,10 @@
                     </button>
 
                     <div class="dropdown-divider"></div>
-
-                    <header class="dropdown-header" role="heading" aria-level="2">Theme</header>
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item px-0"
-                                :aria-label="t"
-                                :aria-pressed="theme.name == t"
-                                :class="{active: theme.name == t}"
-                                @click.stop="theme.name = t"
-                                v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
-                    </div>
-
-                    <div class="dropdown-divider"></div>
-
-                    <header class="dropdown-header" role="heading" aria-level="2">Accent</header>
-                    <div class="accent-swatches">
-                        <button class="accent-swatch"
-                                :class="'swatch-'+a"
-                                :aria-label="a"
-                                :aria-pressed="theme.accent == a"
-                                @click.stop="theme.accent = a"
-                                v-for="a in ['blue','teal','green','violet','rose','amber','slate']"></button>
-                    </div>
-
-                    <div class="dropdown-divider"></div>
-
-                    <header class="dropdown-header" role="heading" aria-level="2">Density</header>
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item px-0" :aria-pressed="theme.density == 'comfortable'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
-                        <button class="dropdown-item px-0" :aria-pressed="theme.density == 'compact'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
-                    </div>
-
-                    <div class="dropdown-divider"></div>
-
-                    <header class="dropdown-header" role="heading" aria-level="2">Motion</header>
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item px-0" :aria-pressed="theme.motion == 'system'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
-                        <button class="dropdown-item px-0" :aria-pressed="theme.motion == 'reduce'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
-                    </div>
-
-                    <div class="dropdown-divider"></div>
-
-                    <header class="dropdown-header" role="heading" aria-level="2">Auto Refresh</header>
-                    <div class="row text-center m-0">
-                        <button class="dropdown-item col-4 px-0"
-                                @click.stop="changeRefreshRate(-1)"
-                                :disabled="!refreshRate">
-                            <span class="icon">
-                                {% inline "chevron-down.svg" %}
-                            </span>
-                        </button>
-                        <div class="col-4 d-flex align-items-center justify-content-center">{{ refreshRateTitle }}</div>
-                        <button class="dropdown-item col-4 px-0"
-                                @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value">
-                            <span class="icon">
-                                {% inline "chevron-up.svg" %}
-                            </span>
-                        </button>
-                    </div>
-
-                    <div class="dropdown-divider"></div>
-
-                    <header class="dropdown-header" role="heading" aria-level="2">Show first</header>
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item px-0" :aria-pressed="itemSortNewestFirst"  :class="{active: itemSortNewestFirst}"  @click.stop="itemSortNewestFirst=true">New</button>
-                        <button class="dropdown-item px-0" :aria-pressed="!itemSortNewestFirst" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
-                    </div>
-                    <div class="dropdown-divider"></div>
-                    <header class="dropdown-header" role="heading" aria-level="2">Instapaper</header>
-                    <div class="px-3 py-1">
-                        <input type="text"
-                               class="form-control form-control-sm mb-1"
-                               placeholder="Username or email"
-                               :value="instapaperUsername"
-                               @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
-                        <input type="password"
-                               class="form-control form-control-sm"
-                               placeholder="Password"
-                               :value="instapaperPassword"
-                               @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
-                    </div>
-                    <div class="dropdown-divider"></div>
-                    <header class="dropdown-header" role="heading" aria-level="2">Subscriptions</header>
-                    <form id="opml-import-form" enctype="multipart/form-data" tabindex="-1">
-                        <input type="file"
-                               id="opml-import"
-                               @change="importOPML"
-                               name="opml"
-                               style="opacity: 0; width: 1px; height: 0; position: absolute; z-index: -1;">
-                        <label class="dropdown-item mb-0 cursor-pointer" for="opml-import" @click.stop="">
-                            <span class="icon mr-1">{% inline "download.svg" %}</span>
-                            Import
-                        </label>
-                    </form>
-                    <a class="dropdown-item" href="./opml/export">
-                        <span class="icon mr-1">{% inline "upload.svg" %}</span>
-                        Export
-                    </a>
+                    <button class="dropdown-item" @click="showSettings('settings')">
+                        <span class="icon mr-1">{% inline "sliders.svg" %}</span>
+                        Settings
+                    </button>
                     <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="showSettings('shortcuts')">
                         <span class="icon mr-1">{% inline "help-circle.svg" %}</span>
@@ -562,7 +469,82 @@
             <button class="btn btn-link outline-none float-right p-2 mr-n2 mt-n2" style="line-height: 1" @click="settings = ''">
                 <span class="icon">{% inline "x.svg" %}</span>
             </button>
-            <div v-if="settings=='create'">
+            <div v-if="settings=='settings'" class="settings-panel">
+                <p class="cursor-default"><b>Settings</b></p>
+
+                <div class="settings-section">
+                    <label class="settings-label">Theme</label>
+                    <div class="d-flex text-center">
+                        <button class="dropdown-item px-0" :aria-label="t" :aria-pressed="theme.name == t" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">Accent</label>
+                    <div class="accent-swatches">
+                        <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="theme.accent == a" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']"></button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">Density</label>
+                    <div class="d-flex text-center">
+                        <button class="dropdown-item px-0" :aria-pressed="theme.density == 'comfortable'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
+                        <button class="dropdown-item px-0" :aria-pressed="theme.density == 'compact'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">Motion</label>
+                    <div class="d-flex text-center">
+                        <button class="dropdown-item px-0" :aria-pressed="theme.motion == 'system'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
+                        <button class="dropdown-item px-0" :aria-pressed="theme.motion == 'reduce'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">Auto refresh</label>
+                    <div class="row text-center m-0">
+                        <button class="dropdown-item col-4 px-0" @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate">
+                            <span class="icon">{% inline "chevron-down.svg" %}</span>
+                        </button>
+                        <div class="col-4 d-flex align-items-center justify-content-center">{{ refreshRateTitle }}</div>
+                        <button class="dropdown-item col-4 px-0" @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value">
+                            <span class="icon">{% inline "chevron-up.svg" %}</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">Show first</label>
+                    <div class="d-flex text-center">
+                        <button class="dropdown-item px-0" :aria-pressed="itemSortNewestFirst" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
+                        <button class="dropdown-item px-0" :aria-pressed="!itemSortNewestFirst" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">Instapaper</label>
+                    <input type="text" class="form-control form-control-sm mb-1" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
+                    <input type="password" class="form-control form-control-sm" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
+                </div>
+
+                <div class="settings-section">
+                    <label class="settings-label">Subscriptions</label>
+                    <div class="d-flex">
+                        <form id="opml-import-form" enctype="multipart/form-data" tabindex="-1" class="mr-2">
+                            <input type="file" id="opml-import" @change="importOPML" name="opml" style="opacity: 0; width: 1px; height: 0; position: absolute; z-index: -1;">
+                            <label class="btn btn-default mb-0 cursor-pointer" for="opml-import">
+                                <span class="icon mr-1">{% inline "download.svg" %}</span> Import
+                            </label>
+                        </form>
+                        <a class="btn btn-default" href="./opml/export">
+                            <span class="icon mr-1">{% inline "upload.svg" %}</span> Export
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div v-else-if="settings=='create'">
                 <p class="cursor-default"><b>New Feed</b></p>
                 <form action="" @submit.prevent="createFeed(event)" class="mt-4">
                     <label for="feed-url">URL</label>
