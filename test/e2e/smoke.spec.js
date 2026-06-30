@@ -50,3 +50,14 @@ test('theme has an Auto option that follows the OS', async ({ page }) => {
   await page.getByRole('button', { name: 'auto', exact: true }).click()
   await expect(page.locator('body')).toHaveClass(/theme-light/)
 })
+
+test('search has placeholder, clear button, and result count', async ({ page }) => {
+  await page.goto('/')
+  const search = page.locator('#searchbar')
+  await expect(search).toHaveAttribute('placeholder', 'Search articles')
+  await search.fill('golang')
+  await expect(page.getByRole('button', { name: 'Clear search' })).toBeVisible()
+  await expect(page.getByText(/result.* for "golang"/)).toBeVisible()
+  await page.getByRole('button', { name: 'Clear search' }).click()
+  await expect(search).toHaveValue('')
+})
