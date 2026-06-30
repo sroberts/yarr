@@ -98,7 +98,7 @@
                                 :aria-pressed="theme.name == t"
                                 :class="{active: theme.name == t}"
                                 @click.stop="theme.name = t"
-                                v-for="t in ['light', 'dark']">{{ t }}</button>
+                                v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
                     </div>
 
                     <div class="dropdown-divider"></div>
