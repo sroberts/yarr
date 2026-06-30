@@ -1232,3 +1232,16 @@ body[data-motion="reduce"] *::after {
 .input-icon .search-clear:hover { color: var(--text-primary); }
 /* hide the native search clear so we use ours */
 .toolbar-search[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+/* ── Empty states ──────────────────────────────────── */
+.empty-hint {
+  max-width: 18rem;
+  margin: 2rem auto 0;
+  padding: 0 .5rem;
+  text-align: center;
+}
+.reader-empty .icon {
+  width: 2rem;
+  height: 2rem;
+}
+.reader-empty .icon > svg { width: 2rem; height: 2rem; }
