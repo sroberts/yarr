@@ -1086,6 +1086,7 @@ a,
 a:focus-visible,
 .card-folder-select:focus-visible,
 .card-undo-btn:focus-visible,
+.search-clear:focus-visible,
 .form-control:focus-visible,
 [role="button"]:focus-visible,
 [tabindex]:focus-visible {
@@ -1303,3 +1304,11 @@ body[data-motion="reduce"] *::after {
   color: var(--on-accent);
 }
 .accent-check > svg { width: .9rem; height: .9rem; }
+
+/* Polish: placeholders default to a too-faint browser color; pin them to the
+   AA-checked tertiary token (opacity:1 so it isn't dimmed further). */
+.form-control::placeholder,
+.toolbar-search::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
