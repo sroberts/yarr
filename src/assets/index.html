@@ -454,7 +454,7 @@
                     <div v-if="!itemSelectedReadability">
                         <div v-if="contentImages.length">
                             <figure v-for="media in contentImages">
-                                <img :src="media.url" loading="lazy">
+                                <img :src="media.url" :alt="media.description || ''" loading="lazy">
                                 <figcaption v-if="media.description">{{ media.description }}</figcaption>
                             </figure>
                         </div>
