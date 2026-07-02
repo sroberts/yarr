@@ -40,7 +40,7 @@
     </script>
     <div id="app" class="d-flex" :class="{'feed-selected': feedSelected !== null, 'item-selected': itemSelected !== null, 'card-mode': cardMode}" v-cloak>
         <!-- feed list -->
-        <div id="col-feed-list" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
+        <div id="col-feed-list" role="navigation" aria-label="Feeds" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
             <drag :width="feedListWidth" @resize="resizeFeedList"></drag>
             <div class="p-2 toolbar d-flex align-items-center">
                 <div class="icon mx-2">{% inline "anchor.svg" %}</div>
@@ -243,7 +243,7 @@
             </div>
         </div>
         <!-- item list -->
-        <div id="col-item-list" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: itemListWidth+'px'}">
+        <div id="col-item-list" role="region" aria-label="Articles" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: itemListWidth+'px'}">
             <drag :width="itemListWidth" @resize="resizeItemList"></drag>
             <div class="px-2 toolbar d-flex align-items-center">
                 <button class="toolbar-item mr-2 d-block d-md-none"
@@ -254,7 +254,7 @@
                 <div class="input-icon flex-grow-1">
                     <span class="icon">{% inline "search.svg" %}</span>
                     <!-- id used by keybindings -->
-                    <input id="searchbar" type="search" placeholder="Search articles" class="d-block toolbar-search" v-model="itemSearch" @keydown.enter="$event.target.blur()" @keydown.esc="itemSearch = ''">
+                    <input id="searchbar" type="search" aria-label="Search articles" placeholder="Search articles" class="d-block toolbar-search" v-model="itemSearch" @keydown.enter="$event.target.blur()" @keydown.esc="itemSearch = ''">
                     <button class="search-clear" v-if="itemSearch" @click="itemSearch = ''" title="Clear search" aria-label="Clear search">
                         <span class="icon">{% inline "x.svg" %}</span>
                     </button>
@@ -367,7 +367,7 @@
             </div>
         </div>
         <!-- item show -->
-        <div id="col-item" class="vh-100 d-flex flex-column w-100" style="min-width: 0;">
+        <div id="col-item" role="main" aria-label="Article" class="vh-100 d-flex flex-column w-100" style="min-width: 0;">
             <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted" v-if="!itemSelectedDetails && !itemUnavailable">
                 <span class="icon mb-2" style="opacity:.5">{% inline "book-open.svg" %}</span>
                 <p class="mb-1">Select an article to read</p>
@@ -476,7 +476,7 @@
                 <span class="icon">{% inline "x.svg" %}</span>
             </button>
             <div v-if="settings=='settings'" class="settings-panel">
-                <p class="cursor-default"><b>Settings</b></p>
+                <p class="cursor-default" role="heading" aria-level="2"><b>Settings</b></p>
 
                 <div class="settings-group">
                     <div class="settings-title">Appearance</div>
@@ -535,8 +535,8 @@
 
                 <div class="settings-group">
                     <div class="settings-title">Instapaper</div>
-                    <input type="text" class="form-control form-control-sm mb-1" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
-                    <input type="password" class="form-control form-control-sm" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
+                    <input type="text" class="form-control form-control-sm mb-1" aria-label="Instapaper username or email" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
+                    <input type="password" class="form-control form-control-sm" aria-label="Instapaper password" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
                 </div>
 
                 <div class="settings-group">
@@ -555,10 +555,10 @@
                 </div>
             </div>
             <div v-else-if="settings=='create'">
-                <p class="cursor-default"><b>New Feed</b></p>
+                <p class="cursor-default" role="heading" aria-level="2"><b>New Feed</b></p>
                 <form action="" @submit.prevent="createFeed(event)" class="mt-4">
                     <label for="feed-url">URL</label>
-                    <input id="feed-url" name="url" type="url" class="form-control" required autocomplete="off" :readonly="feedNewChoice.length > 0" placeholder="https://example.com/feed" v-focus>
+                    <input id="feed-url" name="url" type="url" class="form-control" required autocomplete="off" aria-label="Feed or site URL" :readonly="feedNewChoice.length > 0" placeholder="https://example.com/feed" v-focus>
                     <label for="feed-folder" class="mt-3 d-block">
                         Folder
                         <a href="#" class="float-right text-decoration-none" @click.prevent="createNewFeedFolder()">new folder</a>
@@ -584,7 +584,7 @@
                 </form>
             </div>
             <div v-else-if="settings=='shortcuts'">
-                <p class="cursor-default"><b>Keyboard Shortcuts</b></p>
+                <p class="cursor-default" role="heading" aria-level="2"><b>Keyboard Shortcuts</b></p>
 
                 <table class="table table-borderless table-sm table-compact m-0">
                     <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td>

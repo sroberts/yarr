@@ -102,3 +102,16 @@ test('offline reading: cache hit shows content, miss shows message', async ({ pa
   await expect(page.getByText('Not available offline')).toBeVisible()
   await context.setOffline(false)
 })
+
+test('a11y: inputs have accessible names and panes expose landmarks', async ({ page }) => {
+  await page.goto('/')
+  // placeholder-only inputs previously had no programmatic name (WCAG 4.1.2)
+  await expect(page.getByRole('searchbox', { name: 'Search articles' })).toBeVisible()
+  // the three panes are navigable as landmarks
+  await expect(page.getByRole('navigation', { name: 'Feeds' })).toBeVisible()
+  await expect(page.getByRole('main', { name: 'Article' })).toBeVisible()
+  // modal titles are headings, not styled paragraphs
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible()
+})
