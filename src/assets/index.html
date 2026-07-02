@@ -480,8 +480,8 @@
 
                 <div class="settings-section">
                     <label class="settings-label">Theme</label>
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item px-0" :aria-label="t" :aria-pressed="theme.name == t" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
+                    <div class="segmented">
+                        <button :aria-label="t" :aria-pressed="theme.name == t" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
                     </div>
                 </div>
 
@@ -496,28 +496,28 @@
 
                 <div class="settings-section">
                     <label class="settings-label">Density</label>
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item px-0" :aria-pressed="theme.density == 'comfortable'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
-                        <button class="dropdown-item px-0" :aria-pressed="theme.density == 'compact'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
+                    <div class="segmented">
+                        <button :aria-pressed="theme.density == 'comfortable'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
+                        <button :aria-pressed="theme.density == 'compact'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
                     </div>
                 </div>
 
                 <div class="settings-section">
                     <label class="settings-label">Motion</label>
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item px-0" :aria-pressed="theme.motion == 'system'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
-                        <button class="dropdown-item px-0" :aria-pressed="theme.motion == 'reduce'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
+                    <div class="segmented">
+                        <button :aria-pressed="theme.motion == 'system'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
+                        <button :aria-pressed="theme.motion == 'reduce'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
                     </div>
                 </div>
 
                 <div class="settings-section">
                     <label class="settings-label">Auto refresh</label>
-                    <div class="row text-center m-0">
-                        <button class="dropdown-item col-4 px-0" @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate">
+                    <div class="segmented">
+                        <button @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate" aria-label="less frequent">
                             <span class="icon">{% inline "chevron-down.svg" %}</span>
                         </button>
-                        <div class="col-4 d-flex align-items-center justify-content-center">{{ refreshRateTitle }}</div>
-                        <button class="dropdown-item col-4 px-0" @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value">
+                        <div class="segmented-value">{{ refreshRateTitle }}</div>
+                        <button @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value" aria-label="more frequent">
                             <span class="icon">{% inline "chevron-up.svg" %}</span>
                         </button>
                     </div>
@@ -525,9 +525,9 @@
 
                 <div class="settings-section">
                     <label class="settings-label">Show first</label>
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item px-0" :aria-pressed="itemSortNewestFirst" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
-                        <button class="dropdown-item px-0" :aria-pressed="!itemSortNewestFirst" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
+                    <div class="segmented">
+                        <button :aria-pressed="itemSortNewestFirst" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
+                        <button :aria-pressed="!itemSortNewestFirst" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
                     </div>
                 </div>
 
