@@ -1248,7 +1248,12 @@ body[data-motion="reduce"] *::after {
 .reader-empty .icon > svg { width: 2rem; height: 2rem; }
 
 /* ── Settings modal panel ──────────────────────────── */
-.settings-panel .settings-section { margin-bottom: 1.25rem; }
+.settings-panel .settings-section { margin-bottom: 1.5rem; }
+
+/* On phones let the modal use more width so controls aren't cramped (#86). */
+@media (max-width: 480px) {
+  .modal-dialog { margin: 1rem .5rem; max-width: none; }
+}
 .settings-panel .settings-label {
   display: block;
   font-size: .8rem;
@@ -1312,3 +1317,37 @@ body[data-motion="reduce"] *::after {
   color: var(--text-tertiary);
   opacity: 1;
 }
+
+/* ── Segmented control (settings toggles) ──────────────
+   A bordered track of equal segments so inactive options read as
+   selectable, not as floating text. Fixes the dense/ambiguous mobile
+   Settings toggles (#86). Active = accent fill; dividers between segments. */
+.segmented {
+  display: flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented > * {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: .4rem .5rem;
+  text-align: center;
+  border-left: 1px solid var(--border-subtle);
+}
+.segmented > *:first-child { border-left: 0; }
+.segmented > button {
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.segmented > button:hover { background: var(--surface-hover); }
+.segmented > button.active { background: var(--accent); color: var(--on-accent); }
+.segmented > button:disabled { opacity: .4; cursor: not-allowed; }
+.segmented > button:disabled:hover { background: transparent; }
+.segmented > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.segmented-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
