@@ -126,7 +126,10 @@ kbd {
 /* ── flex / display utilities ───────────────────── */
 .d-flex { display: flex; }
 .d-block { display: block; }
-.d-none { display: none; }
+/* !important so the utility beats component display rules (e.g. .selectgroup
+   { display: block } in app.css, which loads later and otherwise wins at equal
+   specificity — leaving d-none'd feed/folder rows visible). Matches Bootstrap. */
+.d-none { display: none !important; }
 .flex-column { flex-direction: column; }
 .flex-fill { flex: 1 1 auto; }
 .flex-grow-1 { flex-grow: 1; }

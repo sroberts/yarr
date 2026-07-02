@@ -158,3 +158,19 @@ test('resume position: reopening an article restores scroll offset', async ({ pa
   expect(y).toBeGreaterThan(1000)
   await context.setOffline(false)
 })
+
+test('d-none actually hides a .selectgroup (feed-list unread filter depends on it)', async ({ page }) => {
+  await page.goto('/')
+  // Regression guard: .selectgroup { display: block } (app.css) and .d-none
+  // (base.css) have equal specificity; if d-none loses the cascade, feed/folder
+  // rows that should be hidden in the All-Unread view stay visible (#100).
+  const display = await page.evaluate(() => {
+    const el = document.createElement('label')
+    el.className = 'selectgroup d-none'
+    document.body.appendChild(el)
+    const d = getComputedStyle(el).display
+    el.remove()
+    return d
+  })
+  expect(display).toBe('none')
+})
