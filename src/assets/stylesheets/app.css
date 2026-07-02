@@ -396,13 +396,18 @@ select.form-control:not([multiple]):not([size]) {
 /* column dividers: border starts below the toolbar, not at window top */
 #col-feed-list,
 #col-item-list {
-  border-right: 1px solid;
-  border-image: linear-gradient(to bottom, transparent 2rem, var(--border-subtle) 2rem) 1;
+  border-right: 1px solid var(--border-subtle);
 }
 
 .toolbar {
   min-height: 2rem !important;
   max-height: 2rem !important;
+}
+
+/* Empty reading-pane header: continues the top-bar divider across the pane
+   when no article is open, so the rule spans the full width. */
+.reader-blank-toolbar {
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .toolbar-item {

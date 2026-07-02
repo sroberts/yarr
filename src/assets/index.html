@@ -369,6 +369,9 @@
         </div>
         <!-- item show -->
         <div id="col-item" role="main" aria-label="Article" class="vh-100 d-flex flex-column w-100" style="min-width: 0;">
+            <!-- blank header keeps the top-bar rule continuous across the reading
+                 pane when no article is open (matches the other columns' toolbars) -->
+            <div class="toolbar reader-blank-toolbar flex-shrink-0" v-if="!itemSelectedDetails"></div>
             <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted" v-if="!itemSelectedDetails && !itemUnavailable">
                 <span class="icon mb-2" style="opacity:.5">{% inline "book-open.svg" %}</span>
                 <p class="mb-1">Select an article to read</p>
