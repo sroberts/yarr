@@ -83,3 +83,22 @@ test('accent selection shows a check (not color-only) and modal takes focus', as
     !!document.querySelector('.accent-swatch.swatch-violet .accent-check'))
   expect(violetHasCheck).toBe(true)
 })
+
+test('offline reading: cache hit shows content, miss shows message', async ({ page, context }) => {
+  await page.goto('/')
+  // seed the offline store with a deliberately-kept article
+  await page.evaluate(() => window.offlineStore.put({
+    id: 999001, title: 'Cached Article', feed_id: 1,
+    date: new Date().toISOString(), content: '<p>Offline body text.</p>', status: 'starred'
+  }))
+  await context.setOffline(true)
+  // opening the cached item resolves from IndexedDB
+  await page.evaluate(() => { vm.itemSelected = 999001 })
+  await expect(page.getByRole('heading', { name: 'Cached Article' })).toBeVisible()
+  await expect(page.getByText('offline copy')).toBeVisible()
+  await expect(page.getByText('Offline body text.')).toBeVisible()
+  // an uncached item shows the calm offline message
+  await page.evaluate(() => { vm.itemSelected = 424242 })
+  await expect(page.getByText('Not available offline')).toBeVisible()
+  await context.setOffline(false)
+})

@@ -368,10 +368,15 @@
         </div>
         <!-- item show -->
         <div id="col-item" class="vh-100 d-flex flex-column w-100" style="min-width: 0;">
-            <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted" v-if="!itemSelectedDetails">
+            <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted" v-if="!itemSelectedDetails && !itemUnavailable">
                 <span class="icon mb-2" style="opacity:.5">{% inline "book-open.svg" %}</span>
                 <p class="mb-1">Select an article to read</p>
                 <p class="small mb-0"><kbd>j</kbd> / <kbd>k</kbd> to move, <kbd>?</kbd> for shortcuts</p>
+            </div>
+            <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted px-4 text-center" v-if="itemUnavailable">
+                <span class="icon mb-2" style="opacity:.5">{% inline "alert-circle.svg" %}</span>
+                <p class="mb-1">Not available offline</p>
+                <p class="small mb-0">Star or save an article while online to read it here without a connection.</p>
             </div>
             <div class="toolbar px-2 d-flex align-items-center" v-if="itemSelectedDetails">
                 <button class="toolbar-item mr-1 d-block d-md-none"
@@ -449,6 +454,7 @@
                             </span>
                         </div>
                         <time>{{ formatDate(itemSelectedDetails.date) }}</time>
+                        <span v-if="itemOffline" class="small"> · offline copy</span>
                     </div>
                     <hr>
                     <div v-if="!itemSelectedReadability">
@@ -617,6 +623,7 @@
     <script src="./static/javascripts/vue.global.prod.js"></script>
     <!-- internal -->
     <script src="./static/javascripts/api.js"></script>
+    <script src="./static/javascripts/offline.js"></script>
     <script src="./static/javascripts/app.js"></script>
     <script src="./static/javascripts/swipe.js"></script>
     <script src="./static/javascripts/key.js"></script>

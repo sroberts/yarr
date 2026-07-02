@@ -325,6 +325,8 @@ function rootComponent() { return {
       'cardLoading': false,
       'cardUndo': null,
       'toast': null,
+      'itemOffline': false,
+      'itemUnavailable': false,
       'cardFolder': '',
       'previousFilter': '',
       'refreshRateOptions': [
@@ -505,6 +507,8 @@ function rootComponent() { return {
     },
     'itemSelected': function(newVal, oldVal) {
       this.itemSelectedReadability = ''
+      this.itemOffline = false
+      this.itemUnavailable = false
       if (newVal === null) {
         this.itemSelectedDetails = null
         return
@@ -513,6 +517,10 @@ function rootComponent() { return {
 
       api.items.get(newVal).then(function(item) {
         this.itemSelectedDetails = item
+        // keep the offline copy of deliberately-kept articles fresh
+        if (item.status == 'starred' || item.instapaper_saved) {
+          if (window.offlineStore) window.offlineStore.put(item)
+        }
         if (this.itemSelectedDetails.status == 'unread') {
           api.items.update(this.itemSelectedDetails.id, {status: 'read'}).then(function() {
             this.feedStats[this.itemSelectedDetails.feed_id].unread -= 1
@@ -521,6 +529,20 @@ function rootComponent() { return {
             this.itemSelectedDetails.status = 'read'
           }.bind(this))
         }
+      }.bind(this)).catch(function() {
+        // network unavailable — fall back to the offline cache
+        var self = this
+        var lookup = window.offlineStore ? window.offlineStore.get(newVal) : Promise.resolve(null)
+        lookup.then(function(cached) {
+          if (self.itemSelected !== newVal) return  // selection moved on
+          if (cached) {
+            self.itemSelectedDetails = cached
+            self.itemOffline = true
+          } else {
+            self.itemSelectedDetails = null
+            self.itemUnavailable = true
+          }
+        })
       }.bind(this))
     },
     'itemSearch': debounce(function(newVal) {
@@ -790,6 +812,11 @@ function rootComponent() { return {
         var itemInList = this.items.find(function(i) { return i.id == item.id })
         if (itemInList) itemInList.status = newstatus
         item.status = newstatus
+        // cache the open article for offline reading when it's starred
+        if (newstatus == 'starred' && window.offlineStore &&
+            this.itemSelectedDetails && this.itemSelectedDetails.id == item.id) {
+          window.offlineStore.put(this.itemSelectedDetails)
+        }
       }.bind(this))
     },
     toggleItemStarred: function(item) {
@@ -842,6 +869,7 @@ function rootComponent() { return {
           vm.showToast('Saved to Instapaper')
           vm.itemSelectedDetails.instapaper_saved = true
           vm.itemSelectedDetails.status = 'read'
+          if (window.offlineStore) window.offlineStore.put(vm.itemSelectedDetails)
           var itemInList = vm.items.find(function(i) { return i.id == item.id })
           if (itemInList) {
             itemInList.status = 'read'
