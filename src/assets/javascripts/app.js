@@ -2,6 +2,45 @@
 
 var TITLE = document.title
 
+// Reading time: computed client-side from an item's content (the list payload
+// already ships content), memoized per item id so re-renders are cheap.
+// Returns whole minutes at ~200 wpm (min 1), '60+' past an hour, or null when
+// there's no prose to estimate (link-only posts) so the UI shows nothing.
+var readingTimeCache = {}
+function readingMinutes(item) {
+  if (!item || item.id == null) return null
+  if (readingTimeCache[item.id] !== undefined) return readingTimeCache[item.id]
+  var text = (item.content || '').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').trim()
+  var words = text ? text.split(/\s+/).length : 0
+  var mins = words ? Math.max(1, Math.round(words / 200)) : null
+  if (mins && mins > 60) mins = '60+'
+  readingTimeCache[item.id] = mins
+  return mins
+}
+
+// Resume position: remember where you left off in a long article. Per-device,
+// per-item scroll offsets in localStorage — ephemeral, no server round-trip.
+// Bounded (oldest evicted past CAP) so it never grows without limit.
+var readingScroll = (function() {
+  var KEY = 'yarr:scroll', CAP = 100, map = {}
+  try { map = JSON.parse(localStorage.getItem(KEY)) || {} } catch (e) { map = {} }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(map)) } catch (e) {} }
+  return {
+    get: function(id) { return (map[id] && map[id].y) || 0 },
+    set: function(id, y) {
+      map[id] = {y: y, t: Date.now()}
+      var keys = Object.keys(map)
+      if (keys.length > CAP) {
+        keys.sort(function(a, b) { return map[a].t - map[b].t })
+        delete map[keys[0]]
+        persist()
+      } else {
+        persist()
+      }
+    },
+  }
+})()
+
 // Theme preference is one of auto/light/dark (persisted as theme_name).
 // 'auto' follows the OS; legacy values map night -> dark, sepia -> light.
 function normalizeThemePref(pref) {
@@ -517,6 +556,7 @@ function rootComponent() { return {
 
       api.items.get(newVal).then(function(item) {
         this.itemSelectedDetails = item
+        this.restoreScroll(newVal)
         // keep the offline copy of deliberately-kept articles fresh
         if (item.status == 'starred' || item.instapaper_saved) {
           if (window.offlineStore) window.offlineStore.put(item)
@@ -538,6 +578,7 @@ function rootComponent() { return {
           if (cached) {
             self.itemSelectedDetails = cached
             self.itemOffline = true
+            self.restoreScroll(newVal)
           } else {
             self.itemSelectedDetails = null
             self.itemUnavailable = true
@@ -568,6 +609,23 @@ function rootComponent() { return {
   methods: {
     updateMetaTheme: function(theme) {
       document.querySelector("meta[name='theme-color']").content = this.themeColors[theme] || this.themeColors.light
+    },
+    // Estimated reading time for an item (see readingMinutes). Template helper.
+    readingTime: function(item) {
+      return readingMinutes(item)
+    },
+    // Remember the reading pane's scroll offset for the open article (debounced
+    // so a scroll gesture stores once, not on every frame).
+    saveScroll: debounce(function() {
+      var el = this.$refs.content
+      if (el && this.itemSelected != null) readingScroll.set(this.itemSelected, el.scrollTop)
+    }, 250),
+    // Restore a stored offset after the article's DOM has rendered.
+    restoreScroll: function(id) {
+      this.$nextTick(function() {
+        var el = this.$refs.content
+        if (el) el.scrollTop = readingScroll.get(id)
+      }.bind(this))
     },
     refreshStats: function(loopMode) {
       return api.status().then(function(data) {

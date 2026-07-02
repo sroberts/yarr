@@ -358,6 +358,7 @@
                             <small class="flex-fill text-truncate mr-1">
                                 {{ (feedsById[item.feed_id] || {}).title }}
                             </small>
+                            <small class="flex-shrink-0 mr-1" v-if="readingTime(item)">{{ readingTime(item) }} min ·</small>
                             <small class="flex-shrink-0"><relative-time v-bind:title="formatDate(item.date)" :val="item.date"/></small>
                         </div>
                         <div>{{ item.title || 'untitled' }}</div>
@@ -442,6 +443,7 @@
             </div>
             <div v-if="itemSelectedDetails"
                  ref="content"
+                 @scroll="saveScroll"
                  class="content px-4 pt-3 pb-5 border-top overflow-auto scroll-touch"
                  :class="{'font-serif': theme.font == 'serif', 'font-monospace': theme.font == 'monospace'}"
                  :style="{'font-size': theme.size + 'rem'}">
@@ -454,6 +456,7 @@
                             </span>
                         </div>
                         <time>{{ formatDate(itemSelectedDetails.date) }}</time>
+                        <span v-if="readingTime(itemSelectedDetails)" class="small"> · {{ readingTime(itemSelectedDetails) }} min</span>
                         <span v-if="itemOffline" class="small"> · offline copy</span>
                     </div>
                     <hr>
