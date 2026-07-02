@@ -1,11 +1,13 @@
-var CACHE_NAME = 'yarr-v2';
+var CACHE_NAME = 'yarr-v3';
 var STATIC_ASSETS = [
-  './static/stylesheets/bootstrap.min.css',
+  './static/stylesheets/base.css',
   './static/stylesheets/app.css',
-  './static/javascripts/vue.min.js',
+  './static/javascripts/vue.global.prod.js',
   './static/javascripts/api.js',
   './static/javascripts/app.js',
   './static/javascripts/key.js',
+  './static/javascripts/swipe.js',
+  './static/fonts/inter.woff2',
   './static/graphicarts/favicon.svg',
   './static/graphicarts/favicon.png',
   './static/graphicarts/icon-192.png',
