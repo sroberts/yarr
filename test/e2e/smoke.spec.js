@@ -115,3 +115,46 @@ test('a11y: inputs have accessible names and panes expose landmarks', async ({ p
   await page.getByRole('button', { name: 'Settings', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible()
 })
+
+test('reading time: shows N min from content, hidden for link-only posts', async ({ page }) => {
+  await page.goto('/')
+  // let the initial refreshItems() settle first (on a fresh DB it resolves to
+  // [] and would otherwise clobber our seed), then freeze it and seed.
+  await page.waitForLoadState('networkidle')
+  await page.evaluate(() => {
+    vm.refreshItems = () => Promise.resolve()
+    vm.items = [
+      { id: 500002, feed_id: 1, title: 'Longread', status: 'read', content: '<p>' + 'word '.repeat(1000) + '</p>' },
+      { id: 500003, feed_id: 1, title: 'Linkonly', status: 'read', content: '' },
+    ]
+  })
+  // 1000 words / 200 wpm => 5 min
+  await expect(page.locator('label.selectgroup', { hasText: 'Longread' })).toContainText('5 min')
+  // no prose => no reading-time label at all (absence beats "0 min")
+  await expect(page.locator('label.selectgroup', { hasText: 'Linkonly' })).not.toContainText('min')
+})
+
+test('resume position: reopening an article restores scroll offset', async ({ page, context }) => {
+  await page.goto('/')
+  await page.evaluate(() => window.offlineStore.put({
+    id: 700001, feed_id: 1, title: 'Resume Me', status: 'starred', media_links: [],
+    content: '<div>' + '<p>a paragraph tall enough to scroll past</p>'.repeat(300) + '</div>',
+  }))
+  await context.setOffline(true)               // force the offline render path (no server item)
+  await page.evaluate(() => { vm.itemSelected = 700001 })
+  await expect(page.getByRole('heading', { name: 'Resume Me' })).toBeVisible()
+  // scroll down and let the debounced save fire
+  await page.evaluate(() => {
+    vm.$refs.content.scrollTop = 1500
+    vm.$refs.content.dispatchEvent(new Event('scroll'))
+  })
+  await page.waitForTimeout(400)
+  // leave and come back
+  await page.evaluate(() => { vm.itemSelected = null })
+  await page.evaluate(() => { vm.itemSelected = 700001 })
+  await expect(page.getByRole('heading', { name: 'Resume Me' })).toBeVisible()
+  await page.waitForTimeout(200)
+  const y = await page.evaluate(() => vm.$refs.content.scrollTop)
+  expect(y).toBeGreaterThan(1000)
+  await context.setOffline(false)
+})
