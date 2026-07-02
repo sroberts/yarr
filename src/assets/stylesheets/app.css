@@ -1248,7 +1248,21 @@ body[data-motion="reduce"] *::after {
 .reader-empty .icon > svg { width: 2rem; height: 2rem; }
 
 /* ── Settings modal panel ──────────────────────────── */
-.settings-panel .settings-section { margin-bottom: 1.5rem; }
+/* Grouped settings: chunk the eight controls into labelled clusters with
+   rhythm — generous space between groups, tight within — so the modal reads
+   as four scannable sections instead of a flat list (#86 P2). */
+.settings-panel .settings-group { margin-bottom: 2rem; }
+.settings-panel .settings-group:last-child { margin-bottom: .5rem; }
+.settings-panel .settings-title {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding-bottom: .35rem;
+  margin-bottom: .9rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.settings-panel .settings-section { margin-bottom: 1rem; }
+.settings-panel .settings-section:last-child { margin-bottom: 0; }
 
 /* On phones let the modal use more width so controls aren't cramped (#86). */
 @media (max-width: 480px) {

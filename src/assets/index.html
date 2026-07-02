@@ -478,67 +478,69 @@
             <div v-if="settings=='settings'" class="settings-panel">
                 <p class="cursor-default"><b>Settings</b></p>
 
-                <div class="settings-section">
-                    <label class="settings-label">Theme</label>
-                    <div class="segmented">
-                        <button :aria-label="t" :aria-pressed="theme.name == t" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
+                <div class="settings-group">
+                    <div class="settings-title">Appearance</div>
+                    <div class="settings-section">
+                        <label class="settings-label">Theme</label>
+                        <div class="segmented">
+                            <button :aria-label="t" :aria-pressed="theme.name == t" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <label class="settings-label">Accent</label>
+                        <div class="accent-swatches">
+                            <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="theme.accent == a" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
+                                <span class="accent-check" v-if="theme.accent == a">{% inline "check.svg" %}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <label class="settings-label">Density</label>
+                        <div class="segmented">
+                            <button :aria-pressed="theme.density == 'comfortable'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
+                            <button :aria-pressed="theme.density == 'compact'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <label class="settings-label">Motion</label>
+                        <div class="segmented">
+                            <button :aria-pressed="theme.motion == 'system'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
+                            <button :aria-pressed="theme.motion == 'reduce'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="settings-section">
-                    <label class="settings-label">Accent</label>
-                    <div class="accent-swatches">
-                        <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="theme.accent == a" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
-                            <span class="accent-check" v-if="theme.accent == a">{% inline "check.svg" %}</span>
-                        </button>
+                <div class="settings-group">
+                    <div class="settings-title">Reading</div>
+                    <div class="settings-section">
+                        <label class="settings-label">Auto refresh</label>
+                        <div class="segmented">
+                            <button @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate" aria-label="less frequent">
+                                <span class="icon">{% inline "chevron-down.svg" %}</span>
+                            </button>
+                            <div class="segmented-value">{{ refreshRateTitle }}</div>
+                            <button @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value" aria-label="more frequent">
+                                <span class="icon">{% inline "chevron-up.svg" %}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <label class="settings-label">Show first</label>
+                        <div class="segmented">
+                            <button :aria-pressed="itemSortNewestFirst" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
+                            <button :aria-pressed="!itemSortNewestFirst" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="settings-section">
-                    <label class="settings-label">Density</label>
-                    <div class="segmented">
-                        <button :aria-pressed="theme.density == 'comfortable'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
-                        <button :aria-pressed="theme.density == 'compact'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <label class="settings-label">Motion</label>
-                    <div class="segmented">
-                        <button :aria-pressed="theme.motion == 'system'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
-                        <button :aria-pressed="theme.motion == 'reduce'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <label class="settings-label">Auto refresh</label>
-                    <div class="segmented">
-                        <button @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate" aria-label="less frequent">
-                            <span class="icon">{% inline "chevron-down.svg" %}</span>
-                        </button>
-                        <div class="segmented-value">{{ refreshRateTitle }}</div>
-                        <button @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value" aria-label="more frequent">
-                            <span class="icon">{% inline "chevron-up.svg" %}</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <label class="settings-label">Show first</label>
-                    <div class="segmented">
-                        <button :aria-pressed="itemSortNewestFirst" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
-                        <button :aria-pressed="!itemSortNewestFirst" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <label class="settings-label">Instapaper</label>
+                <div class="settings-group">
+                    <div class="settings-title">Instapaper</div>
                     <input type="text" class="form-control form-control-sm mb-1" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
                     <input type="password" class="form-control form-control-sm" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
                 </div>
 
-                <div class="settings-section">
-                    <label class="settings-label">Subscriptions</label>
+                <div class="settings-group">
+                    <div class="settings-title">Subscriptions</div>
                     <div class="d-flex">
                         <form id="opml-import-form" enctype="multipart/form-data" tabindex="-1" class="mr-2">
                             <input type="file" id="opml-import" @change="importOPML" name="opml" style="opacity: 0; width: 1px; height: 0; position: absolute; z-index: -1;">
