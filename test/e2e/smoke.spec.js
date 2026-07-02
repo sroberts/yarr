@@ -119,6 +119,8 @@ test('a11y: inputs have accessible names and panes expose landmarks', async ({ p
 test('reading time: shows N min from content, hidden for link-only posts', async ({ page }) => {
   await page.goto('/')
   await page.evaluate(() => {
+    // freeze the list so a late-resolving initial refresh can't clobber our seed
+    vm.refreshItems = () => Promise.resolve()
     vm.items = [
       { id: 500002, feed_id: 1, title: 'Longread', status: 'read', content: '<p>' + 'word '.repeat(1000) + '</p>' },
       { id: 500003, feed_id: 1, title: 'Linkonly', status: 'read', content: '' },
