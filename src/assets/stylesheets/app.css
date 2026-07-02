@@ -312,12 +312,19 @@ select.form-control:not([multiple]):not([size]) {
   cursor: pointer;
 }
 
-.toolbar-item:hover,
-.toolbar-search:hover,
-.toolbar-search:focus,
-.selectgroup-label:hover,
-.dropdown-item:hover {
+.toolbar-search:focus {
   background-color: var(--surface-hover);
+}
+
+/* Hover feedback only on real pointers — avoids sticky-hover on touch,
+   where a tapped row/button would keep the highlight until the next tap. */
+@media (hover: hover) {
+  .toolbar-item:hover,
+  .toolbar-search:hover,
+  .selectgroup-label:hover,
+  .dropdown-item:hover {
+    background-color: var(--surface-hover);
+  }
 }
 
 .expanded {
@@ -836,10 +843,11 @@ a,
     min-height: 44px;
     min-width: 44px;
   }
+  /* Touch height only — the labels set their own flex direction/alignment.
+     Forcing align-items:center here horizontally-centered the flex-column
+     item rows (broken on tablet/mobile). */
   .selectgroup-label {
     min-height: 44px;
-    display: flex;
-    align-items: center;
   }
   .dropdown-item {
     min-height: 44px;
@@ -1359,7 +1367,7 @@ body[data-motion="reduce"] *::after {
   font: inherit;
   cursor: pointer;
 }
-.segmented > button:hover { background: var(--surface-hover); }
+@media (hover: hover) { .segmented > button:hover { background: var(--surface-hover); } }
 .segmented > button.active { background: var(--accent); color: var(--on-accent); }
 .segmented > button:disabled { opacity: .4; cursor: not-allowed; }
 .segmented > button:disabled:hover { background: transparent; }
