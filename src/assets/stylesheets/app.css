@@ -582,6 +582,16 @@ select.form-control:not([multiple]):not([size]) {
   color: var(--text-tertiary);
 }
 
+/* Smart Filters rule list (Settings > Filters) */
+.filter-row {
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.filter-row:last-of-type { border-bottom: 0; }
+
 /* content */
 
 /* Reading view: comfort-optimized. The article font-size is driven by the

@@ -59,6 +59,8 @@ func (s *Server) handler() http.Handler {
 	r.For("/api/items", s.handleItemList)
 	r.For("/api/items/:id/instapaper", s.handleItemInstapaper)
 	r.For("/api/items/:id", s.handleItem)
+	r.For("/api/filters", s.handleFilterList)
+	r.For("/api/filters/:id", s.handleFilter)
 	r.For("/api/settings", s.handleSettings)
 	r.For("/opml/import", s.handleOPMLImport)
 	r.For("/opml/export", s.handleOPMLExport)
@@ -198,6 +200,45 @@ func (s *Server) handleFolder(c *router.Context) {
 	} else if c.Req.Method == "DELETE" {
 		s.db.DeleteFolder(id)
 		c.Out.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (s *Server) handleFilterList(c *router.Context) {
+	if c.Req.Method == "GET" {
+		c.JSON(http.StatusOK, s.db.ListFilters())
+	} else if c.Req.Method == "POST" {
+		var body FilterCreateForm
+		if err := json.NewDecoder(c.Req.Body).Decode(&body); err != nil {
+			log.Print(err)
+			c.Out.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		body.Keyword = strings.TrimSpace(body.Keyword)
+		if !storage.ValidFilterAction(body.Action) || len(body.Keyword) == 0 {
+			c.JSON(http.StatusBadRequest, map[string]string{"error": "Filter needs an action and a keyword."})
+			return
+		}
+		filter := s.db.CreateFilter(body.Action, body.Keyword, body.FeedID)
+		if body.ApplyNow {
+			s.db.ApplyFiltersToUnread()
+		}
+		c.JSON(http.StatusCreated, filter)
+	} else {
+		c.Out.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleFilter(c *router.Context) {
+	id, err := c.VarInt64("id")
+	if err != nil {
+		c.Out.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if c.Req.Method == "DELETE" {
+		s.db.DeleteFilter(id)
+		c.Out.WriteHeader(http.StatusNoContent)
+	} else {
+		c.Out.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 

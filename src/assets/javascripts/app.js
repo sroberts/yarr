@@ -314,6 +314,7 @@ function rootComponent() { return {
     api.feeds.list_errors().then(function(errors) {
       vm.feed_errors = errors
     })
+    this.loadFilters()
     this.updateMetaTheme(resolveTheme(this.theme.name))
     // Cmd/Ctrl+K opens the command palette from anywhere (key.js ignores
     // modifier chords, so this needs its own listener).
@@ -339,6 +340,8 @@ function rootComponent() { return {
       'filterSelected': s.filter,
       'folders': [],
       'feeds': [],
+      'filters': [],
+      'filterDraft': {action: 'read', keyword: '', feedId: null, applyNow: false},
       'feedSelected': s.feed,
       'feedListWidth': s.feed_list_width || 300,
       'feedNewChoice': [],
@@ -752,6 +755,32 @@ function rootComponent() { return {
       this.paletteOpen = false
       this.paletteQuery = ''
       this.$nextTick(function() { if (r && r.run) r.run() })
+    },
+    // Smart Filters (Settings > Filters): rules that pre-triage items on refresh.
+    loadFilters: function() {
+      return api.filters.list().then(function(list) { vm.filters = list || [] })
+    },
+    filterActionLabel: function(action) {
+      return {read: 'Auto-read', star: 'Auto-star', mute: 'Mute'}[action] || action
+    },
+    createFilter: function() {
+      var draft = this.filterDraft
+      var keyword = (draft.keyword || '').trim()
+      if (!keyword) return
+      var payload = {action: draft.action, keyword: keyword, feed_id: draft.feedId, apply_now: draft.applyNow}
+      api.filters.create(payload).then(function(filter) {
+        if (filter && filter.id) vm.filters.push(filter)
+        vm.filterDraft = {action: 'read', keyword: '', feedId: null, applyNow: false}
+        // "apply now" changed existing items server-side — resync the views.
+        if (payload.apply_now) {
+          vm.refreshStats().then(vm.refreshFeeds.bind(vm)).then(vm.refreshItems.bind(vm, false))
+        }
+      })
+    },
+    deleteFilter: function(f) {
+      api.filters.delete(f.id).then(function() {
+        vm.filters = vm.filters.filter(function(x) { return x.id !== f.id })
+      })
     },
     refreshStats: function(loopMode) {
       return api.status().then(function(data) {

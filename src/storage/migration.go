@@ -19,6 +19,7 @@ var migrations = []func(*sql.Tx) error{
 	m09_change_item_index,
 	m10_add_item_medialinks,
 	m11_add_instapaper_saved,
+	m12_add_filters,
 }
 
 var maxVersion = int64(len(migrations))
@@ -333,5 +334,20 @@ func m10_add_item_medialinks(tx *sql.Tx) error {
 
 func m11_add_instapaper_saved(tx *sql.Tx) error {
 	_, err := tx.Exec(`alter table items add column instapaper_saved boolean not null default 0`)
+	return err
+}
+
+func m12_add_filters(tx *sql.Tx) error {
+	sql := `
+		create table if not exists filters (
+		 id         integer primary key autoincrement,
+		 action     text not null,
+		 keyword    text not null,
+		 feed_id    references feeds(id) on delete cascade,
+		 created_at datetime not null
+		);
+		create index if not exists idx_filter_feed_id on filters(feed_id);
+	`
+	_, err := tx.Exec(sql)
 	return err
 }

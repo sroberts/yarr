@@ -119,6 +119,11 @@ func (list ItemList) Swap(i, j int) {
 }
 
 func (s *Storage) CreateItems(items []Item) bool {
+	// Smart Filters pre-triage incoming items: mute drops them before they
+	// ever surface; auto-read/auto-star set the initial status. Loaded once,
+	// before the tx, to avoid a nested query on the same connection.
+	filters := s.ListFilters()
+
 	tx, err := s.db.Begin()
 	if err != nil {
 		log.Print(err)
@@ -131,6 +136,10 @@ func (s *Storage) CreateItems(items []Item) bool {
 	sort.Sort(itemsSorted)
 
 	for _, item := range itemsSorted {
+		status, mute := filterAction(filters, item.FeedId, item.Title)
+		if mute {
+			continue // filtered out at ingest; never surfaces to triage
+		}
 		_, err = tx.Exec(`
 			insert into items (
 				guid, feed_id, title, link, date,
@@ -145,7 +154,7 @@ func (s *Storage) CreateItems(items []Item) bool {
 			on conflict (feed_id, guid) do nothing`,
 			item.GUID, item.FeedId, item.Title, item.Link, item.Date,
 			item.Content, item.MediaLinks,
-			now, UNREAD,
+			now, status,
 		)
 		if err != nil {
 			log.Print(err)

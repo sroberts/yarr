@@ -70,6 +70,17 @@
         return api('get', './api/folders/' + id + '/items').then(json)
       }
     },
+    filters: {
+      list: function() {
+        return api('get', './api/filters').then(json)
+      },
+      create: function(data) {
+        return api('post', './api/filters', data).then(json)
+      },
+      delete: function(id) {
+        return api('delete', './api/filters/' + id)
+      },
+    },
     items: {
       get: function(id) {
         return api('get', './api/items/' + id).then(json)

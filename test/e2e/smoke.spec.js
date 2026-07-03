@@ -194,3 +194,17 @@ test('command palette: Escape closes it', async ({ page }) => {
   await page.keyboard.press('Escape')
   await expect(page.locator('.command-palette-dialog')).toHaveCount(0)
 })
+
+test('smart filters: add a rule in settings, see it listed, delete it', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  await page.locator('input[aria-label="Keyword (case-insensitive)"]').fill('sponsored')
+  await page.getByRole('button', { name: 'Add rule' }).click()
+  const row = page.locator('.filter-row', { hasText: 'sponsored' })
+  await expect(row).toBeVisible()
+  await expect(row).toContainText('Auto-read')          // default action
+  await expect(row).toContainText('all feeds')
+  await row.locator('button[aria-label="Delete filter"]').click()
+  await expect(page.locator('.filter-row')).toHaveCount(0)
+})
