@@ -596,6 +596,7 @@
                     <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td>
                                                             <td>show unread / starred / all feeds</td></tr>
                     <tr><td><kbd>/</kbd></td>               <td>focus the search bar</td></tr>
+                    <tr><td><kbd>⌘</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
                     <tr><td><kbd>?</kbd></td>               <td>show keyboard shortcuts</td></tr>
 
                     <tr><td colspan=2>&nbsp;</td></tr>
@@ -626,6 +627,34 @@
         <transition name="toast">
             <div class="app-toast" v-if="toast" role="status" aria-live="polite">{{ toast.text }}</div>
         </transition>
+        <!-- command palette (Cmd/Ctrl+K): jump to a feed/folder or run a command -->
+        <div class="modal custom-modal command-palette" v-if="paletteOpen" @click="closePalette()">
+            <div class="command-palette-dialog" role="dialog" aria-label="Command palette" @click.stop>
+                <input ref="paletteInput"
+                       class="command-palette-input"
+                       type="text"
+                       v-model="paletteQuery"
+                       placeholder="Jump to a feed or run a command…"
+                       aria-label="Jump to a feed or run a command"
+                       @keydown.down.prevent="paletteMove(1)"
+                       @keydown.up.prevent="paletteMove(-1)"
+                       @keydown.enter.prevent="paletteExecute(paletteIndex)"
+                       @keydown.esc.prevent="closePalette()">
+                <div class="command-palette-results">
+                    <template v-for="(r, i) in paletteResults" :key="i">
+                        <div class="command-palette-group" v-if="i === 0 || paletteResults[i-1].group !== r.group">{{ r.group }}</div>
+                        <div class="command-palette-row"
+                             :class="{selected: i === paletteIndex}"
+                             @click="paletteExecute(i)"
+                             @mousemove="paletteIndex = i">
+                            <span class="cmd-label">{{ r.label }}</span>
+                            <kbd class="cmd-hint" v-if="r.hint">{{ r.hint }}</kbd>
+                        </div>
+                    </template>
+                    <div class="command-palette-empty" v-if="paletteResults.length === 0">No matches</div>
+                </div>
+            </div>
+        </div>
     </div>
     <!-- external -->
     <script src="./static/javascripts/vue.global.prod.js"></script>
