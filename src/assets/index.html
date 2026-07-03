@@ -430,6 +430,7 @@
                 </button>
                 <button class="toolbar-item"
                         v-if="ttsSupported"
+                        data-testid="reader-listen"
                         :class="{active: ttsPlaying}"
                         @click="toggleListen()"
                         :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'">
