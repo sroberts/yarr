@@ -18,6 +18,26 @@ function readingMinutes(item) {
   return mins
 }
 
+// Fuzzy matcher for the command palette: subsequence match with a score so
+// tighter/earlier/word-start matches rank first. Returns a score (higher is
+// better) or -1 when query isn't a subsequence of text. No dependency.
+function fuzzyMatch(query, text) {
+  if (!query) return 0
+  var q = query.toLowerCase(), t = (text || '').toLowerCase()
+  var qi = 0, score = 0, streak = 0, ti = 0
+  for (; ti < t.length && qi < q.length; ti++) {
+    if (t[ti] === q[qi]) {
+      qi++
+      streak++
+      score += streak                                   // reward consecutive hits
+      if (ti === 0 || /[\s\W_]/.test(t[ti - 1])) score += 6  // word-start bonus
+    } else {
+      streak = 0
+    }
+  }
+  return qi === q.length ? score - ti * 0.01 : -1       // tiebreak: earlier finish
+}
+
 // Resume position: remember where you left off in a long article. Per-device,
 // per-item scroll offsets in localStorage — ephemeral, no server round-trip.
 // Bounded (oldest evicted past CAP) so it never grows without limit.
@@ -295,6 +315,14 @@ function rootComponent() { return {
       vm.feed_errors = errors
     })
     this.updateMetaTheme(resolveTheme(this.theme.name))
+    // Cmd/Ctrl+K opens the command palette from anywhere (key.js ignores
+    // modifier chords, so this needs its own listener).
+    document.addEventListener('keydown', function(e) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault()
+        vm.togglePalette()
+      }
+    })
     // when following the OS, react to OS theme changes live
     if (window.matchMedia) {
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
@@ -321,6 +349,9 @@ function rootComponent() { return {
       'itemSelectedDetails': null,
       'itemSelectedReadability': '',
       'itemSearch': '',
+      'paletteOpen': false,
+      'paletteQuery': '',
+      'paletteIndex': 0,
       'itemSortNewestFirst': s.sort_newest_first,
       'itemListWidth': s.item_list_width || 300,
 
@@ -415,6 +446,38 @@ function rootComponent() { return {
         folder = this.foldersById[guid] || {}
 
       return {type: type, feed: feed, folder: folder}
+    },
+    // Command-palette candidates: enabled actions, then feeds, then folders,
+    // fuzzy-ranked against the query (or default order when empty), plus an
+    // article-search escape hatch. Capped so a huge feed list stays instant.
+    paletteResults: function() {
+      var q = this.paletteQuery.trim()
+      var all = this.paletteCommands().filter(function(c) { return c.enabled !== false })
+      this.feeds.forEach(function(f) {
+        all.push({group: 'Feeds', label: f.title || f.feed_link, run: function() {
+          vm.feedSelected = 'feed:' + f.id; vm.itemSelected = null
+        }})
+      })
+      this.folders.forEach(function(fo) {
+        all.push({group: 'Folders', label: fo.title, run: function() {
+          vm.feedSelected = 'folder:' + fo.id; vm.itemSelected = null
+        }})
+      })
+      var results
+      if (!q) {
+        results = all
+      } else {
+        results = all
+          .map(function(c) { return {c: c, s: fuzzyMatch(q, c.label)} })
+          .filter(function(x) { return x.s >= 0 })
+          .sort(function(a, b) { return b.s - a.s })
+          .map(function(x) { return x.c })
+        results.push({group: 'Search', label: 'Search articles for “' + q + '”', run: function() {
+          vm.itemSearch = q
+          var box = document.getElementById('searchbar'); if (box) box.focus()
+        }})
+      }
+      return results.slice(0, 50)
     },
     itemSelectedContent: function() {
       if (!this.itemSelected) return ''
@@ -589,6 +652,9 @@ function rootComponent() { return {
     'itemSearch': debounce(function(newVal) {
       this.refreshItems()
     }, 500),
+    'paletteQuery': function() {
+      this.paletteIndex = 0
+    },
     'itemSortNewestFirst': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
       api.settings.update({sort_newest_first: newVal}).then(vm.refreshItems.bind(this, false))
@@ -626,6 +692,66 @@ function rootComponent() { return {
         var el = this.$refs.content
         if (el) el.scrollTop = readingScroll.get(id)
       }.bind(this))
+    },
+    // Command-palette actions. Reuse key.js's shortcutFunctions so the palette
+    // and keyboard map can't drift; each entry carries a label, shortcut hint,
+    // and an `enabled` predicate for context-dependent actions.
+    paletteCommands: function() {
+      var S = window.shortcutFunctions || {}
+      var hasItem = this.itemSelected != null
+      var det = this.itemSelectedDetails
+      return [
+        {group: 'Actions', label: 'New feed',               run: function() { vm.showSettings('create') }},
+        {group: 'Actions', label: 'Refresh feeds',          run: function() { vm.fetchAllFeeds() }},
+        {group: 'Actions', label: 'Mark all read',          hint: 'R', enabled: this.filterSelected == 'unread', run: S.markAllRead},
+        {group: 'Actions', label: 'Show unread',            hint: '1', run: S.showUnread},
+        {group: 'Actions', label: 'Show starred',           hint: '2', run: S.showStarred},
+        {group: 'Actions', label: 'Show all',               hint: '3', run: S.showAll},
+        {group: 'Actions', label: 'Star / unstar article',  hint: 's', enabled: hasItem, run: S.toggleItemStarred},
+        {group: 'Actions', label: 'Mark read / unread',     hint: 'r', enabled: hasItem, run: S.toggleItemRead},
+        {group: 'Actions', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !det.instapaper_saved, run: S.saveToInstapaper},
+        {group: 'Actions', label: 'Read here (readability)', hint: 'i', enabled: hasItem, run: S.toggleReadability},
+        {group: 'Actions', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
+        {group: 'Actions', label: 'Theme: Light',           enabled: this.theme.name !== 'light', run: function() { vm.theme.name = 'light' }},
+        {group: 'Actions', label: 'Theme: Dark',            enabled: this.theme.name !== 'dark', run: function() { vm.theme.name = 'dark' }},
+        {group: 'Actions', label: 'Theme: Auto (system)',   enabled: this.theme.name !== 'auto', run: function() { vm.theme.name = 'auto' }},
+        {group: 'Actions', label: 'Settings',               run: function() { vm.showSettings('settings') }},
+        {group: 'Actions', label: 'Keyboard shortcuts',     hint: '?', run: S.showShortcuts},
+      ]
+    },
+    togglePalette: function() {
+      this.paletteOpen ? this.closePalette() : this.openPalette()
+    },
+    openPalette: function() {
+      this._palettePrevFocus = document.activeElement
+      this.paletteQuery = ''
+      this.paletteIndex = 0
+      this.paletteOpen = true
+      this.$nextTick(function() {
+        if (this.$refs.paletteInput) this.$refs.paletteInput.focus()
+      }.bind(this))
+    },
+    closePalette: function() {
+      this.paletteOpen = false
+      if (this._palettePrevFocus && this._palettePrevFocus.focus) this._palettePrevFocus.focus()
+    },
+    paletteMove: function(delta) {
+      var n = this.paletteResults.length
+      if (!n) return
+      this.paletteIndex = (this.paletteIndex + delta + n) % n
+      this.$nextTick(function() {
+        var el = document.querySelector('.command-palette-row.selected')
+        if (el && el.scrollIntoView) el.scrollIntoView({block: 'nearest'})
+      })
+    },
+    paletteExecute: function(i) {
+      var r = this.paletteResults[i]
+      if (!r) return
+      // close first, then run — so an action that opens a modal (settings) or
+      // moves focus (search) isn't fighting the palette's focus restore.
+      this.paletteOpen = false
+      this.paletteQuery = ''
+      this.$nextTick(function() { if (r && r.run) r.run() })
     },
     refreshStats: function(loopMode) {
       return api.status().then(function(data) {

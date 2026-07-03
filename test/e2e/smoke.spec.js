@@ -174,3 +174,23 @@ test('d-none actually hides a .selectgroup (feed-list unread filter depends on i
   })
   expect(display).toBe('none')
 })
+
+test('command palette: Ctrl/Cmd+K opens, fuzzy-filters, and runs an action', async ({ page }) => {
+  await page.goto('/')
+  await page.keyboard.press('Control+k')
+  await expect(page.locator('.command-palette-input')).toBeFocused()
+  await page.locator('.command-palette-input').fill('dark')
+  const row = page.locator('.command-palette-row', { hasText: 'Theme: Dark' })
+  await expect(row).toBeVisible()
+  await row.click()
+  await expect(page.locator('body')).toHaveClass(/theme-dark/)
+  await expect(page.locator('.command-palette-dialog')).toHaveCount(0)  // closed after run
+})
+
+test('command palette: Escape closes it', async ({ page }) => {
+  await page.goto('/')
+  await page.keyboard.press('Control+k')
+  await expect(page.locator('.command-palette-dialog')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.command-palette-dialog')).toHaveCount(0)
+})
