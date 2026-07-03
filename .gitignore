@@ -19,6 +19,8 @@ versioninfo.rc
 /test/e2e/node_modules/
 /test/e2e/test-results/
 /test/e2e/playwright-report/
+# playwright can also drop artifacts at the repo root when run from there
+/test-results/
 
 # Claude Code local config + installed skills
 /.claude/
