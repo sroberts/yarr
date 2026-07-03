@@ -61,6 +61,83 @@ var readingScroll = (function() {
   }
 })()
 
+// Listen to article: on-device text-to-speech via the browser's Web Speech
+// API. No network, no deps, no telemetry. speechSynthesis is browser-global
+// (keeps talking across SPA state changes), so a single engine owns all of it
+// and cancellation is centralized. Long text is split into sentence-sized
+// chunks and spoken in sequence: Chrome truncates a single long utterance, and
+// the per-chunk queue gives a reliable "finished" signal for triage continuation.
+var ttsEngine = (function() {
+  var supported = typeof window !== 'undefined' && 'speechSynthesis' in window
+  var chunks = [], index = 0, playing = false, paused = false
+  var onEnd = null
+
+  // Split into ~200-char pieces on sentence boundaries, falling back to hard
+  // slices for runaway sentences so no chunk trips the engine's length limit.
+  function chunkText(text) {
+    var sentences = (text || '').replace(/\s+/g, ' ').trim().match(/[^.!?]+[.!?]+|\S[^.!?]*$/g) || []
+    var out = [], buf = ''
+    sentences.forEach(function(s) {
+      s = s.trim()
+      while (s.length > 220) { out.push(s.slice(0, 220)); s = s.slice(220) }
+      if ((buf + ' ' + s).trim().length > 200) { if (buf) out.push(buf.trim()); buf = s }
+      else { buf = (buf + ' ' + s).trim() }
+    })
+    if (buf) out.push(buf.trim())
+    return out
+  }
+
+  function speakNext() {
+    if (index >= chunks.length) { finish(); return }
+    var u = new SpeechSynthesisUtterance(chunks[index])
+    u.onend = function() { if (!playing) return; index++; speakNext() }
+    u.onerror = function() { if (!playing) return; index++; speakNext() }
+    window.speechSynthesis.speak(u)
+  }
+
+  function finish() {
+    var cb = onEnd
+    reset()
+    if (cb) cb()
+  }
+
+  function reset() { chunks = []; index = 0; playing = false; paused = false; onEnd = null }
+
+  return {
+    supported: supported,
+    playing: function() { return playing && !paused },
+    paused: function() { return paused },
+    active: function() { return playing },
+    // Speak text to completion. opts.onend fires only on natural completion
+    // (not on stop/replacement), which triage uses to advance to the next card.
+    speak: function(text, opts) {
+      if (!supported) return
+      window.speechSynthesis.cancel()
+      chunks = chunkText(text)
+      index = 0
+      onEnd = (opts && opts.onend) || null
+      if (!chunks.length) { reset(); return }
+      playing = true; paused = false
+      speakNext()
+    },
+    pause: function() {
+      if (!supported || !playing || paused) return
+      paused = true
+      window.speechSynthesis.pause()
+    },
+    resume: function() {
+      if (!supported || !playing || !paused) return
+      paused = false
+      window.speechSynthesis.resume()
+    },
+    stop: function() {
+      if (!supported) return
+      reset()
+      window.speechSynthesis.cancel()
+    },
+  }
+})()
+
 // Theme preference is one of auto/light/dark (persisted as theme_name).
 // 'auto' follows the OS; legacy values map night -> dark, sepia -> light.
 function normalizeThemePref(pref) {
@@ -355,6 +432,8 @@ function rootComponent() { return {
       'paletteOpen': false,
       'paletteQuery': '',
       'paletteIndex': 0,
+      'ttsPlaying': false,
+      'ttsPaused': false,
       'itemSortNewestFirst': s.sort_newest_first,
       'itemListWidth': s.item_list_width || 300,
 
@@ -415,6 +494,9 @@ function rootComponent() { return {
     }
   },
   computed: {
+    ttsSupported: function() {
+      return ttsEngine.supported
+    },
     foldersWithFeeds: function() {
       var feedsByFolders = this.feeds.reduce(function(folders, feed) {
         if (!folders[feed.folder_id])
@@ -585,6 +667,7 @@ function rootComponent() { return {
     },
     'filterSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
+      this.stopListen()  // halt read-aloud when leaving/entering triage or switching views
       if (oldVal === 'triage') {
         this.flushCardAction()
         this.cardItems = []
@@ -611,6 +694,7 @@ function rootComponent() { return {
       if (this.$refs.itemlist) this.$refs.itemlist.scrollTop = 0
     },
     'itemSelected': function(newVal, oldVal) {
+      this.stopListen()  // halt any read-aloud when the article changes or closes
       this.itemSelectedReadability = ''
       this.itemOffline = false
       this.itemUnavailable = false
@@ -696,6 +780,72 @@ function rootComponent() { return {
         if (el) el.scrollTop = readingScroll.get(id)
       }.bind(this))
     },
+    // Listen to article (on-device TTS). Strip HTML to plain text via a temp
+    // element (decodes entities, drops tags) — same approach as cardExcerpt.
+    plainText: function(html) {
+      var tmp = document.createElement('div')
+      tmp.insertAdjacentHTML('afterbegin', html || '')
+      return (tmp.textContent || tmp.innerText || '').trim()
+    },
+    speakArticle: function() {
+      var det = this.itemSelectedDetails
+      if (!det) return
+      var body = this.plainText(this.itemSelectedContent)
+      var text = ((det.title || '') + '. ' + body).trim()
+      var self = this
+      ttsEngine.speak(text, {onend: function() { self.ttsPlaying = false; self.ttsPaused = false }})
+      this.ttsPlaying = true
+      this.ttsPaused = false
+    },
+    speakCard: function() {
+      var card = this.currentCard
+      if (!card) return
+      var text = ((card.title || '') + '. ' + this.plainText(card.content)).trim()
+      var self = this
+      // On natural completion, advance to the next card and keep reading until
+      // the deck is exhausted — the hands-free triage loop.
+      ttsEngine.speak(text, {onend: function() {
+        if (!self.cardMode) { self.ttsPlaying = false; self.ttsPaused = false; return }
+        self.cardListenNext()
+      }})
+      this.ttsPlaying = true
+      this.ttsPaused = false
+    },
+    // Advance triage to the next card and continue reading, or stop at the end.
+    cardListenNext: function() {
+      if (this.cardIndex + 1 >= this.cardItems.length) {
+        this.stopListen()  // deck exhausted (all cards are preloaded)
+        return
+      }
+      this.cardIndex += 1
+      var self = this
+      this.$nextTick(function() { self.speakCard() })
+    },
+    pauseListen: function() {
+      ttsEngine.pause()
+      this.ttsPaused = true
+    },
+    resumeListen: function() {
+      ttsEngine.resume()
+      this.ttsPaused = false
+    },
+    stopListen: function() {
+      ttsEngine.stop()
+      this.ttsPlaying = false
+      this.ttsPaused = false
+    },
+    // Context-aware toggle used by the toolbar button, 'p' key, and palette:
+    // idle -> start (card or article), playing -> pause, paused -> resume.
+    toggleListen: function() {
+      if (!ttsEngine.supported) return
+      if (this.ttsPlaying) {
+        this.ttsPaused ? this.resumeListen() : this.pauseListen()
+      } else if (this.cardMode) {
+        this.speakCard()
+      } else if (this.itemSelected != null) {
+        this.speakArticle()
+      }
+    },
     // Command-palette actions. Reuse key.js's shortcutFunctions so the palette
     // and keyboard map can't drift; each entry carries a label, shortcut hint,
     // and an `enabled` predicate for context-dependent actions.
@@ -714,6 +864,7 @@ function rootComponent() { return {
         {group: 'Actions', label: 'Mark read / unread',     hint: 'r', enabled: hasItem, run: S.toggleItemRead},
         {group: 'Actions', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !det.instapaper_saved, run: S.saveToInstapaper},
         {group: 'Actions', label: 'Read here (readability)', hint: 'i', enabled: hasItem, run: S.toggleReadability},
+        {group: 'Actions', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (hasItem || this.cardMode), run: S.toggleListen},
         {group: 'Actions', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
         {group: 'Actions', label: 'Theme: Light',           enabled: this.theme.name !== 'light', run: function() { vm.theme.name = 'light' }},
         {group: 'Actions', label: 'Theme: Dark',            enabled: this.theme.name !== 'dark', run: function() { vm.theme.name = 'dark' }},

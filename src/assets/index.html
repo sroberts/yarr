@@ -143,9 +143,17 @@
                 <!-- action indicator -->
                 <div class="card-view-action" id="card-action-indicator"></div>
                 <!-- swipe hints -->
-                <div v-if="currentCard && !cardDone" class="card-view-hints px-4 pb-3 d-flex justify-content-between text-muted small">
+                <div v-if="currentCard && !cardDone" class="card-view-hints px-4 pb-3 d-flex align-items-center justify-content-between text-muted small">
                     <span v-if="instapaperUsername">← instapaper</span>
                     <span v-else>← keep unread</span>
+                    <button v-if="ttsSupported" type="button" class="toolbar-item card-listen-btn"
+                            :class="{active: ttsPlaying}"
+                            @click="toggleListen()"
+                            :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'">
+                        <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
+                        <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
+                        <span class="icon" v-else>{% inline "pause.svg" %}</span>
+                    </button>
                     <span>mark read →</span>
                 </div>
                 <!-- stats screen -->
@@ -421,6 +429,16 @@
                     <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
                 </button>
                 <button class="toolbar-item"
+                        v-if="ttsSupported"
+                        data-testid="reader-listen"
+                        :class="{active: ttsPlaying}"
+                        @click="toggleListen()"
+                        :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'">
+                    <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
+                    <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
+                    <span class="icon" v-else>{% inline "pause.svg" %}</span>
+                </button>
+                <button class="toolbar-item"
                         :class="{active: itemSelectedDetails.instapaper_saved}"
                         :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper"
                         @click="saveToInstapaper(itemSelectedDetails)"
@@ -643,6 +661,7 @@
                     <tr><td><kbd>o</kbd></td>               <td>open link</td></tr>
                     <tr><td><kbd>i</kbd></td>               <td>read here</td> </tr>
                     <tr><td><kbd>I</kbd></td>               <td>save to Instapaper</td></tr>
+                    <tr><td><kbd>p</kbd></td>               <td>listen to article (play / pause)</td></tr>
                     <tr><td><kbd>f</kbd> <kbd>b</kbd></td>  <td>scroll content forward / backward</td>
                     </tr>
 

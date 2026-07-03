@@ -195,6 +195,59 @@ test('command palette: Escape closes it', async ({ page }) => {
   await expect(page.locator('.command-palette-dialog')).toHaveCount(0)
 })
 
+test('listen (TTS): button speaks the article, toggles pause, stops on close', async ({ page }) => {
+  // Headless Chromium has no real voices, so inject a deterministic mock of the
+  // Web Speech API before load: it records speak/pause/resume/cancel calls and
+  // does NOT auto-fire onend, so playback stays "in progress" for assertions.
+  await page.addInitScript(() => {
+    window.__tts = { spoken: [], paused: 0, resumed: 0, cancelled: 0 }
+    var mock = {
+      speak: function (u) { window.__tts.spoken.push(u.text) },
+      pause: function () { window.__tts.paused++ },
+      resume: function () { window.__tts.resumed++ },
+      cancel: function () { window.__tts.cancelled++ },
+    }
+    // speechSynthesis is a read-only getter in Chromium; override it outright.
+    Object.defineProperty(window, 'speechSynthesis', { configurable: true, get: function () { return mock } })
+    Object.defineProperty(window, 'SpeechSynthesisUtterance', {
+      configurable: true, writable: true,
+      value: function (text) { this.text = text },
+    })
+  })
+  await page.goto('/')
+  // Open an article online (stub the fetch) rather than via the offline path —
+  // going offline raises the "You're offline" banner, which overlays the toolbar.
+  await page.evaluate(() => {
+    var item = {
+      id: 800001, feed_id: 1, title: 'Listen Me', status: 'read', media_links: [],
+      content: '<p>The quick brown fox jumps over the lazy dog. A second sentence follows here.</p>',
+    }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 800001
+  })
+  await expect(page.getByRole('heading', { name: 'Listen Me' })).toBeVisible()
+
+  // stable handle: the button's title flips (Listen/Pause/Resume) so we target
+  // it by testid rather than its changing accessible name.
+  const listen = page.getByTestId('reader-listen')
+
+  // click Listen -> speak() called with text that leads with the title
+  await listen.click()
+  const first = await page.evaluate(() => window.__tts.spoken[0])
+  expect(first).toContain('Listen Me')
+  expect(await page.evaluate(() => vm.ttsPlaying && !vm.ttsPaused)).toBe(true)
+
+  // clicking again pauses
+  await listen.click()
+  expect(await page.evaluate(() => window.__tts.paused)).toBeGreaterThan(0)
+  expect(await page.evaluate(() => vm.ttsPaused)).toBe(true)
+
+  // leaving the article stops playback
+  await page.evaluate(() => { vm.itemSelected = null })
+  expect(await page.evaluate(() => window.__tts.cancelled)).toBeGreaterThan(0)
+  expect(await page.evaluate(() => vm.ttsPlaying)).toBe(false)
+})
+
 test('smart filters: add a rule in settings, see it listed, delete it', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Menu' }).click()
