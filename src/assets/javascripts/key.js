@@ -44,6 +44,9 @@ var shortcutFunctions = {
       vm.saveToInstapaper(vm.itemSelectedDetails)
     }
   },
+  toggleListen: function() {
+    vm.toggleListen()
+  },
   focusSearch: function() {
     document.getElementById("searchbar").focus()
   },
@@ -90,6 +93,7 @@ var keybindings = {
   "R": shortcutFunctions.markAllRead,
   "s": shortcutFunctions.toggleItemStarred,
   "I": shortcutFunctions.saveToInstapaper,
+  "p": shortcutFunctions.toggleListen,
   "/": shortcutFunctions.focusSearch,
   "j": shortcutFunctions.nextItem,
   "k": shortcutFunctions.previousItem,
@@ -110,6 +114,7 @@ var codebindings = {
   //"r": shortcutFunctions.toggleItemRead,
   //"KeyR": shortcutFunctions.markAllRead,
   "KeyS": shortcutFunctions.toggleItemStarred,
+  "KeyP": shortcutFunctions.toggleListen,
   "Slash": shortcutFunctions.focusSearch,
   "KeyJ": shortcutFunctions.nextItem,
   "KeyK": shortcutFunctions.previousItem,
@@ -129,6 +134,7 @@ var triageBindings = {
   "ArrowRight": function() { vm.cardSwipeRight() },
   "ArrowLeft":  function() { vm.cardSwipeLeft() },
   "Enter":      function() { vm.cardTap() },
+  "p":          function() { vm.toggleListen() },
   "u":          function() { vm.undoCardAction() },
   "Escape":     function() { vm.exitCardMode() },
 }
