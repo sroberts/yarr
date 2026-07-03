@@ -540,6 +540,38 @@
                 </div>
 
                 <div class="settings-group">
+                    <div class="settings-title">Filters</div>
+                    <p class="text-muted small mb-2">Rules run on refresh to auto-read, star, or mute items by title. Star beats read beats mute.</p>
+                    <div v-for="f in filters" :key="f.id" class="filter-row d-flex align-items-center">
+                        <span class="flex-fill">{{ filterActionLabel(f.action) }} · titles containing “{{ f.keyword }}” · {{ f.feed_id ? 'in ' + ((feedsById[f.feed_id] || {}).title || 'a feed') : 'all feeds' }}</span>
+                        <button class="toolbar-item flex-shrink-0" @click="deleteFilter(f)" aria-label="Delete filter" title="Delete filter">
+                            <span class="icon">{% inline "x.svg" %}</span>
+                        </button>
+                    </div>
+                    <p class="text-muted small mb-2" v-if="filters.length === 0">No filters yet.</p>
+                    <form class="mt-1" @submit.prevent="createFilter()">
+                        <div class="d-flex">
+                            <select class="form-control form-control-sm flex-shrink-0 mr-1" style="width:auto" v-model="filterDraft.action" aria-label="Filter action">
+                                <option value="read">Auto-read</option>
+                                <option value="star">Auto-star</option>
+                                <option value="mute">Mute</option>
+                            </select>
+                            <input class="form-control form-control-sm flex-fill" v-model="filterDraft.keyword" placeholder="title contains…" aria-label="Keyword (case-insensitive)">
+                        </div>
+                        <select class="form-control form-control-sm mt-1" v-model="filterDraft.feedId" aria-label="Scope">
+                            <option :value="null">All feeds</option>
+                            <option :value="feed.id" v-for="feed in feeds">{{ feed.title }}</option>
+                        </select>
+                        <label class="d-flex align-items-center small text-muted mt-2 mb-0">
+                            <input type="checkbox" class="mr-1" v-model="filterDraft.applyNow">
+                            <span v-if="filterDraft.action == 'mute'">Also delete matching unread items now</span>
+                            <span v-else>Also apply to current unread items</span>
+                        </label>
+                        <button class="btn btn-sm btn-default mt-2" type="submit" :disabled="!filterDraft.keyword.trim()">Add rule</button>
+                    </form>
+                </div>
+
+                <div class="settings-group">
                     <div class="settings-title">Instapaper</div>
                     <input type="text" class="form-control form-control-sm mb-1" aria-label="Instapaper username or email" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
                     <input type="password" class="form-control form-control-sm" aria-label="Instapaper password" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
