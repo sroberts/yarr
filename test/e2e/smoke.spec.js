@@ -104,6 +104,28 @@ test('accent selection shows a check (not color-only) and modal takes focus', as
   expect(violetHasCheck).toBe(true)
 })
 
+test('reader toolbar: all icon controls are the same width (even spacing)', async ({ page }) => {
+  // Regression: the Appearance dropdown toggle had its padding zeroed by
+  // .settings-dropdown .dropdown-toggle, making it narrower than sibling
+  // toolbar-items so the row looked unevenly spaced. Every icon control in
+  // the reader toolbar should be the same width.
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = { id: 810001, feed_id: 1, title: 'Even Toolbar', status: 'read', media_links: [], content: '<p>body</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 810001
+  })
+  await expect(page.getByRole('heading', { name: 'Even Toolbar' })).toBeVisible()
+  const widths = await page.evaluate(() => {
+    const tb = Array.from(document.querySelectorAll('#col-item .toolbar')).slice(-1)[0]
+    return Array.from(tb.children)
+      .map(c => Math.round(c.getBoundingClientRect().width))
+      .filter(w => w > 0 && w < 100)   // icon controls only, not the flex spacer
+  })
+  expect(widths.length).toBeGreaterThan(6)
+  expect(new Set(widths).size).toBe(1)  // all identical => evenly spaced
+})
+
 test('offline reading: cache hit shows content, miss shows message', async ({ page, context }) => {
   await page.goto('/')
   // seed the offline store with a deliberately-kept article
