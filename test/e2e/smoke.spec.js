@@ -70,6 +70,26 @@ test('empty states: first-run feed CTA + empty reader hint', async ({ page }) =>
   await expect(page.getByText('Select an article to read')).toBeVisible()
 })
 
+test('add feed: submitting the New Feed form reaches the API (no bare-event crash)', async ({ page }) => {
+  // Regression: the form used @submit.prevent="createFeed(event)" — bare `event`
+  // is the removed Vue 2 magic global, so in the Vue 3 prod build it resolved to
+  // undefined and `event.target` threw, silently breaking every UI feed-add.
+  await page.goto('/')
+  const errors = []
+  page.on('pageerror', e => errors.push(String(e)))
+  await page.getByRole('button', { name: 'Add your first feed' }).click()
+  // stub the network call so we can assert createFeed ran to completion
+  await page.evaluate(() => {
+    window.__created = null
+    api.feeds.create = function (data) { window.__created = data; return Promise.resolve({ status: 'success', feed: { id: 1 } }) }
+  })
+  await page.locator('#feed-url').fill('https://example.com/feed.xml')
+  await page.getByRole('button', { name: 'Add', exact: true }).click()
+  // the handler read the form (event.target) and called the API with the URL
+  await expect.poll(() => page.evaluate(() => window.__created && window.__created.url)).toBe('https://example.com/feed.xml')
+  expect(errors).toEqual([])
+})
+
 test('accent selection shows a check (not color-only) and modal takes focus', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Menu' }).click()
