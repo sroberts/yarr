@@ -157,4 +157,4 @@ See more:
 
 ## credits
 
-[Feather](http://feathericons.com/) for icons.
+[Tabler Icons](https://tabler.io/icons) (MIT) for icons.
