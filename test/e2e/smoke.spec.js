@@ -308,6 +308,35 @@ test('listen (TTS): button speaks the article, toggles pause, stops on close', a
   expect(await page.evaluate(() => vm.ttsPlaying)).toBe(false)
 })
 
+test('triage card: the date updates when cycling cards (not frozen to the first)', async ({ page }) => {
+  // Regression: <relative-time> computed its date once in data() and the triage
+  // card reuses one instance, so every card after the first showed card 1's date.
+  await page.goto('/')
+  // enter triage without the network load clobbering our seeded deck
+  await page.evaluate(() => {
+    vm.loadCardItems = () => {}
+    vm.filterSelected = 'triage'
+  })
+  await page.evaluate(() => {
+    vm.cardItems = [
+      { id: 111, feed_id: 1, title: 'First card', date: '2019-03-10T00:00:00Z', content: '<p>a</p>' },
+      { id: 222, feed_id: 1, title: 'Second card', date: '2022-11-20T00:00:00Z', content: '<p>b</p>' },
+    ]
+    vm.cardIndex = 0
+    vm.cardLoading = false
+  })
+  const dateText = () => page.locator('.triage-card-date').innerText()
+  await expect(page.locator('.triage-card-title')).toHaveText('First card')
+  const firstDate = await dateText()
+  expect(firstDate).toMatch(/2019/)
+  // advance to the next card
+  await page.evaluate(() => { vm.cardIndex = 1 })
+  await expect(page.locator('.triage-card-title')).toHaveText('Second card')
+  const secondDate = await dateText()
+  expect(secondDate).toMatch(/2022/)
+  expect(secondDate).not.toBe(firstDate)   // the frozen-date bug
+})
+
 test('smart filters: add a rule in settings, see it listed, delete it', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: 'Menu' }).click()

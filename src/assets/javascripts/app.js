@@ -372,6 +372,15 @@ vueApp.component('relative-time', {
     }
   },
   template: '<time :datetime="val">{{ formatted }}</time>',
+  watch: {
+    // React to `val` changing on a reused instance. The triage card keeps one
+    // <relative-time> mounted and swaps currentCard.date through it; without
+    // this the first card's date would stick to every later card.
+    'val': function(newVal) {
+      this.date = new Date(newVal)
+      this.formatted = dateRepr(this.date)
+    },
+  },
   mounted: function() {
     this.interval = setInterval(function() {
       this.formatted = dateRepr(this.date)
