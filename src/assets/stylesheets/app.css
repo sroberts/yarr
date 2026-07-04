@@ -168,8 +168,11 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .settings-dropdown .dropdown-toggle {
-  padding-left: 0;
-  padding-right: 0;
+  /* Match .toolbar-item's horizontal padding so dropdown toggles are the same
+     width as sibling icon buttons (the markup already asks for px-2). Zeroing
+     it here made the Appearance gear narrower than its neighbours (uneven). */
+  padding-left: .5rem;
+  padding-right: .5rem;
 }
 
 .settings-dropdown .dropdown-menu {
