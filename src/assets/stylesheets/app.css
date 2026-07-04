@@ -68,7 +68,7 @@ html {
   --border-strong: #C7CDD6;
   --text-primary: #16191D;   /* ~15.8:1 on base — AAA */
   --text-secondary: #4A515B; /* ~8.3:1 — AAA */
-  --text-tertiary: #6B7280;  /* ~5.1:1 — AA  */
+  --text-tertiary: #666D79;  /* 5.2:1 base, 4.6:1 on hover surface — AA */
   --status-success: #15803D;
   --status-attention: #B45309;
   --status-error: #DC2626;
@@ -85,7 +85,7 @@ html {
   --border-strong: #38414F;
   --text-primary: #E6EAF0;   /* ~13.5:1 on base — AAA */
   --text-secondary: #A4ADBA; /* ~7.4:1 — AAA */
-  --text-tertiary: #6E7889;  /* ~4.6:1 — AA  */
+  --text-tertiary: #868FA0;  /* 5.8:1 base, 5.3:1 raised, 4.7:1 hover — AA */
   --status-success: #4ADE80;
   --status-attention: #FBBF24;
   --status-error: #F87171;
@@ -272,7 +272,10 @@ select.form-control:not([multiple]):not([size]) {
 
 .counter {
   padding-left: .5rem;
-  opacity: .6;
+  /* De-emphasise unread counts with a real token (AAA on every surface)
+     rather than opacity — .6 opacity on a selected row's on-accent text
+     dropped below AA in every accent. */
+  color: var(--text-secondary);
 }
 
 .light {
@@ -723,6 +726,11 @@ a,
   background-color: var(--accent) !important;
 }
 
+/* On a selected row the counter must ride the accent, not the muted token. */
+.selectgroup input:checked + .selectgroup-label .counter {
+  color: var(--on-accent);
+}
+
 .btn-default:focus,
 .form-control:focus {
   border-color: var(--accent);
@@ -1045,7 +1053,8 @@ a,
   padding-top: 0.5rem;
   border-top: 1px solid rgba(128,128,128,0.1);
   font-size: 0.75rem;
-  opacity: 0.35;
+  /* Muted but legible — 0.35 opacity was well below AA (detector-flagged). */
+  color: var(--text-tertiary);
 }
 
 .card-view-action {
