@@ -497,6 +497,17 @@ function rootComponent() { return {
     ttsSupported: function() {
       return ttsEngine.supported
     },
+    // Responsive layout classes for the #app container. These drive the mobile
+    // single-column view (app.css @media max-width): feed list -> article list
+    // -> reader. Applied imperatively via a watcher because #app is the Vue
+    // *mount container* and Vue 3 ignores :class bindings on the mount host.
+    appLayoutClasses: function() {
+      return {
+        'feed-selected': this.feedSelected !== null,
+        'item-selected': this.itemSelected !== null,
+        'card-mode': this.cardMode,
+      }
+    },
     foldersWithFeeds: function() {
       var feedsByFolders = this.feeds.reduce(function(folders, feed) {
         if (!folders[feed.folder_id])
@@ -625,6 +636,14 @@ function rootComponent() { return {
     },
   },
   watch: {
+    'appLayoutClasses': {
+      immediate: true,
+      handler: function(classes) {
+        var el = document.getElementById('app')
+        if (!el) return
+        Object.keys(classes).forEach(function(name) { el.classList.toggle(name, classes[name]) })
+      },
+    },
     'theme': {
       deep: true,
       handler: function(theme) {

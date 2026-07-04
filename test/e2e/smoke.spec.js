@@ -126,6 +126,24 @@ test('reader toolbar: all icon controls are the same width (even spacing)', asyn
   expect(new Set(widths).size).toBe(1)  // all identical => evenly spaced
 })
 
+test('mobile layout: #app reflects feed/item selection (drives single-column nav)', async ({ page }) => {
+  // Regression: the responsive classes lived in a :class on #app, but #app is
+  // the Vue mount container and Vue 3 ignores bindings on the mount host — so
+  // feed-selected/item-selected never applied and mobile couldn't slide from
+  // the feed list to a feed's article list. Now applied via a watcher.
+  await page.goto('/')
+  const appClass = () => page.evaluate(() => document.getElementById('app').className)
+  // selecting a feed slides to the article list on mobile
+  await page.evaluate(() => { vm.feedSelected = 'feed:1' })
+  await expect.poll(appClass).toContain('feed-selected')
+  // opening an article slides to the reader
+  await page.evaluate(() => { vm.itemSelected = 123 })
+  await expect.poll(appClass).toContain('item-selected')
+  // going back clears both
+  await page.evaluate(() => { vm.itemSelected = null; vm.feedSelected = null })
+  await expect.poll(appClass).not.toContain('selected')
+})
+
 test('offline reading: cache hit shows content, miss shows message', async ({ page, context }) => {
   await page.goto('/')
   // seed the offline store with a deliberately-kept article
