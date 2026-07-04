@@ -308,6 +308,43 @@ test('listen (TTS): button speaks the article, toggles pause, stops on close', a
   expect(await page.evaluate(() => vm.ttsPlaying)).toBe(false)
 })
 
+test('contrast: muted text clears WCAG AA in both themes; counters not opacity-dimmed', async ({ page }) => {
+  // Regression: dark --text-tertiary was 4.24:1 (below AA) while its comment
+  // claimed compliance, and .counter used opacity .6 that failed on selected
+  // (accent-bg) rows. Guard the token math and the opacity choice directly.
+  await page.goto('/')
+  const contrast = await page.evaluate(() => {
+    const lum = (c) => {
+      const [r, g, b] = c.match(/[\d.]+/g).map(Number).slice(0, 3)
+        .map(v => v / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const toRGB = (v) => { const d = document.createElement('div'); d.style.color = v; document.body.appendChild(d); const c = getComputedStyle(d).color; d.remove(); return c }
+    const cr = (a, b) => { const x = lum(toRGB(a)), y = lum(toRGB(b)); const hi = Math.max(x, y), lo = Math.min(x, y); return (hi + 0.05) / (lo + 0.05) }
+    const read = (name) => getComputedStyle(document.body).getPropertyValue(name).trim()
+    const out = {}
+    for (const theme of ['light', 'dark']) {
+      document.body.className = 'theme-' + theme
+      const t = read('--text-tertiary')
+      out[theme] = {
+        tertiaryOnBase: cr(t, read('--surface-base')),
+        tertiaryOnRaised: cr(t, read('--surface-raised')),
+      }
+    }
+    return out
+  })
+  expect(contrast.light.tertiaryOnBase).toBeGreaterThanOrEqual(4.5)
+  expect(contrast.light.tertiaryOnRaised).toBeGreaterThanOrEqual(4.5)
+  expect(contrast.dark.tertiaryOnBase).toBeGreaterThanOrEqual(4.5)
+  expect(contrast.dark.tertiaryOnRaised).toBeGreaterThanOrEqual(4.5)
+  // counters de-emphasise with a token, not opacity (opacity has no headroom on accent rows)
+  const counterOpacity = await page.evaluate(() => {
+    const el = document.createElement('span'); el.className = 'counter'; document.body.appendChild(el)
+    const o = getComputedStyle(el).opacity; el.remove(); return o
+  })
+  expect(counterOpacity).toBe('1')
+})
+
 test('triage card: the date updates when cycling cards (not frozen to the first)', async ({ page }) => {
   // Regression: <relative-time> computed its date once in data() and the triage
   // card reuses one instance, so every card after the first showed card 1's date.
