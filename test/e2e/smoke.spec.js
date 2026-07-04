@@ -345,6 +345,40 @@ test('contrast: muted text clears WCAG AA in both themes; counters not opacity-d
   expect(counterOpacity).toBe('1')
 })
 
+test('accent swatches: preview dot matches the applied accent in both themes', async ({ page }) => {
+  // Regression (#130): .swatch-* hardcoded only the light accent values, so in
+  // dark mode the picker showed the wrong color (e.g. amber dot burnt-orange
+  // while selecting it painted bright yellow). The swatch must equal the accent
+  // that [data-accent] applies, per theme.
+  await page.goto('/')
+  const accents = ['blue', 'teal', 'green', 'violet', 'rose', 'amber', 'slate']
+  const result = await page.evaluate((accents) => {
+    const toRGB = (v) => { const d = document.createElement('div'); d.style.color = v; document.body.appendChild(d); const c = getComputedStyle(d).color; d.remove(); return c }
+    const out = {}
+    for (const theme of ['light', 'dark']) {
+      out[theme] = {}
+      for (const a of accents) {
+        // color the swatch dot would show
+        document.body.className = 'theme-' + theme
+        document.body.removeAttribute('data-accent')
+        const sw = document.createElement('span'); sw.className = 'swatch-' + a; document.body.appendChild(sw)
+        const swatch = toRGB(getComputedStyle(sw).getPropertyValue('--swatch').trim())
+        sw.remove()
+        // color selecting that accent actually applies
+        document.body.setAttribute('data-accent', a)
+        const applied = toRGB(getComputedStyle(document.body).getPropertyValue('--accent').trim())
+        out[theme][a] = { swatch, applied }
+      }
+    }
+    return out
+  }, accents)
+  for (const theme of ['light', 'dark']) {
+    for (const a of accents) {
+      expect(result[theme][a].swatch, `${theme}/${a} swatch should match applied accent`).toBe(result[theme][a].applied)
+    }
+  }
+})
+
 test('triage card: the date updates when cycling cards (not frozen to the first)', async ({ page }) => {
   // Regression: <relative-time> computed its date once in data() and the triage
   // card reuses one instance, so every card after the first showed card 1's date.

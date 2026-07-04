@@ -1292,6 +1292,9 @@ body[data-motion="reduce"] *::after {
   outline-offset: 2px;
 }
 
+/* Swatch preview colors mirror the [data-accent] --accent values above so the
+   dot matches the color selecting it paints. Each has a dark override, since
+   the applied accent shifts in dark mode (e.g. amber #B45309 → #FBBF24). */
 .swatch-blue   { --swatch: #2563EB; }
 .swatch-teal   { --swatch: #0F766E; }
 .swatch-green  { --swatch: #15803D; }
@@ -1299,6 +1302,13 @@ body[data-motion="reduce"] *::after {
 .swatch-rose   { --swatch: #BE123C; }
 .swatch-amber  { --swatch: #B45309; }
 .swatch-slate  { --swatch: #475569; }
+.theme-dark .swatch-blue   { --swatch: #5B8DEF; }
+.theme-dark .swatch-teal   { --swatch: #2DD4BF; }
+.theme-dark .swatch-green  { --swatch: #4ADE80; }
+.theme-dark .swatch-violet { --swatch: #A78BFA; }
+.theme-dark .swatch-rose   { --swatch: #FB7185; }
+.theme-dark .swatch-amber  { --swatch: #FBBF24; }
+.theme-dark .swatch-slate  { --swatch: #94A3B8; }
 
 /* coarse-pointer: keep accent swatches a comfortable tap target */
 @media (pointer: coarse) {
