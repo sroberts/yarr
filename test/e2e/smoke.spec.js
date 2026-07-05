@@ -126,6 +126,33 @@ test('reader toolbar: all icon controls are the same width (even spacing)', asyn
   expect(new Set(widths).size).toBe(1)  // all identical => evenly spaced
 })
 
+test('reader toolbar: fits the viewport at phone widths (no unreachable controls)', async ({ page }) => {
+  // Regression (#123): the reader toolbar rendered Prev/Next/Close past the
+  // right edge at 390px (and clipped Open Link at 320px) — unreachable, no
+  // wrap or scroll. Every visible control must sit within the viewport.
+  const seed = () => page.evaluate(() => {
+    var item = { id: 810123, feed_id: 1, title: 'Fits The Phone', status: 'read', media_links: [], content: '<p>body</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 810123
+  })
+  const overflow = () => page.evaluate(() => {
+    const tb = Array.from(document.querySelectorAll('#col-item .toolbar')).slice(-1)[0]
+    const w = window.innerWidth
+    // controls whose right edge spills past the viewport (or left edge < 0)
+    return Array.from(tb.querySelectorAll('.toolbar-item'))
+      .filter(el => getComputedStyle(el).display !== 'none')
+      .map(el => { const r = el.getBoundingClientRect(); return { title: el.title, left: Math.round(r.left), right: Math.round(r.right) } })
+      .filter(r => r.right > w + 0.5 || r.left < -0.5)
+  })
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/')
+    await seed()
+    await expect(page.getByRole('heading', { name: 'Fits The Phone' })).toBeVisible()
+    expect(await overflow(), `toolbar overflow at ${width}px`).toEqual([])
+  }
+})
+
 test('mobile layout: #app reflects feed/item selection (drives single-column nav)', async ({ page }) => {
   // Regression: the responsive classes lived in a :class on #app, but #app is
   // the Vue mount container and Vue 3 ignores bindings on the mount host — so

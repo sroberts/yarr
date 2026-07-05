@@ -138,6 +138,9 @@ kbd {
 .justify-content-center { justify-content: center; }
 .justify-content-between { justify-content: space-between; }
 @media (min-width: 768px) { .d-md-none { display: none !important; } }
+/* paired with .d-none to make a control desktop-only: hidden on phones,
+   restored as an inline-flex toolbar-item at the md breakpoint and up. */
+@media (min-width: 768px) { .d-md-inline-flex { display: inline-flex !important; } }
 
 /* ── position / sizing / overflow / float ───────── */
 .position-relative { position: relative; }

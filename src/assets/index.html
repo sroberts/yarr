@@ -455,13 +455,16 @@
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <div class="flex-grow-1"></div>
-                <button class="toolbar-item" @click="navigateToItem(-1)" title="Previous Article" :disabled="!items.length || itemSelected == items[0].id">
+                <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
+                     and swipe navigation cover them, and keeping them here
+                     overflowed the toolbar past the viewport edge (unreachable). -->
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" :disabled="!items.length || itemSelected == items[0].id">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
-                <button class="toolbar-item" @click="navigateToItem(+1)" title="Next Article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
                     <span class="icon">{% inline "chevron-right.svg" %}</span>
                 </button>
-                <button class="toolbar-item" @click="itemSelected=null" title="Close Article">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="itemSelected=null" title="Close Article">
                     <span class="icon">{% inline "x.svg" %}</span>
                 </button>
             </div>
