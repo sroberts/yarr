@@ -964,6 +964,17 @@ a,
   }
 }
 
+/* Very narrow phones (~320px): eight reader actions can't all keep a 44px
+   width, so pack them horizontally — the 44px touch height (above) stays,
+   only the width compresses — rather than clip controls off-screen (#123). */
+@media (max-width: 380px) {
+  #col-item .toolbar-item {
+    min-width: 36px;
+    padding-left: .3rem;
+    padding-right: .3rem;
+  }
+}
+
 /* ── Card triage mode ────────────────────────── */
 
 
