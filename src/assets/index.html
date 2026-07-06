@@ -245,7 +245,7 @@
                 <div class="empty-hint" v-if="feeds.length === 0">
                     <p class="mb-2">No feeds yet.</p>
                     <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
-                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu. Press <kbd>?</kbd> for keyboard shortcuts.</p>
+                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
                 </div>
             </div>
             <div class="p-2 toolbar d-flex align-items-center border-top flex-shrink-0" v-if="loading.feeds">
@@ -357,6 +357,14 @@
                 {{ items.length }}{{ itemsHasMore ? '+' : '' }} result{{ items.length == 1 ? '' : 's' }} for "{{ itemSearch }}"
             </div>
             <div id="item-list-scroll" class="p-2 overflow-auto scroll-touch border-top flex-grow-1" v-scroll="loadMoreItems" ref="itemlist">
+                <!-- First-run: single-column layouts (mobile, zoomed desktop) land
+                     here, not on the feed list, so the "add a feed" CTA has to
+                     live in this pane too or the app looks broken (#120). -->
+                <div class="empty-hint" v-if="feeds.length === 0">
+                    <p class="mb-2">No feeds yet.</p>
+                    <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
+                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
+                </div>
                 <label v-for="item in items" :key="item.id"
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected">
@@ -375,7 +383,7 @@
                         <div>{{ item.title || 'untitled' }}</div>
                     </div>
                 </label>
-                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore"></button>
+                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length"></button>
             </div>
         </div>
         <!-- item show -->
