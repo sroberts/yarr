@@ -70,6 +70,26 @@ test('empty states: first-run feed CTA + empty reader hint', async ({ page }) =>
   await expect(page.getByText('Select an article to read')).toBeVisible()
 })
 
+test('first-run (#120): single-column landing shows the add-feed CTA, not a blank pane', async ({ page }) => {
+  // Regression: feedSelected defaults to '' (!== null), so the mobile/zoomed
+  // single-column layout slides to the item pane — which had no empty state,
+  // leaving a blank dead-end. The feed-list CTA was hidden off in the other pane.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  // production's first-run default is feedSelected === '' (settings.feed), which
+  // applies the feed-selected class and slides a single column to the item pane;
+  // reproduce that exact state (the e2e server happens to boot with null).
+  await page.evaluate(() => { vm.feedSelected = '' })
+  // the item pane is the single-column landing and must carry its own CTA
+  const cta = page.locator('#col-item-list').getByRole('button', { name: 'Add your first feed' })
+  await expect(cta).toBeVisible()
+  const box = await cta.boundingBox()
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(391)
+  // no perpetual loading spinner when there are no feeds
+  await expect(page.locator('#col-item-list .loading')).toHaveCount(0)
+})
+
 test('add feed: submitting the New Feed form reaches the API (no bare-event crash)', async ({ page }) => {
   // Regression: the form used @submit.prevent="createFeed(event)" — bare `event`
   // is the removed Vue 2 magic global, so in the Vue 3 prod build it resolved to
