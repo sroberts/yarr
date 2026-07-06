@@ -7,7 +7,17 @@
       init['headers'] = init['headers'] || {}
       init['headers']['x-requested-by'] = 'yarr'
     }
-    return fetch(resource, init)
+    return fetch(resource, init).then(function(res) {
+      // Session expired or cookie cleared: the server now 401s every API call.
+      // Reload to land on the login page instead of leaving the SPA frozen with
+      // JSON-parse errors. Return a pending promise so the caller's .then(json)
+      // never runs against the login response while the reload is in flight. (#125)
+      if (res.status === 401) {
+        window.location.reload()
+        return new Promise(function() {})
+      }
+      return res
+    })
   }
   var api = function(method, endpoint, data) {
     var headers = {'Content-Type': 'application/json'}
