@@ -393,6 +393,16 @@ vueApp.component('relative-time', {
 
 function rootComponent() { return {
   created: function() {
+    // Consume the PWA shortcut param: clean it from the URL so a reload doesn't
+    // re-apply it, and route triage through filterSelected (its watcher enters
+    // card mode). unread/starred/all were already set as the initial filter.
+    var view = (new URLSearchParams(location.search)).get('view')
+    if (view) {
+      if (window.history && history.replaceState) {
+        history.replaceState(null, '', location.pathname + location.hash)
+      }
+      if (view === 'triage') this.filterSelected = 'triage'
+    }
     this.refreshStats()
       .then(this.refreshFeeds.bind(this))
       .then(this.refreshItems.bind(this, false))
@@ -422,8 +432,15 @@ function rootComponent() { return {
   },
   data: function() {
     var s = app.settings
+    // PWA app-icon shortcuts land on ?view=<name> (manifest shortcuts). Apply
+    // unread/starred/all as the initial filter so there's no persist or extra
+    // fetch; triage is applied in created() so its watcher enters card mode.
+    var view = (new URLSearchParams(location.search)).get('view')
+    var initialFilter = (view === 'unread' || view === 'starred') ? view
+                      : (view === 'all') ? ''
+                      : s.filter
     return {
-      'filterSelected': s.filter,
+      'filterSelected': initialFilter,
       'folders': [],
       'feeds': [],
       'filters': [],

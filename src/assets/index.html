@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="yarr!">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="" />
+    <meta name="theme-color" content="#0E1116" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
     <script>
         window.app = window.app || {}
@@ -36,6 +36,10 @@
                 var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
                 document.body.className = 'theme-' + (dark ? 'dark' : 'light')
             }
+            // sync the browser-chrome color to the resolved theme before paint so
+            // dark users don't get a white bar until Vue mounts (updateMetaTheme).
+            var m = document.querySelector('meta[name=theme-color]')
+            if (m) m.content = document.body.className.indexOf('theme-dark') !== -1 ? '#0E1116' : '#FFFFFF'
         })()
     </script>
     <!-- #app is the Vue mount container; Vue 3 ignores :class here, so the

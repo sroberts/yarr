@@ -93,15 +93,17 @@ func (s *Server) handleStatic(c *router.Context) {
 func (s *Server) handleManifest(c *router.Context) {
 	startURL := "/" + strings.TrimPrefix(s.BasePath, "/")
 	c.JSON(http.StatusOK, map[string]interface{}{
-		"$schema":          "https://json.schemastore.org/web-manifest-combined.json",
-		"name":             "yarr!",
-		"short_name":       "yarr",
-		"description":      "yet another rss reader",
-		"display":          "standalone",
-		"start_url":        startURL,
-		"scope":            startURL,
-		"background_color": "#1a1a2e",
-		"theme_color":      "#ffffff",
+		"$schema":     "https://json.schemastore.org/web-manifest-combined.json",
+		"name":        "yarr!",
+		"short_name":  "yarr",
+		"description": "yet another rss reader",
+		"display":     "standalone",
+		"start_url":   startURL,
+		"scope":       startURL,
+		// match the dark base surface (#0E1116); the running chrome tracks the
+		// active theme via <meta name="theme-color"> media queries in the page.
+		"background_color": "#0E1116",
+		"theme_color":      "#0E1116",
 		"categories":       []string{"news", "productivity"},
 		"icons": []map[string]interface{}{
 			{
@@ -126,11 +128,25 @@ func (s *Server) handleManifest(c *router.Context) {
 				"type":    "image/png",
 				"purpose": "any",
 			},
+			// full-bleed variant so Android adaptive icons aren't letterboxed
+			{
+				"src":     s.BasePath + "/static/graphicarts/icon-maskable.svg",
+				"sizes":   "any",
+				"type":    "image/svg+xml",
+				"purpose": "maskable",
+			},
 			{
 				"src":   s.BasePath + "/static/graphicarts/apple-touch-icon.png",
 				"sizes": "180x180",
 				"type":  "image/png",
 			},
+		},
+		// app-icon long-press shortcuts jump straight to a view (see the
+		// ?view= reader in app.js that maps these onto filterSelected).
+		"shortcuts": []map[string]interface{}{
+			{"name": "Unread", "url": startURL + "?view=unread"},
+			{"name": "Starred", "url": startURL + "?view=starred"},
+			{"name": "Triage", "url": startURL + "?view=triage"},
 		},
 	})
 }
