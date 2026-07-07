@@ -173,6 +173,24 @@ test('reader toolbar: fits the viewport at phone widths (no unreachable controls
   }
 })
 
+test('session expiry (#125): a 401 from the API reloads the page (lands on login)', async ({ page }) => {
+  // Regression: when the auth cookie lapsed the SPA had no 401 handling — every
+  // call failed with JSON-parse errors while the UI looked normal (frozen).
+  // xfetch now reloads on 401; in production the reload lands on the login page.
+  await page.goto('/')
+  // 401 exactly one API call (then let traffic through) so the reload can't loop
+  let armed = true
+  await page.route('**/api/**', route => {
+    if (armed) { armed = false; route.fulfill({ status: 401, body: '' }) }
+    else route.continue()
+  })
+  // a marker the reload will wipe, proving the page actually reloaded
+  await page.evaluate(() => { window.__preReload = 1; api.feeds.list() })
+  await page.waitForFunction(() => window.__preReload === undefined, { timeout: 5000 })
+  // and the app comes back up cleanly after the reload (not stuck)
+  await expect(page.locator('#app')).toBeVisible()
+})
+
 test('mobile layout: #app reflects feed/item selection (drives single-column nav)', async ({ page }) => {
   // Regression: the responsive classes lived in a :class on #app, but #app is
   // the Vue mount container and Vue 3 ignores bindings on the mount host — so
