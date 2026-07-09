@@ -8,18 +8,74 @@
     <link rel="stylesheet" href="./static/stylesheets/app.css">
     <link rel="icon" href="./static/graphicarts/favicon.svg" type="image/svg+xml">
     <link rel="alternate icon" href="./static/graphicarts/favicon.png" type="image/png">
+    <meta name="theme-color" content="#0E1116" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <style>
-        form {
-            max-width: 300px;
-            margin: 0 auto;
-            padding: 1rem;
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+            gap: 2rem;
         }
-        form img {
-            width: 4rem;
-            height: 4rem;
+        /* Brand lockup: the anchor is inlined (not an <img>) so its
+           stroke="currentColor" resolves to the text token and stays visible
+           in both themes. */
+        .login-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .35rem;
+            color: var(--text-primary);
+        }
+        .login-brand svg {
+            width: 2.75rem;
+            height: 2.75rem;
+        }
+        .login-brand-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+        .login-brand-tagline {
+            font-size: .875rem;
+            color: var(--text-tertiary);
+        }
+        /* Soft raised panel gives the front door solidity; inputs sit on the
+           base surface so they read as inset wells against it. */
+        .login-panel {
+            width: 100%;
+            max-width: 20rem;
+            background-color: var(--surface-raised);
+            border: 1px solid var(--border-subtle);
+            border-radius: calc(var(--radius) + 2px);
+            padding: 1.5rem;
+        }
+        .login-panel .form-group:last-of-type {
+            margin-bottom: 1.25rem;
+        }
+        .login-panel label {
             display: block;
-            margin: 3rem auto;
+            margin-bottom: .35rem;
+            font-size: .875rem;
+            color: var(--text-secondary);
+        }
+        /* Resting inputs need a border that clears the 3:1 non-text minimum
+           against the base surface in both themes; border-strong alone is
+           ~1.8:1 in dark. Nudge it toward the ink so the field edge is crisp. */
+        .login-panel .form-control {
+            background-color: var(--surface-base);
+            border-color: color-mix(in oklab, var(--text-primary) 48%, transparent);
+            padding: .5rem .75rem;
+        }
+        .login-panel .form-control:focus {
+            border-color: var(--accent);
+        }
+        .login-error {
+            margin-bottom: 1rem;
         }
     </style>
 </head>
@@ -32,23 +88,35 @@
                 var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
                 document.body.className = 'theme-' + (dark ? 'dark' : 'light')
             }
+            // match the browser chrome to the resolved theme (there's no Vue app here)
+            var m = document.querySelector('meta[name=theme-color]')
+            if (m) m.content = document.body.className.indexOf('theme-dark') !== -1 ? '#0E1116' : '#FFFFFF'
         })()
     </script>
-    <form action="" method="post">
-        <img src="./static/graphicarts/anchor.svg" alt="">
-        {% if .error %}
-            <div class="text-danger text-center my-3">{% .error %}</div>
-        {% end %}
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input name="username" class="form-control" id="username" autocomplete="off"
-                   value="{% if .username %}{% .username %}{% end %}" required autofocus>
+    <div class="login-page">
+        <div class="login-brand">
+            <span class="login-brand-mark">{% inline "anchor.svg" %}</span>
+            <span class="login-brand-name">yarr</span>
+            <span class="login-brand-tagline">feed reader</span>
         </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input name="password" class="form-control" id="password" type="password" required>
-        </div>
-        <button class="btn btn-block btn-default" type="submit">Login</button>
-    </form>
+        <main class="login-panel">
+            <form action="" method="post">
+                {% if .error %}
+                    <div class="text-danger text-center login-error" role="alert">{% .error %}</div>
+                {% end %}
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input name="username" class="form-control" id="username" autocomplete="username"
+                           value="{% if .username %}{% .username %}{% end %}" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input name="password" class="form-control" id="password" type="password"
+                           autocomplete="current-password" required>
+                </div>
+                <button class="btn btn-block btn-default" type="submit">Login</button>
+            </form>
+        </main>
+    </div>
 </body>
 </html>

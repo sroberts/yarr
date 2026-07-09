@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="yarr!">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="" />
+    <meta name="theme-color" content="#0E1116" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
     <script>
         window.app = window.app || {}
@@ -36,6 +36,10 @@
                 var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
                 document.body.className = 'theme-' + (dark ? 'dark' : 'light')
             }
+            // sync the browser-chrome color to the resolved theme before paint so
+            // dark users don't get a white bar until Vue mounts (updateMetaTheme).
+            var m = document.querySelector('meta[name=theme-color]')
+            if (m) m.content = document.body.className.indexOf('theme-dark') !== -1 ? '#0E1116' : '#FFFFFF'
         })()
     </script>
     <!-- #app is the Vue mount container; Vue 3 ignores :class here, so the
@@ -245,7 +249,7 @@
                 <div class="empty-hint" v-if="feeds.length === 0">
                     <p class="mb-2">No feeds yet.</p>
                     <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
-                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu. Press <kbd>?</kbd> for keyboard shortcuts.</p>
+                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
                 </div>
             </div>
             <div class="p-2 toolbar d-flex align-items-center border-top flex-shrink-0" v-if="loading.feeds">
@@ -357,6 +361,14 @@
                 {{ items.length }}{{ itemsHasMore ? '+' : '' }} result{{ items.length == 1 ? '' : 's' }} for "{{ itemSearch }}"
             </div>
             <div id="item-list-scroll" class="p-2 overflow-auto scroll-touch border-top flex-grow-1" v-scroll="loadMoreItems" ref="itemlist">
+                <!-- First-run: single-column layouts (mobile, zoomed desktop) land
+                     here, not on the feed list, so the "add a feed" CTA has to
+                     live in this pane too or the app looks broken (#120). -->
+                <div class="empty-hint" v-if="feeds.length === 0">
+                    <p class="mb-2">No feeds yet.</p>
+                    <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
+                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
+                </div>
                 <label v-for="item in items" :key="item.id"
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected">
@@ -375,7 +387,7 @@
                         <div>{{ item.title || 'untitled' }}</div>
                     </div>
                 </label>
-                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore"></button>
+                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length"></button>
             </div>
         </div>
         <!-- item show -->
@@ -455,13 +467,16 @@
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <div class="flex-grow-1"></div>
-                <button class="toolbar-item" @click="navigateToItem(-1)" title="Previous Article" :disabled="!items.length || itemSelected == items[0].id">
+                <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
+                     and swipe navigation cover them, and keeping them here
+                     overflowed the toolbar past the viewport edge (unreachable). -->
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" :disabled="!items.length || itemSelected == items[0].id">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
-                <button class="toolbar-item" @click="navigateToItem(+1)" title="Next Article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
                     <span class="icon">{% inline "chevron-right.svg" %}</span>
                 </button>
-                <button class="toolbar-item" @click="itemSelected=null" title="Close Article">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="itemSelected=null" title="Close Article">
                     <span class="icon">{% inline "x.svg" %}</span>
                 </button>
             </div>

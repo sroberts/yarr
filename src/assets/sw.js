@@ -1,4 +1,4 @@
-var CACHE_NAME = 'yarr-v9';
+var CACHE_NAME = 'yarr-v10';
 var STATIC_ASSETS = [
   './static/stylesheets/base.css',
   './static/stylesheets/app.css',
@@ -9,10 +9,13 @@ var STATIC_ASSETS = [
   './static/javascripts/key.js',
   './static/javascripts/swipe.js',
   './static/fonts/inter.woff2',
+  './static/fonts/source-serif-4.woff2',
+  './static/fonts/jetbrains-mono.woff2',
   './static/graphicarts/favicon.svg',
   './static/graphicarts/favicon.png',
   './static/graphicarts/icon-192.png',
   './static/graphicarts/icon-512.png',
+  './static/graphicarts/icon-maskable.svg',
 ];
 
 self.addEventListener('install', function(event) {

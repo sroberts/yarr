@@ -70,6 +70,26 @@ test('empty states: first-run feed CTA + empty reader hint', async ({ page }) =>
   await expect(page.getByText('Select an article to read')).toBeVisible()
 })
 
+test('first-run (#120): single-column landing shows the add-feed CTA, not a blank pane', async ({ page }) => {
+  // Regression: feedSelected defaults to '' (!== null), so the mobile/zoomed
+  // single-column layout slides to the item pane — which had no empty state,
+  // leaving a blank dead-end. The feed-list CTA was hidden off in the other pane.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  // production's first-run default is feedSelected === '' (settings.feed), which
+  // applies the feed-selected class and slides a single column to the item pane;
+  // reproduce that exact state (the e2e server happens to boot with null).
+  await page.evaluate(() => { vm.feedSelected = '' })
+  // the item pane is the single-column landing and must carry its own CTA
+  const cta = page.locator('#col-item-list').getByRole('button', { name: 'Add your first feed' })
+  await expect(cta).toBeVisible()
+  const box = await cta.boundingBox()
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(391)
+  // no perpetual loading spinner when there are no feeds
+  await expect(page.locator('#col-item-list .loading')).toHaveCount(0)
+})
+
 test('add feed: submitting the New Feed form reaches the API (no bare-event crash)', async ({ page }) => {
   // Regression: the form used @submit.prevent="createFeed(event)" — bare `event`
   // is the removed Vue 2 magic global, so in the Vue 3 prod build it resolved to
@@ -124,6 +144,65 @@ test('reader toolbar: all icon controls are the same width (even spacing)', asyn
   })
   expect(widths.length).toBeGreaterThan(6)
   expect(new Set(widths).size).toBe(1)  // all identical => evenly spaced
+})
+
+test('reader toolbar: fits the viewport at phone widths (no unreachable controls)', async ({ page }) => {
+  // Regression (#123): the reader toolbar rendered Prev/Next/Close past the
+  // right edge at 390px (and clipped Open Link at 320px) — unreachable, no
+  // wrap or scroll. Every visible control must sit within the viewport.
+  const seed = () => page.evaluate(() => {
+    var item = { id: 810123, feed_id: 1, title: 'Fits The Phone', status: 'read', media_links: [], content: '<p>body</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 810123
+  })
+  const overflow = () => page.evaluate(() => {
+    const tb = Array.from(document.querySelectorAll('#col-item .toolbar')).slice(-1)[0]
+    const w = window.innerWidth
+    // controls whose right edge spills past the viewport (or left edge < 0)
+    return Array.from(tb.querySelectorAll('.toolbar-item'))
+      .filter(el => getComputedStyle(el).display !== 'none')
+      .map(el => { const r = el.getBoundingClientRect(); return { title: el.title, left: Math.round(r.left), right: Math.round(r.right) } })
+      .filter(r => r.right > w + 0.5 || r.left < -0.5)
+  })
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/')
+    await seed()
+    await expect(page.getByRole('heading', { name: 'Fits The Phone' })).toBeVisible()
+    expect(await overflow(), `toolbar overflow at ${width}px`).toEqual([])
+  }
+})
+
+test('session expiry (#125): a 401 from the API reloads the page (lands on login)', async ({ page }) => {
+  // Regression: when the auth cookie lapsed the SPA had no 401 handling — every
+  // call failed with JSON-parse errors while the UI looked normal (frozen).
+  // xfetch now reloads on 401; in production the reload lands on the login page.
+  await page.goto('/')
+  // 401 exactly one API call (then let traffic through) so the reload can't loop
+  let armed = true
+  await page.route('**/api/**', route => {
+    if (armed) { armed = false; route.fulfill({ status: 401, body: '' }) }
+    else route.continue()
+  })
+  // a marker the reload will wipe, proving the page actually reloaded
+  await page.evaluate(() => { window.__preReload = 1; api.feeds.list() })
+  await page.waitForFunction(() => window.__preReload === undefined, { timeout: 5000 })
+  // and the app comes back up cleanly after the reload (not stuck)
+  await expect(page.locator('#app')).toBeVisible()
+})
+
+test('PWA shortcuts (#126): ?view= lands on the right view and cleans the URL', async ({ page }) => {
+  // The manifest shortcuts open ?view=unread|starred|triage; the app maps them
+  // onto filterSelected (triage into card mode) and strips the query so a reload
+  // doesn't re-apply it.
+  await page.goto('/?view=starred')
+  await expect.poll(() => page.evaluate(() => vm.filterSelected)).toBe('starred')
+  expect(await page.evaluate(() => location.search)).toBe('')
+
+  await page.goto('/?view=triage')
+  await expect.poll(() => page.evaluate(() => vm.filterSelected)).toBe('triage')
+  expect(await page.evaluate(() => vm.cardMode)).toBe(true)
+  expect(await page.evaluate(() => location.search)).toBe('')
 })
 
 test('mobile layout: #app reflects feed/item selection (drives single-column nav)', async ({ page }) => {

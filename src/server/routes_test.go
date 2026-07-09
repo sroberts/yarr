@@ -256,11 +256,13 @@ func TestManifestPWAFields(t *testing.T) {
 	if manifest["scope"] == nil {
 		t.Error("manifest missing scope")
 	}
-	if manifest["background_color"] != "#1a1a2e" {
-		t.Errorf("expected background_color #1a1a2e, got %v", manifest["background_color"])
+	// theme-matched dark surface (#126): the pre-redesign #1a1a2e/#ffffff drifted
+	// from the token system and gave dark users a white launch chrome.
+	if manifest["background_color"] != "#0E1116" {
+		t.Errorf("expected background_color #0E1116, got %v", manifest["background_color"])
 	}
-	if manifest["theme_color"] != "#ffffff" {
-		t.Errorf("expected theme_color #ffffff, got %v", manifest["theme_color"])
+	if manifest["theme_color"] != "#0E1116" {
+		t.Errorf("expected theme_color #0E1116, got %v", manifest["theme_color"])
 	}
 	if manifest["display"] != "standalone" {
 		t.Errorf("expected display standalone, got %v", manifest["display"])
@@ -322,5 +324,47 @@ func TestManifestWithBase(t *testing.T) {
 		if !strings.HasPrefix(src, "/yarr/") {
 			t.Errorf("icon src %q should be prefixed with /yarr/", src)
 		}
+	}
+}
+
+// Guards issue #126: the PWA manifest must ship a maskable icon (so Android
+// adaptive icons aren't letterboxed) and expose the app-icon shortcuts.
+func TestManifestMaskableAndShortcuts(t *testing.T) {
+	handler := NewServer(nil, "127.0.0.1:8000").handler()
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", "/manifest.json", nil)
+	handler.ServeHTTP(recorder, request)
+	if recorder.Result().StatusCode != 200 {
+		t.Fatalf("manifest status = %d", recorder.Result().StatusCode)
+	}
+
+	var m struct {
+		Icons []struct {
+			Purpose string `json:"purpose"`
+		} `json:"icons"`
+		Shortcuts []struct {
+			Name string `json:"name"`
+		} `json:"shortcuts"`
+	}
+	if err := json.NewDecoder(recorder.Body).Decode(&m); err != nil {
+		t.Fatal(err)
+	}
+
+	hasMaskable := false
+	for _, ic := range m.Icons {
+		if ic.Purpose == "maskable" {
+			hasMaskable = true
+		}
+	}
+	if !hasMaskable {
+		t.Error("manifest is missing a maskable icon (Android adaptive icons letterbox without one)")
+	}
+
+	var names []string
+	for _, s := range m.Shortcuts {
+		names = append(names, s.Name)
+	}
+	if want := "Unread,Starred,Triage"; strings.Join(names, ",") != want {
+		t.Errorf("shortcuts = %v, want %s", names, want)
 	}
 }

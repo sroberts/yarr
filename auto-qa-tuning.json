@@ -12,37 +12,37 @@
       "merged": 0,
       "closed_unmerged": 0,
       "rate": null,
-      "last_updated": "2026-06-29"
+      "last_updated": "2026-07-06"
     },
     "storage": {
       "merged": 0,
       "closed_unmerged": 0,
       "rate": null,
-      "last_updated": "2026-06-29"
+      "last_updated": "2026-07-06"
     },
     "server-handlers": {
       "merged": 1,
       "closed_unmerged": 0,
       "rate": null,
-      "last_updated": "2026-06-29"
+      "last_updated": "2026-07-06"
     },
     "ui-assets": {
-      "merged": 5,
+      "merged": 23,
       "closed_unmerged": 1,
-      "rate": 0.83,
-      "last_updated": "2026-06-29"
+      "rate": 0.96,
+      "last_updated": "2026-07-06"
     },
     "ci-build": {
-      "merged": 5,
+      "merged": 7,
       "closed_unmerged": 0,
       "rate": 1,
-      "last_updated": "2026-06-29"
+      "last_updated": "2026-07-06"
     },
     "docs": {
-      "merged": 1,
-      "closed_unmerged": 0,
-      "rate": null,
-      "last_updated": "2026-06-29"
+      "merged": 3,
+      "closed_unmerged": 3,
+      "rate": 0.5,
+      "last_updated": "2026-07-06"
     }
   }
 }

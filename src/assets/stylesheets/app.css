@@ -964,6 +964,17 @@ a,
   }
 }
 
+/* Very narrow phones (~320px): eight reader actions can't all keep a 44px
+   width, so pack them horizontally — the 44px touch height (above) stays,
+   only the width compresses — rather than clip controls off-screen (#123). */
+@media (max-width: 380px) {
+  #col-item .toolbar-item {
+    min-width: 36px;
+    padding-left: .3rem;
+    padding-right: .3rem;
+  }
+}
+
 /* ── Card triage mode ────────────────────────── */
 
 
@@ -1317,6 +1328,10 @@ body[data-motion="reduce"] *::after {
     height: 2rem;
     min-width: 2rem;
   }
+  /* "Press ? for shortcuts" is meaningless without a keyboard (#120). */
+  .kbd-hint {
+    display: none;
+  }
 }
 
 /* ── App toast (lightweight action confirmation) ───────
@@ -1367,6 +1382,12 @@ body[data-motion="reduce"] *::after {
   margin: 2rem auto 0;
   padding: 0 .5rem;
   text-align: center;
+}
+/* The item-pane first-run CTA only earns its place in single-column layouts
+   (≤991.98px), where the feed list is slid away. On the 3-pane desktop the
+   feed-list CTA already covers it, so hide this one to avoid a double CTA. */
+@media (min-width: 992px) {
+  #col-item-list .empty-hint { display: none; }
 }
 .reader-empty .icon {
   width: 2rem;
