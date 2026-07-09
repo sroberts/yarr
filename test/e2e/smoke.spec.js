@@ -191,6 +191,20 @@ test('session expiry (#125): a 401 from the API reloads the page (lands on login
   await expect(page.locator('#app')).toBeVisible()
 })
 
+test('PWA shortcuts (#126): ?view= lands on the right view and cleans the URL', async ({ page }) => {
+  // The manifest shortcuts open ?view=unread|starred|triage; the app maps them
+  // onto filterSelected (triage into card mode) and strips the query so a reload
+  // doesn't re-apply it.
+  await page.goto('/?view=starred')
+  await expect.poll(() => page.evaluate(() => vm.filterSelected)).toBe('starred')
+  expect(await page.evaluate(() => location.search)).toBe('')
+
+  await page.goto('/?view=triage')
+  await expect.poll(() => page.evaluate(() => vm.filterSelected)).toBe('triage')
+  expect(await page.evaluate(() => vm.cardMode)).toBe(true)
+  expect(await page.evaluate(() => location.search)).toBe('')
+})
+
 test('mobile layout: #app reflects feed/item selection (drives single-column nav)', async ({ page }) => {
   // Regression: the responsive classes lived in a :class on #app, but #app is
   // the Vue mount container and Vue 3 ignores bindings on the mount host — so
