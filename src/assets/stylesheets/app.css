@@ -803,14 +803,20 @@ a,
 
 /* pull-to-refresh */
 .pull-to-refresh {
-  height: 0;
+  transform: scaleY(0);
   opacity: 0;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: height .2s ease, opacity .2s ease;
+  transition: transform .2s ease, opacity .2s ease;
   flex-shrink: 0;
+  transform-origin: top center;
+}
+
+.pull-to-refresh.ready {
+  transform: scaleY(1);
+  opacity: 1;
 }
 
 .pull-to-refresh-spinner {
@@ -1513,3 +1519,8 @@ body[data-motion="reduce"] *::after {
 .segmented > button:disabled:hover { background: transparent; }
 .segmented > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 .segmented-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* ── Read title dimming ────────────────────────────── */
+.read-title {
+  opacity: 0.6;
+}
