@@ -133,7 +133,7 @@
                 </div>
                 <!-- card -->
                 <div v-if="currentCard && !cardDone" class="card-view-area flex-grow-1 d-flex flex-column align-items-center justify-content-center" id="card-swipe-area">
-                    <div class="triage-card" id="triage-card" @click="cardTap()">
+                    <div class="triage-card" id="triage-card" :key="currentCard.id" @click="cardTap()">
                         <div class="triage-card-feed">
                             <span>{{ (feedsById[currentCard.feed_id] || {}).title }}</span>
                             <span class="triage-card-date"><relative-time :val="currentCard.date"/></span>

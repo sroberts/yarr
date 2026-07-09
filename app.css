@@ -1,0 +1,7 @@
+.pull-to-refresh {
+    transform: scaleY(0);
+    transition: transform 0.3s;
+}
+.pull-to-refresh.active {
+    transform: scaleY(1);
+}
