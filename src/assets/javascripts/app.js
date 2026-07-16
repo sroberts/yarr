@@ -235,7 +235,14 @@ vueApp.component('drag', {
 vueApp.component('dropdown', {
   // Vue 3: `class`/`ref` are reserved and can't be props; a passed class now
   // auto-merges onto the root element, so we drop the explicit :class binding.
-  props: ['toggle-class', 'drop', 'title'],
+  // `fixed` opts the menu into viewport-fixed positioning so it isn't clipped
+  // by an overflow:auto ancestor (the sidebar feed list scrolls).
+  props: {
+    toggleClass: String,
+    drop: String,
+    title: String,
+    fixed: Boolean,
+  },
   data: function() {
     return {open: false}
   },
@@ -259,17 +266,41 @@ vueApp.component('dropdown', {
     },
     show: function(e) {
       this.open = true
-      this.$refs.menu.style.top = this.$refs.btn.offsetHeight + 'px'
+      var menu = this.$refs.menu
       var drop = this.$props.drop
 
+      // Feed-row menus sit inside an overflow:auto scroll container that would
+      // clip an absolutely-positioned menu; position:fixed escapes the clip.
+      // Measure after the slot renders (nextTick) so the menu can flip above
+      // the button when there isn't room below, and hide on scroll since a
+      // fixed menu no longer tracks the row it belongs to.
+      if (this.$props.fixed) {
+        menu.style.position = 'fixed'
+        menu.style.visibility = 'hidden'
+        this.$nextTick(function() {
+          var r = this.$refs.btn.getBoundingClientRect()
+          var mh = menu.offsetHeight, mw = menu.offsetWidth
+          var flipUp = (r.bottom + mh > window.innerHeight) && (r.top - mh > 0)
+          menu.style.top = (flipUp ? r.top - mh : r.bottom) + 'px'
+          menu.style.left = Math.max(4, r.right - mw) + 'px'
+          menu.style.right = 'auto'
+          menu.style.visibility = ''
+        }.bind(this))
+        document.addEventListener('click', this.clickHandler)
+        document.addEventListener('keydown', this.keyHandler)
+        window.addEventListener('scroll', this.hide, true)
+        return
+      }
+
+      menu.style.top = this.$refs.btn.offsetHeight + 'px'
       if (drop === 'right') {
-        this.$refs.menu.style.left = 'auto'
-        this.$refs.menu.style.right = '0'
+        menu.style.left = 'auto'
+        menu.style.right = '0'
       } else if (drop === 'center') {
         this.$nextTick(function() {
           var btnWidth = this.$refs.btn.getBoundingClientRect().width
-          var menuWidth = this.$refs.menu.getBoundingClientRect().width
-          this.$refs.menu.style.left = '-' + ((menuWidth - btnWidth) / 2) + 'px'
+          var menuWidth = menu.getBoundingClientRect().width
+          menu.style.left = '-' + ((menuWidth - btnWidth) / 2) + 'px'
         }.bind(this))
       }
 
@@ -278,8 +309,13 @@ vueApp.component('dropdown', {
     },
     hide: function() {
       this.open = false
+      if (this.$refs.menu) {
+        var s = this.$refs.menu.style
+        s.position = s.visibility = s.top = s.left = s.right = ''
+      }
       document.removeEventListener('click', this.clickHandler)
       document.removeEventListener('keydown', this.keyHandler)
+      window.removeEventListener('scroll', this.hide, true)
     },
     clickHandler: function(e) {
       var dropdown = e.target.closest('.dropdown')
