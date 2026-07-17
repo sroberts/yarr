@@ -242,6 +242,58 @@
                                       v-if="!filterSelected && feed_errors[feed.id]">
                                     {% inline "alert-circle.svg" %}
                                 </span>
+                                <!-- Per-feed menu: reachable straight from the list so
+                                     removing/renaming a feed doesn't require selecting it
+                                     first. `fixed` keeps the menu from being clipped by the
+                                     scrolling feed list. -->
+                                <dropdown class="settings-dropdown feed-row-menu flex-shrink-0"
+                                          toggle-class="feed-row-menu-btn"
+                                          drop="right"
+                                          fixed
+                                          title="Feed options">
+                                    <template v-slot:button>
+                                        <span class="icon">{% inline "more-horizontal.svg" %}</span>
+                                    </template>
+                                    <header class="dropdown-header" role="heading" aria-level="2">{{ feed.title }}</header>
+                                    <a class="dropdown-item" :href="feed.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="feed.link">
+                                        <span class="icon mr-1">{% inline "globe.svg" %}</span>
+                                        Website
+                                    </a>
+                                    <a class="dropdown-item" :href="feed.feed_link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="feed.feed_link">
+                                        <span class="icon mr-1">{% inline "rss.svg" %}</span>
+                                        Feed Link
+                                    </a>
+                                    <div class="dropdown-divider" v-if="feed.link || feed.feed_link"></div>
+                                    <button class="dropdown-item" @click="renameFeed(feed)">
+                                        <span class="icon mr-1">{% inline "edit.svg" %}</span>
+                                        Rename
+                                    </button>
+                                    <button class="dropdown-item" @click="updateFeedLink(feed)" v-if="feed.feed_link">
+                                        <span class="icon mr-1">{% inline "edit.svg" %}</span>
+                                        Change Link
+                                    </button>
+                                    <div class="dropdown-divider"></div>
+                                    <header class="dropdown-header" role="heading" aria-level="2">Move to...</header>
+                                    <template v-for="f in folders">
+                                        <button class="dropdown-item" v-if="f.id != feed.folder_id" @click="moveFeed(feed, f)">
+                                            <span class="icon mr-1">{% inline "folder.svg" %}</span>
+                                            {{ f.title }}
+                                        </button>
+                                    </template>
+                                    <button class="dropdown-item text-muted" @click="moveFeed(feed, null)" v-if="feed.folder_id">
+                                        <span class="icon mr-1">{% inline "folder-minus.svg" %}</span>
+                                        ──
+                                    </button>
+                                    <button class="dropdown-item text-muted" @click="moveFeedToNewFolder(feed)">
+                                        <span class="icon mr-1">{% inline "folder-plus.svg" %}</span>
+                                        new folder
+                                    </button>
+                                    <div class="dropdown-divider"></div>
+                                    <button class="dropdown-item text-danger" @click.prevent="deleteFeed(feed)">
+                                        <span class="icon mr-1">{% inline "trash.svg" %}</span>
+                                        Delete
+                                    </button>
+                                </dropdown>
                             </div>
                         </label>
                     </div>
