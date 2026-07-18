@@ -333,59 +333,10 @@
                     <span class="icon">{% inline "check.svg" %}</span>
                 </button>
 
-
-                <button class="btn btn-link toolbar-item px-2 ml-2" v-if="!current.type" disabled>
-                    <span class="icon">{% inline "more-horizontal.svg" %}</span>
-                </button>
-                <dropdown class="settings-dropdown"
-                          toggle-class="btn btn-link toolbar-item px-2 ml-2"
-                          drop="right"
-                          title="Feed Settings"
-                          v-if="current.type == 'feed'">
-                    <template v-slot:button>
-                        <span class="icon">{% inline "more-horizontal.svg" %}</span>
-                    </template>
-                    <header class="dropdown-header" role="heading" aria-level="2">{{ current.feed.title }}</header>
-                    <a class="dropdown-item" :href="current.feed.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="current.feed.link">
-                        <span class="icon mr-1">{% inline "globe.svg" %}</span>
-                        Website
-                    </a>
-                    <a class="dropdown-item" :href="current.feed.feed_link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="current.feed.feed_link">
-                        <span class="icon mr-1">{% inline "rss.svg" %}</span>
-                        Feed Link
-                    </a>
-                    <div class="dropdown-divider" v-if="current.feed.link || current.feed.feed_link"></div>
-                    <button class="dropdown-item" @click="renameFeed(current.feed)">
-                        <span class="icon mr-1">{% inline "edit.svg" %}</span>
-                        Rename
-                    </button>
-                    <button class="dropdown-item" @click="updateFeedLink(current.feed)" v-if="current.feed.feed_link">
-                        <span class="icon mr-1">{% inline "edit.svg" %}</span>
-                        Change Link
-                    </button>
-                    <div class="dropdown-divider"></div>
-                    <header class="dropdown-header" role="heading" aria-level="2">Move to...</header>
-                    <button class="dropdown-item"
-                        v-if="folder.id != current.feed.folder_id"
-                        v-for="folder in folders"
-                        @click="moveFeed(current.feed, folder)">
-                        <span class="icon mr-1">{% inline "folder.svg" %}</span>
-                        {{ folder.title }}
-                    </button>
-                    <button class="dropdown-item text-muted" @click="moveFeed(current.feed, null)" v-if="current.feed.folder_id">
-                        <span class="icon mr-1">{% inline "folder-minus.svg" %}</span>
-                        ──
-                    </button>
-                    <button class="dropdown-item text-muted" @click="moveFeedToNewFolder(current.feed)">
-                        <span class="icon mr-1">{% inline "folder-plus.svg" %}</span>
-                        new folder
-                    </button>
-                    <div class="dropdown-divider"></div>
-                    <button class="dropdown-item text-danger" @click.prevent="deleteFeed(current.feed)">
-                        <span class="icon mr-1">{% inline "trash.svg" %}</span>
-                        Delete
-                    </button>
-                </dropdown>
+                <!-- Per-feed actions now live on each sidebar feed row's ⋯ menu
+                     (reachable without selecting the feed first), so the toolbar
+                     no longer carries a redundant Feed Settings dropdown. Folder
+                     actions stay here since folders have no per-row menu. -->
                 <dropdown class="settings-dropdown"
                           toggle-class="btn btn-link toolbar-item px-2 ml-2"
                           title="Folder Settings"
