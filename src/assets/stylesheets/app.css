@@ -333,35 +333,6 @@ select.form-control:not([multiple]):not([size]) {
   }
 }
 
-/* Per-feed row menu (Rename / Move / Delete) in the sidebar. Muted at rest so
-   it doesn't compete with the feed list; full-strength on hover, keyboard
-   focus, or while its menu is open. Rule order matters: this must follow the
-   .settings-dropdown .dropdown-toggle padding above to win the shorthand. */
-.feed-row-menu {
-  display: flex;
-  align-items: center;
-  margin-left: .25rem;
-}
-.feed-row-menu .dropdown-toggle {
-  display: flex;
-  align-items: center;
-  padding: 0 .125rem;
-  border: 0;
-  background: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  line-height: 1;
-  opacity: .35;
-}
-.selectgroup-label:hover .feed-row-menu .dropdown-toggle,
-.feed-row-menu .dropdown-toggle:focus,
-.feed-row-menu .dropdown-toggle.show {
-  opacity: 1;
-}
-@media (hover: none) {
-  .feed-row-menu .dropdown-toggle { opacity: .6; }
-}
-
 .expanded {
   transform: rotate(90deg);
 }

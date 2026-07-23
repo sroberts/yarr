@@ -494,6 +494,8 @@ function rootComponent() { return {
       'paletteOpen': false,
       'paletteQuery': '',
       'paletteIndex': 0,
+      // {feed, x, y} while a feed row's right-click menu is open, else null
+      'feedContextMenu': null,
       'ttsPlaying': false,
       'ttsPaused': false,
       'itemSortNewestFirst': s.sort_newest_first,
@@ -934,7 +936,11 @@ function rootComponent() { return {
       var S = window.shortcutFunctions || {}
       var hasItem = this.itemSelected != null
       var det = this.itemSelectedDetails
-      return [
+      // Feed management (rare maintenance) is scoped to the selected feed here
+      // and via right-click on a feed row — deliberately not persistent chrome.
+      var feedSel = this.current.type == 'feed'
+      var cf = this.current.feed
+      var cmds = [
         {group: 'Actions', label: 'New feed',               run: function() { vm.showSettings('create') }},
         {group: 'Actions', label: 'Refresh feeds',          run: function() { vm.fetchAllFeeds() }},
         {group: 'Actions', label: 'Mark all read',          hint: 'R', enabled: this.filterSelected == 'unread', run: S.markAllRead},
@@ -952,7 +958,61 @@ function rootComponent() { return {
         {group: 'Actions', label: 'Theme: Auto (system)',   enabled: this.theme.name !== 'auto', run: function() { vm.theme.name = 'auto' }},
         {group: 'Actions', label: 'Settings',               run: function() { vm.showSettings('settings') }},
         {group: 'Actions', label: 'Keyboard shortcuts',     hint: '?', run: S.showShortcuts},
+        {group: 'Feed', label: 'Rename feed',            enabled: feedSel, run: function() { vm.renameFeed(vm.current.feed) }},
+        {group: 'Feed', label: 'Change feed link',       enabled: feedSel && !!cf.feed_link, run: function() { vm.updateFeedLink(vm.current.feed) }},
+        {group: 'Feed', label: 'Move feed to new folder', enabled: feedSel, run: function() { vm.moveFeedToNewFolder(vm.current.feed) }},
+        {group: 'Feed', label: 'Move feed out of folder', enabled: feedSel && cf.folder_id != null, run: function() { vm.moveFeed(vm.current.feed, null) }},
+        {group: 'Feed', label: 'Delete feed',            enabled: feedSel, run: function() { vm.deleteFeed(vm.current.feed) }},
       ]
+      // One "Move feed to <folder>" per other folder, only with a feed selected.
+      if (feedSel) {
+        this.folders.forEach(function(f) {
+          if (f.id == cf.folder_id) return
+          cmds.push({group: 'Feed', label: 'Move feed to ' + f.title, run: function() { vm.moveFeed(vm.current.feed, f) }})
+        })
+      }
+      return cmds
+    },
+    // Feed row right-click menu. Positioned fixed at the cursor (clamped to the
+    // viewport) so the overflow:auto feed list can't clip it; closes on any
+    // click, scroll, resize, or Escape.
+    openFeedContextMenu: function(feed, event) {
+      this.feedContextMenu = {feed: feed, x: event.clientX, y: event.clientY}
+      this.$nextTick(function() {
+        var menu = this.$refs.feedContextMenu
+        if (!menu) return
+        var mw = menu.offsetWidth, mh = menu.offsetHeight
+        var x = this.feedContextMenu.x, y = this.feedContextMenu.y
+        if (x + mw > window.innerWidth) x = Math.max(4, window.innerWidth - mw - 4)
+        if (y + mh > window.innerHeight) y = Math.max(4, window.innerHeight - mh - 4)
+        menu.style.left = x + 'px'
+        menu.style.top = y + 'px'
+        menu.style.visibility = ''
+        menu.focus()
+      }.bind(this))
+      document.addEventListener('click', this.closeFeedContextMenu)
+      document.addEventListener('keydown', this.feedContextMenuKey)
+      window.addEventListener('scroll', this.closeFeedContextMenu, true)
+      window.addEventListener('resize', this.closeFeedContextMenu)
+    },
+    closeFeedContextMenu: function() {
+      if (!this.feedContextMenu) return
+      this.feedContextMenu = null
+      document.removeEventListener('click', this.closeFeedContextMenu)
+      document.removeEventListener('keydown', this.feedContextMenuKey)
+      window.removeEventListener('scroll', this.closeFeedContextMenu, true)
+      window.removeEventListener('resize', this.closeFeedContextMenu)
+    },
+    feedContextMenuKey: function(e) {
+      if (e.key === 'Escape') this.closeFeedContextMenu()
+    },
+    // Grab the menu's feed, close, then run the action — so an action that opens
+    // a prompt()/confirm() isn't racing the menu teardown, and the feed ref
+    // survives the close that nulls feedContextMenu.
+    runFeedCtx: function(fn) {
+      var feed = this.feedContextMenu && this.feedContextMenu.feed
+      this.closeFeedContextMenu()
+      if (feed) fn.call(this, feed)
     },
     togglePalette: function() {
       this.paletteOpen ? this.closePalette() : this.openPalette()
