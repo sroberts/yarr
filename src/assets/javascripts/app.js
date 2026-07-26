@@ -496,6 +496,12 @@ function rootComponent() { return {
       'paletteIndex': 0,
       // {feed, x, y} while a feed row's right-click menu is open, else null
       'feedContextMenu': null,
+      // {title, value, confirmLabel, onConfirm} while the themed input prompt
+      // (rename/change-link/new-folder) is open, else null
+      'promptModal': null,
+      // {label, onUndo, onCommit, timer} while a reversible feed action (delete,
+      // move) is within its undo window, else null
+      'feedUndo': null,
       'ttsPlaying': false,
       'ttsPaused': false,
       'itemSortNewestFirst': s.sort_newest_first,
@@ -961,34 +967,48 @@ function rootComponent() { return {
         {group: 'Feed', label: 'Rename feed',            enabled: feedSel, run: function() { vm.renameFeed(vm.current.feed) }},
         {group: 'Feed', label: 'Change feed link',       enabled: feedSel && !!cf.feed_link, run: function() { vm.updateFeedLink(vm.current.feed) }},
         {group: 'Feed', label: 'Move feed to new folder', enabled: feedSel, run: function() { vm.moveFeedToNewFolder(vm.current.feed) }},
-        {group: 'Feed', label: 'Move feed out of folder', enabled: feedSel && cf.folder_id != null, run: function() { vm.moveFeed(vm.current.feed, null) }},
+        {group: 'Feed', label: 'Move feed out of folder', enabled: feedSel && cf.folder_id != null, run: function() { vm.moveFeedWithUndo(vm.current.feed, null) }},
         {group: 'Feed', label: 'Delete feed',            enabled: feedSel, run: function() { vm.deleteFeed(vm.current.feed) }},
       ]
       // One "Move feed to <folder>" per other folder, only with a feed selected.
       if (feedSel) {
         this.folders.forEach(function(f) {
           if (f.id == cf.folder_id) return
-          cmds.push({group: 'Feed', label: 'Move feed to ' + f.title, run: function() { vm.moveFeed(vm.current.feed, f) }})
+          cmds.push({group: 'Feed', label: 'Move feed to ' + f.title, run: function() { vm.moveFeedWithUndo(vm.current.feed, f) }})
         })
       }
       return cmds
     },
-    // Feed row right-click menu. Positioned fixed at the cursor (clamped to the
-    // viewport) so the overflow:auto feed list can't clip it; closes on any
-    // click, scroll, resize, or Escape.
+    // Feed row actions menu — opened by right-click OR the row's ⋯ button.
+    // Positioned fixed (clamped to the viewport) so the overflow:auto feed list
+    // can't clip it; closes on any click, scroll, resize, or Escape. Opening it
+    // also selects the row, so the menu and the command palette act on the same
+    // feed. `event` is a mouse or keyboard event; keyboard activation has no
+    // cursor, so we fall back to the trigger element's box.
     openFeedContextMenu: function(feed, event) {
-      this.feedContextMenu = {feed: feed, x: event.clientX, y: event.clientY}
+      this.feedSelected = 'feed:' + feed.id
+      // remember the trigger so focus can return to it when the menu closes
+      this._ctxTrigger = (event && event.currentTarget) || null
+      var x = event && event.clientX, y = event && event.clientY
+      if ((!x && !y) && this._ctxTrigger && this._ctxTrigger.getBoundingClientRect) {
+        var tr = this._ctxTrigger.getBoundingClientRect()
+        x = tr.right; y = tr.bottom
+      }
+      this.feedContextMenu = {feed: feed, x: x || 0, y: y || 0}
       this.$nextTick(function() {
         var menu = this.$refs.feedContextMenu
         if (!menu) return
         var mw = menu.offsetWidth, mh = menu.offsetHeight
-        var x = this.feedContextMenu.x, y = this.feedContextMenu.y
-        if (x + mw > window.innerWidth) x = Math.max(4, window.innerWidth - mw - 4)
-        if (y + mh > window.innerHeight) y = Math.max(4, window.innerHeight - mh - 4)
-        menu.style.left = x + 'px'
-        menu.style.top = y + 'px'
+        var mx = this.feedContextMenu.x, my = this.feedContextMenu.y
+        if (mx + mw > window.innerWidth) mx = Math.max(4, window.innerWidth - mw - 4)
+        if (my + mh > window.innerHeight) my = Math.max(4, window.innerHeight - mh - 4)
+        menu.style.left = mx + 'px'
+        menu.style.top = my + 'px'
         menu.style.visibility = ''
-        menu.focus()
+        // Focus the first item so keyboard users land inside the menu, matching
+        // the role="menu" contract that feedContextMenuKey then fulfils.
+        var first = menu.querySelector('.dropdown-item')
+        if (first) first.focus(); else menu.focus()
       }.bind(this))
       document.addEventListener('click', this.closeFeedContextMenu)
       document.addEventListener('keydown', this.feedContextMenuKey)
@@ -997,18 +1017,42 @@ function rootComponent() { return {
     },
     closeFeedContextMenu: function() {
       if (!this.feedContextMenu) return
+      var focusInMenu = this._ctxMenuHasFocus()
       this.feedContextMenu = null
       document.removeEventListener('click', this.closeFeedContextMenu)
       document.removeEventListener('keydown', this.feedContextMenuKey)
       window.removeEventListener('scroll', this.closeFeedContextMenu, true)
       window.removeEventListener('resize', this.closeFeedContextMenu)
+      // Return focus to the trigger only if focus was still inside the menu
+      // (Escape / arrow nav). When an item was activated, its handler owns focus
+      // next (e.g. a prompt modal), so we don't steal it back.
+      if (focusInMenu && this._ctxTrigger && this._ctxTrigger.focus) this._ctxTrigger.focus()
+      this._ctxTrigger = null
     },
+    _ctxMenuHasFocus: function() {
+      var menu = this.$refs.feedContextMenu
+      return !!(menu && menu.contains(document.activeElement))
+    },
+    // Fulfil the role="menu" keyboard contract: arrows / Home / End move focus
+    // between items (wrapping), Tab is trapped inside, Escape closes.
     feedContextMenuKey: function(e) {
-      if (e.key === 'Escape') this.closeFeedContextMenu()
+      if (e.key === 'Escape') { e.preventDefault(); this.closeFeedContextMenu(); return }
+      var menu = this.$refs.feedContextMenu
+      if (!menu) return
+      var items = Array.prototype.slice.call(menu.querySelectorAll('.dropdown-item'))
+      if (!items.length) return
+      var i = items.indexOf(document.activeElement)
+      var next = null
+      if (e.key === 'ArrowDown') next = items[(i + 1 + items.length) % items.length]
+      else if (e.key === 'ArrowUp') next = items[(i - 1 + items.length) % items.length]
+      else if (e.key === 'Home') next = items[0]
+      else if (e.key === 'End') next = items[items.length - 1]
+      else if (e.key === 'Tab') next = items[(i + (e.shiftKey ? -1 : 1) + items.length) % items.length]
+      if (next) { e.preventDefault(); next.focus() }
     },
     // Grab the menu's feed, close, then run the action — so an action that opens
-    // a prompt()/confirm() isn't racing the menu teardown, and the feed ref
-    // survives the close that nulls feedContextMenu.
+    // a prompt/confirm replacement isn't racing the menu teardown, and the feed
+    // ref survives the close that nulls feedContextMenu.
     runFeedCtx: function(fn) {
       var feed = this.feedContextMenu && this.feedContextMenu.feed
       this.closeFeedContextMenu()
@@ -1199,6 +1243,55 @@ function rootComponent() { return {
       }
       return new Date(datestr).toLocaleDateString(undefined, options)
     },
+    // Themed replacement for prompt(): open an in-app input modal. `opts` is
+    // {title, value, confirmLabel, onConfirm}. onConfirm receives the trimmed,
+    // non-empty value; an empty value cancels (matching prompt()'s null).
+    askPrompt: function(opts) {
+      this.promptModal = {
+        title: opts.title,
+        value: opts.value || '',
+        confirmLabel: opts.confirmLabel || 'Save',
+        onConfirm: opts.onConfirm,
+      }
+      // The modal component focuses .modal-content on its own $nextTick; defer a
+      // macrotask so this input focus runs last and actually wins.
+      var self = this
+      setTimeout(function() {
+        var input = self.$refs.promptInput
+        if (input) { input.focus(); input.select() }
+      }, 0)
+    },
+    confirmPrompt: function() {
+      var m = this.promptModal
+      if (!m) return
+      var val = (m.value || '').trim()
+      this.promptModal = null
+      if (val) m.onConfirm(val)
+    },
+    // Show a reversible-action toast. `onCommit` fires when the ~5s window closes
+    // (or is superseded); `onUndo` fires if the user hits Undo instead. Starting a
+    // new undo commits any pending one first, so a deferred server write is never
+    // dropped when actions are chained.
+    showFeedUndo: function(label, onUndo, onCommit) {
+      if (this.feedUndo) this.runFeedUndoCommit()
+      var self = this
+      var timer = setTimeout(function() { self.runFeedUndoCommit() }, 5000)
+      this.feedUndo = {label: label, onUndo: onUndo, onCommit: onCommit, timer: timer}
+    },
+    runFeedUndoCommit: function() {
+      var u = this.feedUndo
+      if (!u) return
+      clearTimeout(u.timer)
+      this.feedUndo = null
+      if (u.onCommit) u.onCommit()
+    },
+    runFeedUndo: function() {
+      var u = this.feedUndo
+      if (!u) return
+      clearTimeout(u.timer)
+      this.feedUndo = null
+      if (u.onUndo) u.onUndo()
+    },
     moveFeed: function(feed, folder) {
       var folder_id = folder ? folder.id : null
       api.feeds.update(feed.id, {folder_id: folder_id}).then(function() {
@@ -1206,16 +1299,26 @@ function rootComponent() { return {
         vm.refreshStats()
       })
     },
+    // moveFeed + an undo toast that moves the feed back to its previous folder.
+    moveFeedWithUndo: function(feed, folder) {
+      var prevId = feed.folder_id
+      var prevFolder = prevId ? this.folders.find(function(f) { return f.id == prevId }) : null
+      this.moveFeed(feed, folder)
+      var dest = folder ? folder.title : 'Uncategorized'
+      this.showFeedUndo('Moved “' + feed.title + '” to ' + dest, function() {
+        vm.moveFeed(feed, prevFolder || null)
+      }, null)
+    },
     moveFeedToNewFolder: function(feed) {
-      var title = prompt('Enter folder name:')
-      if (!title) return
-      api.folders.create({'title': title}).then(function(folder) {
-        api.feeds.update(feed.id, {folder_id: folder.id}).then(function() {
-          vm.refreshFeeds().then(function() {
-            vm.refreshStats()
+      this.askPrompt({title: 'Move to new folder', confirmLabel: 'Create & move', onConfirm: function(title) {
+        api.folders.create({'title': title}).then(function(folder) {
+          api.feeds.update(feed.id, {folder_id: folder.id}).then(function() {
+            vm.refreshFeeds().then(function() {
+              vm.refreshStats()
+            })
           })
         })
-      })
+      }})
     },
     createNewFeedFolder: function() {
       var title = prompt('Enter folder name:')
@@ -1251,29 +1354,35 @@ function rootComponent() { return {
       }
     },
     updateFeedLink: function(feed) {
-      var newLink = prompt('Enter feed link', feed.feed_link)
-      if (newLink) {
+      this.askPrompt({title: 'Change feed link', value: feed.feed_link, confirmLabel: 'Change', onConfirm: function(newLink) {
         api.feeds.update(feed.id, {feed_link: newLink}).then(function() {
           feed.feed_link = newLink
         })
-      }
+      }})
     },
     renameFeed: function(feed) {
-      var newTitle = prompt('Enter new title', feed.title)
-      if (newTitle) {
+      this.askPrompt({title: 'Rename feed', value: feed.title, confirmLabel: 'Rename', onConfirm: function(newTitle) {
         api.feeds.update(feed.id, {title: newTitle}).then(function() {
           feed.title = newTitle
         })
-      }
+      }})
     },
+    // Delete optimistically and defer the server write behind an undo toast, so a
+    // mis-delete is one click to reverse (the feed is only really gone once the
+    // undo window closes). Mirrors the swipe-card deferred-write pattern.
     deleteFeed: function(feed) {
-      if (confirm('Are you sure you want to delete ' + feed.title + '?')) {
+      this.feeds = this.feeds.filter(function(f) { return f.id !== feed.id })
+      if (this.feedSelected === 'feed:' + feed.id) this.feedSelected = null
+      this.refreshStats()
+      this.showFeedUndo('Deleted “' + feed.title + '”', function() {
+        // Nothing was deleted server-side; refetch to restore the row.
+        vm.refreshFeeds().then(function() { vm.refreshStats() })
+      }, function() {
         api.feeds.delete(feed.id).then(function() {
-          vm.feedSelected = null
           vm.refreshStats()
           vm.refreshFeeds()
         })
-      }
+      })
     },
     createFeed: function(event) {
       var form = event.target

@@ -248,6 +248,15 @@
                                       v-if="!filterSelected && feed_errors[feed.id]">
                                     {% inline "alert-circle.svg" %}
                                 </span>
+                                <!-- Muted at rest, full on hover/focus; opens the same
+                                     actions menu as right-click. Keeps feed management
+                                     discoverable without persistent chrome. -->
+                                <button type="button"
+                                        class="feed-row-menu icon flex-shrink-0"
+                                        :aria-label="'Feed actions for ' + feed.title"
+                                        @click.stop.prevent="openFeedContextMenu(feed, $event)">
+                                    {% inline "more-horizontal.svg" %}
+                                </button>
                             </div>
                         </label>
                     </div>
@@ -681,6 +690,30 @@
                 </div>
             </div>
         </div>
+        <!-- Themed input prompt (rename / change link / new folder) — replaces the
+             OS-native prompt() so these flows stay inside the app's theme. -->
+        <modal :open="!!promptModal" @hide="promptModal = null">
+            <form @submit.prevent="confirmPrompt()">
+                <p class="cursor-default mb-2" role="heading" aria-level="2"><b>{{ promptModal.title }}</b></p>
+                <input ref="promptInput"
+                       class="form-control"
+                       type="text"
+                       v-model="promptModal.value"
+                       @keydown.esc.prevent="promptModal = null">
+                <div class="d-flex justify-content-end mt-3">
+                    <button type="button" class="btn btn-link" @click="promptModal = null">Cancel</button>
+                    <button type="submit" class="btn btn-primary ml-2">{{ promptModal.confirmLabel }}</button>
+                </div>
+            </form>
+        </modal>
+        <!-- Undo toast for reversible feed actions (delete, move). The server
+             write is deferred until this window closes, so Undo is instant. -->
+        <transition name="toast">
+            <div class="app-toast app-toast-undo" v-if="feedUndo" role="status" aria-live="polite">
+                <span class="text-truncate">{{ feedUndo.label }}</span>
+                <button type="button" class="app-toast-btn" @click="runFeedUndo()">Undo</button>
+            </div>
+        </transition>
         <!-- Right-click a feed row for its actions. Feed management is rare
              maintenance, so it lives here and in the command palette (⌘K) rather
              than as persistent chrome on every row. Positioned fixed at the
@@ -714,12 +747,12 @@
                 <div class="dropdown-divider"></div>
                 <header class="dropdown-header" role="heading" aria-level="2">Move to...</header>
                 <template v-for="f in folders">
-                    <button class="dropdown-item" role="menuitem" v-if="f.id != feedContextMenu.feed.folder_id" @click="runFeedCtx(feed => moveFeed(feed, f))">
+                    <button class="dropdown-item" role="menuitem" v-if="f.id != feedContextMenu.feed.folder_id" @click="runFeedCtx(feed => moveFeedWithUndo(feed, f))">
                         <span class="icon mr-1">{% inline "folder.svg" %}</span>
                         {{ f.title }}
                     </button>
                 </template>
-                <button class="dropdown-item text-muted" role="menuitem" @click="runFeedCtx(feed => moveFeed(feed, null))" v-if="feedContextMenu.feed.folder_id">
+                <button class="dropdown-item text-muted" role="menuitem" @click="runFeedCtx(feed => moveFeedWithUndo(feed, null))" v-if="feedContextMenu.feed.folder_id">
                     <span class="icon mr-1">{% inline "folder-minus.svg" %}</span>
                     Move out of folder
                 </button>
