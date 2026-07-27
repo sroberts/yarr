@@ -732,3 +732,80 @@ test('reading measure holds ~70 characters in every reading font', async ({ page
     expect(avg, `avg CPL in ${font || 'sans'}`).toBeLessThanOrEqual(76)
   }
 })
+
+test('copy link: button and c shortcut put the article URL on the clipboard', async ({ page }) => {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = {
+      id: 800002, feed_id: 1, title: 'Copy Me', status: 'read', media_links: [],
+      link: 'https://example.com/copy-me', content: '<p>body</p>',
+    }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 800002
+  })
+  await expect(page.getByRole('heading', { name: 'Copy Me' })).toBeVisible()
+
+  const copy = page.getByTestId('reader-copy-link')
+  await copy.click()
+  await expect(page.locator('.app-toast')).toHaveText('Link copied')
+  expect(await page.evaluate(() => navigator.clipboard.readText()))
+    .toBe('https://example.com/copy-me')
+  // the button confirms in place, then reverts on its own
+  await expect(copy).toHaveAttribute('title', 'Link Copied')
+  await expect(copy).toHaveAttribute('title', 'Copy Link', { timeout: 4000 })
+
+  // keyboard path (the toast has to clear first so we see the new one land)
+  await expect(page.locator('.app-toast')).toHaveCount(0, { timeout: 4000 })
+  await page.evaluate(() => navigator.clipboard.writeText('stale'))
+  await page.keyboard.press('c')
+  await expect(page.locator('.app-toast')).toHaveText('Link copied')
+  expect(await page.evaluate(() => navigator.clipboard.readText()))
+    .toBe('https://example.com/copy-me')
+})
+
+test('copy link: falls back to execCommand when the clipboard API is missing', async ({ page }) => {
+  // A self-hosted yarr on a plain-http LAN address has no secure context, so
+  // navigator.clipboard is undefined there — the legacy path is the real one.
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, get: () => undefined })
+    window.__copied = []
+    document.execCommand = function (cmd) {
+      if (cmd === 'copy') window.__copied.push(document.activeElement.value)
+      return true
+    }
+  })
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = {
+      id: 800003, feed_id: 1, title: 'Fallback Me', status: 'read', media_links: [],
+      link: 'https://example.com/fallback', content: '<p>body</p>',
+    }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 800003
+  })
+  await expect(page.getByRole('heading', { name: 'Fallback Me' })).toBeVisible()
+  await page.getByTestId('reader-copy-link').click()
+  await expect(page.locator('.app-toast')).toHaveText('Link copied')
+  expect(await page.evaluate(() => window.__copied)).toEqual(['https://example.com/fallback'])
+})
+
+test('copy link: reports failure instead of claiming success', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, get: () => undefined })
+    document.execCommand = function () { return false }
+  })
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = {
+      id: 800004, feed_id: 1, title: 'No Clipboard', status: 'read', media_links: [],
+      link: 'https://example.com/nope', content: '<p>body</p>',
+    }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 800004
+  })
+  await expect(page.getByRole('heading', { name: 'No Clipboard' })).toBeVisible()
+  await page.getByTestId('reader-copy-link').click()
+  await expect(page.locator('.app-toast')).toHaveText("Couldn't copy link")
+  await expect(page.getByTestId('reader-copy-link')).toHaveAttribute('title', 'Copy Link')
+})

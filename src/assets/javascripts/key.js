@@ -20,6 +20,11 @@ var shortcutFunctions = {
       window.open(vm.itemSelectedDetails.link, '_blank', 'noopener,noreferrer')
     }
   },
+  copyItemLink: function() {
+    if (vm.itemSelectedDetails && vm.itemSelectedDetails.link) {
+      vm.copyItemLink(vm.itemSelectedDetails)
+    }
+  },
   toggleReadability: function() {
     vm.toggleReadability()
   },
@@ -88,6 +93,7 @@ var shortcutFunctions = {
 // If you edit, make sure you update the help modal
 var keybindings = {
   "o": shortcutFunctions.openItemLink,
+  "c": shortcutFunctions.copyItemLink,
   "i": shortcutFunctions.toggleReadability,
   "r": shortcutFunctions.toggleItemRead,
   "R": shortcutFunctions.markAllRead,
@@ -110,6 +116,7 @@ var keybindings = {
 
 var codebindings = {
   "KeyO": shortcutFunctions.openItemLink,
+  "KeyC": shortcutFunctions.copyItemLink,
   "KeyI": shortcutFunctions.toggleReadability,
   //"r": shortcutFunctions.toggleItemRead,
   //"KeyR": shortcutFunctions.markAllRead,

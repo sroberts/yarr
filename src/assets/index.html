@@ -451,6 +451,17 @@
                         <template v-else>{% inline "bookmark.svg" %}</template>
                     </span>
                 </button>
+                <button class="toolbar-item"
+                        data-testid="reader-copy-link"
+                        :disabled="!itemSelectedDetails.link"
+                        @click="copyItemLink(itemSelectedDetails)"
+                        :title="linkCopied ? 'Link Copied' : 'Copy Link'"
+                        :aria-label="linkCopied ? 'Link copied to clipboard' : 'Copy article link'">
+                    <span class="icon">
+                        <template v-if="linkCopied">{% inline "check.svg" %}</template>
+                        <template v-else>{% inline "link.svg" %}</template>
+                    </span>
+                </button>
                 <a class="toolbar-item" :href="itemSelectedDetails.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
@@ -668,6 +679,7 @@
                     <tr><td><kbd>r</kbd></td>               <td>mark read / unread</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>mark starred / unstarred</td></tr>
                     <tr><td><kbd>o</kbd></td>               <td>open link</td></tr>
+                    <tr><td><kbd>c</kbd></td>               <td>copy link</td></tr>
                     <tr><td><kbd>i</kbd></td>               <td>read here</td> </tr>
                     <tr><td><kbd>I</kbd></td>               <td>save to Instapaper</td></tr>
                     <tr><td><kbd>p</kbd></td>               <td>listen to article (play / pause)</td></tr>

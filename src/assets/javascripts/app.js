@@ -61,6 +61,48 @@ var readingScroll = (function() {
   }
 })()
 
+// Clipboard write, with a fallback. navigator.clipboard only exists in a
+// secure context (https or localhost) and a self-hosted yarr is routinely
+// reached over plain http on a LAN address, so keep the legacy path: a
+// throwaway textarea plus execCommand. Returns a promise resolving to whether
+// the text made it to the clipboard — nothing here reports success blindly.
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text)
+      .then(function() { return true })
+      .catch(function() { return copyTextLegacy(text) })
+  }
+  return Promise.resolve(copyTextLegacy(text))
+}
+
+function copyTextLegacy(text) {
+  var el = document.createElement('textarea')
+  el.value = text
+  el.setAttribute('readonly', '')
+  // Off-screen but focusable; display:none or visibility:hidden won't select.
+  el.style.position = 'fixed'
+  el.style.top = '0'
+  el.style.left = '-9999px'
+  el.style.opacity = '0'
+  document.body.appendChild(el)
+
+  // Preserve whatever the user had selected — copying a link shouldn't wipe a
+  // text selection in the article.
+  var selection = window.getSelection ? window.getSelection() : null
+  var previous = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null
+
+  el.select()
+  el.setSelectionRange(0, text.length)  // iOS Safari ignores select() alone
+  var ok = false
+  try { ok = document.execCommand('copy') } catch (e) { ok = false }
+  document.body.removeChild(el)
+  if (previous && selection) {
+    selection.removeAllRanges()
+    selection.addRange(previous)
+  }
+  return ok
+}
+
 // Listen to article: on-device text-to-speech via the browser's Web Speech
 // API. No network, no deps, no telemetry. speechSynthesis is browser-global
 // (keeps talking across SPA state changes), so a single engine owns all of it
@@ -547,6 +589,7 @@ function rootComponent() { return {
       'cardLoading': false,
       'cardUndo': null,
       'toast': null,
+      'linkCopied': false,
       'itemOffline': false,
       'itemUnavailable': false,
       'cardFolder': '',
@@ -810,6 +853,9 @@ function rootComponent() { return {
     'itemSelected': function(newVal, oldVal) {
       this.stopListen()  // halt any read-aloud when the article changes or closes
       this.itemSelectedReadability = ''
+      // the copy-link check belongs to the article you copied, not the next one
+      clearTimeout(this._linkCopiedTimer)
+      this.linkCopied = false
       this.itemOffline = false
       this.itemUnavailable = false
       if (newVal === null) {
@@ -989,6 +1035,7 @@ function rootComponent() { return {
         {group: 'Actions', label: 'Read here (readability)', hint: 'i', enabled: hasItem, run: S.toggleReadability},
         {group: 'Actions', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (hasItem || this.cardMode), run: S.toggleListen},
         {group: 'Actions', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
+        {group: 'Actions', label: 'Copy link',              hint: 'c', enabled: hasItem && det && !!det.link, run: S.copyItemLink},
         {group: 'Actions', label: 'Theme: Light',           enabled: this.theme.name !== 'light', run: function() { vm.theme.name = 'light' }},
         {group: 'Actions', label: 'Theme: Dark',            enabled: this.theme.name !== 'dark', run: function() { vm.theme.name = 'dark' }},
         {group: 'Actions', label: 'Theme: Auto (system)',   enabled: this.theme.name !== 'auto', run: function() { vm.theme.name = 'auto' }},
@@ -1508,6 +1555,23 @@ function rootComponent() { return {
       }).catch(function() {
         vm.loading.readability = false
         vm.showToast('Could not extract this page')
+      })
+    },
+    // Copy the article's original URL. Confirmation is doubled deliberately:
+    // the icon flips to a check in place (visible at the desk) and the toast
+    // announces it (visible on a phone, where a thumb covers the button, and
+    // audible to screen readers via the toast's aria-live region).
+    copyItemLink: function(item) {
+      var target = item || this.itemSelectedDetails
+      var link = target && target.link
+      if (!link) return
+      var self = this
+      copyText(link).then(function(ok) {
+        if (!ok) return self.showToast("Couldn't copy link")
+        self.linkCopied = true
+        clearTimeout(self._linkCopiedTimer)
+        self._linkCopiedTimer = setTimeout(function() { self.linkCopied = false }, 1600)
+        self.showToast('Link copied')
       })
     },
     saveToInstapaper: function(item) {
