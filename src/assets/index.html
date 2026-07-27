@@ -462,7 +462,15 @@
                         <template v-else>{% inline "link.svg" %}</template>
                     </span>
                 </button>
-                <a class="toolbar-item" :href="itemSelectedDetails.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
+                <!-- An item with no link (some feeds ship content only) leaves
+                     nothing to open: drop the href so it stops being a link at
+                     all — unfocusable, no navigation — and mark it disabled to
+                     match the Copy Link button beside it. -->
+                <a class="toolbar-item"
+                   :class="{disabled: !itemSelectedDetails.link}"
+                   :href="itemSelectedDetails.link || null"
+                   :aria-disabled="!itemSelectedDetails.link"
+                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <div class="flex-grow-1"></div>

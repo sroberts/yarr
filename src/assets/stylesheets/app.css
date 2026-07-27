@@ -450,10 +450,17 @@ select.form-control:not([multiple]):not([size]) {
    — below the 3:1 non-text floor on one side and visibly unequal across the
    two themes. A tertiary-text color plus a lighter dim reads as "off" in both
    and clears the floor in both. */
-.toolbar-item:disabled {
+.toolbar-item:disabled,
+/* anchors can't carry :disabled — the class is how a link-shaped control
+   (Open Link with nothing to open) says the same thing */
+.toolbar-item.disabled {
   color: var(--text-secondary);
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.toolbar-item.disabled {
+  pointer-events: none;
 }
 
 .cursor-pointer {

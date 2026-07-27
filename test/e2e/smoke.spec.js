@@ -809,3 +809,24 @@ test('copy link: reports failure instead of claiming success', async ({ page }) 
   await expect(page.locator('.app-toast')).toHaveText("Couldn't copy link")
   await expect(page.getByTestId('reader-copy-link')).toHaveAttribute('title', 'Copy Link')
 })
+
+test('link-less item: Open Link and Copy Link both read as disabled', async ({ page }) => {
+  // Some feeds ship content with no canonical URL. Neither control has
+  // anything to act on, so neither may look or behave live.
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = { id: 800005, feed_id: 1, title: 'No Link Here', status: 'read', media_links: [], content: '<p>body</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 800005
+  })
+  await expect(page.getByRole('heading', { name: 'No Link Here' })).toBeVisible()
+
+  const copy = page.getByTestId('reader-copy-link')
+  await expect(copy).toBeDisabled()
+
+  const open = page.locator('#col-item .toolbar a.toolbar-item[title="Open Link"]')
+  await expect(open).toHaveAttribute('aria-disabled', 'true')
+  expect(await open.getAttribute('href')).toBeNull()   // not a link, not focusable
+  const dimmed = await open.evaluate(el => getComputedStyle(el).opacity)
+  expect(Number(dimmed)).toBeLessThan(1)
+})
