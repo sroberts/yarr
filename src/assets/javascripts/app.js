@@ -746,6 +746,31 @@ function rootComponent() { return {
         this.computeStats()
       }, 500),
     },
+    // Feeds ship arbitrary HTML, so the rendered article is the one place we
+    // can't put attributes in the template. A <pre> that scrolls is a
+    // scrollable region and needs a keyboard path (WCAG 2.1.1) — measured, a
+    // Go snippet ran 1506px inside a 648px column with no way to reach the
+    // rest without a mouse.
+    'itemSelectedContent': function() {
+      this.$nextTick(function() {
+        var root = this.$refs.content
+        if (!root) return
+        Array.prototype.forEach.call(root.querySelectorAll('pre'), function(pre) {
+          if (pre.scrollWidth <= pre.clientWidth) return   // nothing to scroll to
+          pre.setAttribute('tabindex', '0')
+          pre.setAttribute('role', 'region')
+          pre.setAttribute('aria-label', 'Code block, scrolls horizontally')
+          // Overlay scrollbars show nothing at rest, so a block can hide 80% of
+          // itself in silence. The fade says "more to the right" and clears
+          // once you're there.
+          pre.classList.add('pre-overflow')
+          pre.addEventListener('scroll', function() {
+            var atEnd = pre.scrollLeft + pre.clientWidth >= pre.scrollWidth - 1
+            pre.classList.toggle('pre-at-end', atEnd)
+          })
+        })
+      }.bind(this))
+    },
     'filterSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
       this.stopListen()  // halt read-aloud when leaving/entering triage or switching views
@@ -1299,13 +1324,22 @@ function rootComponent() { return {
       }
       var item = this.itemSelectedDetails
       if (!item) return
-      if (item.link) {
-        this.loading.readability = true
-        api.crawl(item.link).then(function(data) {
-          vm.itemSelectedReadability = data && data.content
-          vm.loading.readability = false
-        })
-      }
+      if (!item.link) return this.showToast('This article has no link to read from')
+      this.loading.readability = true
+      // Without a rejection path the spinner ran forever: on the dominant
+      // LAN deployment the server often can't reach the page at all, and a
+      // feature that claims to still be working is worse than one that fails.
+      api.crawl(item.link).then(function(data) {
+        vm.loading.readability = false
+        if (data && data.content) {
+          vm.itemSelectedReadability = data.content
+        } else {
+          vm.showToast('Could not extract this page')
+        }
+      }).catch(function() {
+        vm.loading.readability = false
+        vm.showToast('Could not extract this page')
+      })
     },
     saveToInstapaper: function(item) {
       if (!item || !item.link || item.instapaper_saved) return
@@ -1313,8 +1347,10 @@ function rootComponent() { return {
       api.items.saveToInstapaper(item.id).then(function(resp) {
         vm.loading.instapaper = false
         if (!resp.ok) {
+          // toast, not alert(): a blocking unstyled browser dialog is the one
+          // thing in this pane that isn't quiet, and it can't be themed.
           return resp.json().then(function(data) {
-            alert(data.error || 'Failed to save to Instapaper')
+            vm.showToast(data.error || 'Failed to save to Instapaper')
           })
         }
         return resp.json().then(function(data) {
@@ -1336,7 +1372,7 @@ function rootComponent() { return {
         })
       }.bind(this)).catch(function() {
         vm.loading.instapaper = false
-        alert('Failed to save to Instapaper. Check your connection.')
+        vm.showToast('Failed to save to Instapaper — check your connection')
       })
     },
     updateInstapaperCredentials: function(key, value) {

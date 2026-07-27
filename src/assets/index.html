@@ -406,7 +406,12 @@
             <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted px-4 text-center" v-if="itemUnavailable">
                 <span class="icon mb-2" style="opacity:.5">{% inline "alert-circle.svg" %}</span>
                 <p class="mb-1">Not available offline</p>
-                <p class="small mb-0">Star or save an article while online to read it here without a connection.</p>
+                <p class="small mb-2">Star or save an article while online to read it here without a connection.</p>
+                <!-- The reader toolbar (and its Back chevron) lives inside
+                     v-if="itemSelectedDetails", which is null in exactly this
+                     state — so on a phone this pane was the only thing visible
+                     and had no focusable element at all. This is the way out. -->
+                <button class="btn btn-default" @click="itemSelected = null">Back to articles</button>
             </div>
             <div class="toolbar px-2 d-flex align-items-center" v-if="itemSelectedDetails">
                 <!-- Icon-only controls: every one carries an aria-label (title

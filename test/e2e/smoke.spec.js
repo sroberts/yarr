@@ -616,3 +616,119 @@ test('marking read/starred still updates the UI when feed stats are missing', as
   await expect.poll(() => page.evaluate(() => vm.itemSelectedDetails.status)).toBe('starred')
   expect(errors).toEqual([])
 })
+
+test('offline-unavailable: the pane always offers a way back', async ({ page }) => {
+  // Regression: the reader toolbar (and its Back chevron) lives inside
+  // v-if="itemSelectedDetails", which is null in exactly this state — so on a
+  // phone this pane was the only thing visible with zero focusable elements.
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.evaluate(() => {
+    api.items.get = function () { return Promise.reject(new Error('offline')) }
+    window.offlineStore = { get: function () { return Promise.resolve(null) }, put: function () {} }
+    vm.itemSelected = 999001
+  })
+  await expect(page.getByText('Not available offline')).toBeVisible()
+
+  const back = page.getByRole('button', { name: 'Back to articles' })
+  await expect(back).toBeVisible()
+  await back.focus()
+  expect(await page.evaluate(() => document.activeElement.textContent.trim())).toBe('Back to articles')
+  await back.click()
+  expect(await page.evaluate(() => vm.itemSelected)).toBeNull()
+  await expect(page.getByText('Not available offline')).toBeHidden()
+})
+
+test('readability: a failed crawl stops the spinner and says so', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = { id: 999003, feed_id: 1, title: 'Crawl Me', status: 'read', media_links: [], link: 'https://example.com/c', content: '<p>body</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    api.crawl = function () { return Promise.reject(new Error('no egress')) }
+    vm.itemSelected = 999003
+  })
+  await expect(page.getByRole('heading', { name: 'Crawl Me' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Read here' }).click()
+  await expect(page.locator('.app-toast')).toHaveText('Could not extract this page')
+  expect(await page.evaluate(() => vm.loading.readability)).toBe(false)
+  await expect(page.locator('#col-item .icon-loading')).toHaveCount(0)
+
+  // a crawl that resolves without content is also a failure, not a blank pane
+  await page.evaluate(() => { api.crawl = function () { return Promise.resolve({}) } })
+  await page.getByRole('button', { name: 'Read here' }).click()
+  await expect(page.locator('.app-toast')).toHaveText('Could not extract this page')
+  expect(await page.evaluate(() => vm.loading.readability)).toBe(false)
+})
+
+test('code blocks: scrollable ones are keyboard-reachable and visible', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = { id: 999004, feed_id: 1, title: 'Code', status: 'read', media_links: [], link: '',
+      content: '<pre>func main() { fmt.Println("' + 'x'.repeat(300) + '") }</pre><pre>short()</pre>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 999004
+  })
+  await expect(page.getByRole('heading', { name: 'Code' })).toBeVisible()
+
+  const state = await page.evaluate(() => {
+    const pres = Array.from(document.querySelectorAll('.content pre'))
+    return pres.map(p => ({
+      overflows: p.scrollWidth > p.clientWidth,
+      tabindex: p.getAttribute('tabindex'),
+      role: p.getAttribute('role'),
+      bg: getComputedStyle(p).backgroundColor,
+    }))
+  })
+  // the wide block is focusable; the short one is left alone (not a tab trap)
+  expect(state[0].overflows).toBe(true)
+  expect(state[0].tabindex).toBe('0')
+  expect(state[0].role).toBe('region')
+  expect(state[1].tabindex).toBeNull()
+  // and it reads as a block, not an empty outline
+  expect(state[0].bg).not.toBe('rgba(0, 0, 0, 0)')
+
+  // keyboard scrolls it
+  await page.locator('.content pre').first().focus()
+  await page.keyboard.press('ArrowRight')
+  await expect.poll(() => page.evaluate(() => document.querySelector('.content pre').scrollLeft)).toBeGreaterThan(0)
+
+  // the "more to the right" fade clears once you've reached the end
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('.content pre')).maskImage)).not.toBe('none')
+  await page.evaluate(() => { const p = document.querySelector('.content pre'); p.scrollLeft = p.scrollWidth })
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.querySelector('.content pre')).maskImage)).toBe('none')
+})
+
+test('reading measure holds ~70 characters in every reading font', async ({ page }) => {
+  await page.setViewportSize({ width: 1680, height: 900 })
+  await page.goto('/')
+  const cpl = async (font) => {
+    await page.evaluate((f) => {
+      var item = { id: 999005, feed_id: 1, title: 'M', status: 'read', media_links: [], link: '',
+        content: '<p>' + 'The quick brown fox jumps over the lazy dog while reading feeds in a quiet room. '.repeat(25) + '</p>' }
+      api.items.get = function () { return Promise.resolve(item) }
+      vm.itemSelected = 999005; vm.theme.font = f; vm.theme.size = 1.2
+    }, font)
+    await page.waitForTimeout(300)
+    return page.evaluate(() => {
+      const p = document.querySelector('.content-wrapper p')
+      const range = document.createRange(), node = p.firstChild
+      let lines = [], last = null, count = 0
+      for (let i = 0; i < node.length; i++) {
+        range.setStart(node, i); range.setEnd(node, i + 1)
+        const top = Math.round(range.getBoundingClientRect().top)
+        if (last === null) last = top
+        if (top !== last) { lines.push(count); count = 0; last = top }
+        count++
+      }
+      const full = lines.slice(0, -1)
+      return Math.round(full.reduce((a, b) => a + b, 0) / full.length)
+    })
+  }
+  for (const font of ['', 'serif', 'monospace']) {
+    const avg = await cpl(font)
+    expect(avg, `avg CPL in ${font || 'sans'}`).toBeGreaterThanOrEqual(62)
+    expect(avg, `avg CPL in ${font || 'sans'}`).toBeLessThanOrEqual(76)
+  }
+})
