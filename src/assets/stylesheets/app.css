@@ -50,10 +50,6 @@ html {
   /* the single fixed brand action color (Instapaper), both themes */
   --instapaper: #FF6600;
 
-  /* accent derivations — identical formula in both themes */
-  --accent-hover: color-mix(in oklab, var(--accent) 82%, var(--text-primary));
-  --focus-ring: var(--accent);
-
   /* blue fallback if [data-accent] is somehow absent */
   --accent: #2563EB;
   --on-accent: #FFFFFF;
@@ -114,7 +110,16 @@ html {
 [data-accent="slate"]              { --accent: #475569; --on-accent: #FFFFFF; }
 .theme-dark[data-accent="slate"]   { --accent: #94A3B8; --on-accent: #0E1116; }
 
+/* Accent derivations — identical formula in both themes, but they MUST be
+   declared here rather than on :root. A custom property substitutes at the
+   element that declares it, so --focus-ring: var(--accent) written on :root
+   locks in :root's blue fallback and inherits that fixed blue downward; the
+   [data-accent] overrides land on <body> and never reach it. Declared on body,
+   they resolve against the accent that's actually selected. */
 body {
+  --accent-hover: color-mix(in oklab, var(--accent) 82%, var(--text-primary));
+  --focus-ring: var(--accent);
+
   overscroll-behavior: none;
   background-color: var(--surface-base);
   color: var(--text-primary);
@@ -470,8 +475,13 @@ select.form-control:not([multiple]):not([size]) {
   outline: none;
 }
 
+/* Disabled controls: opacity .4 composited to 2.5:1 in light and 3.4:1 in dark
+   — below the 3:1 non-text floor on one side and visibly unequal across the
+   two themes. A tertiary-text color plus a lighter dim reads as "off" in both
+   and clears the floor in both. */
 .toolbar-item:disabled {
-  opacity: 0.4;
+  color: var(--text-secondary);
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
@@ -637,8 +647,12 @@ select.form-control:not([multiple]):not([size]) {
   line-height: var(--article-body-leading);
 }
 
+/* The Measure Rule targets ~70 characters per line. `ch` is the advance of "0",
+   which in Inter is wider than the average lowercase glyph, so 70ch measured out
+   at ~77 characters average and 93 on the longest line — a third past intent.
+   56ch measures out at ~70 on the longest line, which is what the rule asks. */
 .content-wrapper {
-  max-width: 70ch;
+  max-width: 56ch;
   margin: 0 auto;
 }
 

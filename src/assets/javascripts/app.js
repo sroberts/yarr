@@ -248,7 +248,7 @@ vueApp.component('dropdown', {
   },
   template: `
     <div class="dropdown">
-      <button ref="btn" @click="toggle" :class="btnToggleClass" :title="$props.title"><slot name="button"></slot></button>
+      <button ref="btn" @click="toggle" :class="btnToggleClass" :title="$props.title" :aria-label="$props.title" aria-haspopup="true" :aria-expanded="open ? 'true' : 'false'"><slot name="button"></slot></button>
       <div ref="menu" class="dropdown-menu" :class="{show: open}"><slot v-if="open"></slot></div>
     </div>
   `,
@@ -794,7 +794,12 @@ function rootComponent() { return {
         }
         if (this.itemSelectedDetails.status == 'unread') {
           api.items.update(this.itemSelectedDetails.id, {status: 'read'}).then(function() {
-            this.feedStats[this.itemSelectedDetails.feed_id].unread -= 1
+            // guard the index: stats may not be loaded yet, or the feed may be
+            // gone (deleted in another tab, stale offline item). Unguarded, the
+            // throw aborted the three lines below — the server recorded the read
+            // while the UI kept showing it unread.
+            var stat = this.feedStats[this.itemSelectedDetails.feed_id]
+            if (stat) stat.unread -= 1
             var itemInList = this.items.find(function(i) { return i.id == item.id })
             if (itemInList) itemInList.status = 'read'
             this.itemSelectedDetails.status = 'read'
@@ -1245,8 +1250,10 @@ function rootComponent() { return {
       var newstatus = item.status !== targetstatus ? targetstatus : fallbackstatus
 
       var updateStats = function(status, incr) {
+        var stat = this.feedStats[item.feed_id]
+        if (!stat) return   // same guard as above: no stats, nothing to adjust
         if ((status == 'unread') || (status == 'starred')) {
-          this.feedStats[item.feed_id][status] += incr
+          stat[status] += incr
         }
       }.bind(this)
 

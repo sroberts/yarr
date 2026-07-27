@@ -409,19 +409,30 @@
                 <p class="small mb-0">Star or save an article while online to read it here without a connection.</p>
             </div>
             <div class="toolbar px-2 d-flex align-items-center" v-if="itemSelectedDetails">
+                <!-- Icon-only controls: every one carries an aria-label (title
+                     alone is a last-resort accessible name and is invisible on
+                     touch), and the toggles carry aria-pressed so state isn't
+                     conveyed by a swapped glyph alone. -->
                 <button class="toolbar-item mr-1 d-block d-md-none"
                         @click="itemSelected = null"
-                        title="Back">
+                        title="Back"
+                        aria-label="Back to article list">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
                 <button class="toolbar-item"
                         @click="toggleItemStarred(itemSelectedDetails)"
-                        title="Mark Starred">
+                        title="Mark Starred"
+                        aria-label="Star article"
+                        :aria-pressed="itemSelectedDetails.status=='starred' ? 'true' : 'false'">
                     <span class="icon" v-if="itemSelectedDetails.status=='starred'" >{% inline "star-full.svg" %}</span>
                     <span class="icon" v-else-if="itemSelectedDetails.status!='starred'" >{% inline "star.svg" %}</span>
                 </button>
+                <!-- title tracks the action this click performs; the static
+                     "Mark Unread" contradicted the icon on an unread item. -->
                 <button class="toolbar-item"
-                        title="Mark Unread"
+                        :title="itemSelectedDetails.status=='unread' ? 'Mark Read' : 'Mark Unread'"
+                        aria-label="Mark read"
+                        :aria-pressed="itemSelectedDetails.status!='unread' ? 'true' : 'false'"
                         @click="toggleItemRead(itemSelectedDetails)">
                     <span class="icon" v-if="itemSelectedDetails.status=='unread'">{% inline "circle-full.svg" %}</span>
                     <span class="icon" v-if="itemSelectedDetails.status!='unread'">{% inline "circle.svg" %}</span>
@@ -443,7 +454,9 @@
                 <button class="toolbar-item"
                         :class="{active: itemSelectedReadability}"
                         @click="toggleReadability()"
-                        title="Read Here">
+                        title="Read Here"
+                        aria-label="Read here"
+                        :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
                 </button>
                 <button class="toolbar-item"
@@ -451,7 +464,9 @@
                         data-testid="reader-listen"
                         :class="{active: ttsPlaying}"
                         @click="toggleListen()"
-                        :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'">
+                        :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'"
+                        :aria-label="ttsPlaying ? (ttsPaused ? 'Resume reading aloud' : 'Pause reading aloud') : 'Listen to article'"
+                        :aria-pressed="ttsPlaying ? 'true' : 'false'">
                     <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
                     <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
                     <span class="icon" v-else>{% inline "pause.svg" %}</span>
@@ -460,32 +475,37 @@
                         :class="{active: itemSelectedDetails.instapaper_saved}"
                         :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper"
                         @click="saveToInstapaper(itemSelectedDetails)"
-                        title="Save to Instapaper">
+                        title="Save to Instapaper"
+                        aria-label="Save to Instapaper"
+                        :aria-pressed="itemSelectedDetails.instapaper_saved ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.instapaper}">
                         <template v-if="itemSelectedDetails.instapaper_saved">{% inline "check.svg" %}</template>
                         <template v-else>{% inline "bookmark.svg" %}</template>
                     </span>
                 </button>
-                <a class="toolbar-item" :href="itemSelectedDetails.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link">
+                <a class="toolbar-item" :href="itemSelectedDetails.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <div class="flex-grow-1"></div>
                 <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
                      and swipe navigation cover them, and keeping them here
                      overflowed the toolbar past the viewport edge (unreachable). -->
-                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" :disabled="!items.length || itemSelected == items[0].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" aria-label="Previous article" :disabled="!items.length || itemSelected == items[0].id">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" aria-label="Next article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
                     <span class="icon">{% inline "chevron-right.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex" @click="itemSelected=null" title="Close Article">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="itemSelected=null" title="Close Article" aria-label="Close article">
                     <span class="icon">{% inline "x.svg" %}</span>
                 </button>
             </div>
             <div v-if="itemSelectedDetails"
                  ref="content"
                  @scroll="saveScroll"
+                 tabindex="0"
+                 role="region"
+                 aria-label="Article content"
                  class="content px-4 pt-3 pb-5 border-top overflow-auto scroll-touch"
                  :class="{'font-serif': theme.font == 'serif', 'font-monospace': theme.font == 'monospace'}"
                  :style="{'font-size': theme.size + 'rem'}">

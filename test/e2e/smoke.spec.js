@@ -500,3 +500,119 @@ test('smart filters: add a rule in settings, see it listed, delete it', async ({
   await row.locator('button[aria-label="Delete filter"]').click()
   await expect(page.locator('.filter-row')).toHaveCount(0)
 })
+
+test('search field: typing a query does not fire single-letter shortcuts', async ({ page }) => {
+  // Regression: isTextBox() blocklisted type="search", so #searchbar was not
+  // treated as text entry — every letter binding fired and preventDefault()
+  // ate the character. Typing "crypto code" used to leave "yt de".
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = { id: 800006, feed_id: 1, title: 'Search Guard', status: 'read', media_links: [], link: 'https://example.com/s', content: '<p>body</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    api.items.update = function () { return Promise.resolve() }
+    vm.itemSelected = 800006
+  })
+  await expect(page.getByRole('heading', { name: 'Search Guard' })).toBeVisible()
+
+  const filterBefore = await page.evaluate(() => vm.filterSelected)
+  await page.locator('#searchbar').focus()
+  await page.keyboard.type('crypto code')
+  await expect(page.locator('#searchbar')).toHaveValue('crypto code')
+  // and no shortcut fired as a side effect
+  await expect(page.locator('.app-toast')).toHaveCount(0)
+  expect(await page.evaluate(() => vm.ttsPlaying)).toBe(false)
+  expect(await page.evaluate(() => vm.filterSelected)).toBe(filterBefore)
+
+  // the guard must not disable shortcuts outside a text box
+  await page.locator('#searchbar').blur()
+  await page.keyboard.press('s')
+  expect(await page.evaluate(() => vm.itemSelectedDetails.status)).toBe('starred')
+})
+
+test('reader: article is a labelled region reachable and scrollable by keyboard', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = { id: 800007, feed_id: 1, title: 'Long Read', status: 'read', media_links: [], link: 'https://example.com/l',
+      content: '<p>' + 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(200) + '</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 800007
+  })
+  await expect(page.getByRole('heading', { name: 'Long Read' })).toBeVisible()
+
+  const region = page.getByRole('region', { name: 'Article content' })
+  await expect(region).toHaveAttribute('tabindex', '0')
+  await region.focus()
+  await page.keyboard.press('PageDown')
+  await expect.poll(() => page.evaluate(() => document.querySelector('.content').scrollTop)).toBeGreaterThan(0)
+})
+
+test('reader toolbar: icon controls carry accessible names and toggle state', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    var item = { id: 800008, feed_id: 1, title: 'Named Controls', status: 'unread', media_links: [], link: 'https://example.com/n', content: '<p>body</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    vm.itemSelected = 800008
+  })
+  await expect(page.getByRole('heading', { name: 'Named Controls' })).toBeVisible()
+
+  // every visible control in the reader toolbar has a non-title accessible name
+  const unnamed = await page.evaluate(() => {
+    const tb = Array.from(document.querySelectorAll('#col-item .toolbar')).slice(-1)[0]
+    return Array.from(tb.querySelectorAll('button, a'))
+      .filter(el => getComputedStyle(el).display !== 'none')
+      .filter(el => !el.getAttribute('aria-label') && !el.textContent.trim())
+      .map(el => el.title || el.outerHTML.slice(0, 60))
+  })
+  expect(unnamed).toEqual([])
+
+  const star = page.getByRole('button', { name: 'Star article' })
+  await expect(star).toHaveAttribute('aria-pressed', 'false')
+  await star.click()
+  await expect(star).toHaveAttribute('aria-pressed', 'true')
+
+  // read/unread: the tooltip names the action this click performs
+  const read = page.getByRole('button', { name: 'Mark read' })
+  await expect(read).toHaveAttribute('aria-pressed', 'true')   // starring marks it read
+  await expect(read).toHaveAttribute('title', 'Mark Unread')
+})
+
+test('focus ring follows the selected accent in both themes', async ({ page }) => {
+  // Regression: --focus-ring: var(--accent) was declared on :root, so it locked
+  // in the :root blue fallback and the body[data-accent] overrides never reached
+  // it — every accent got a blue ring.
+  await page.goto('/')
+  const ring = (accent, theme) => page.evaluate(([a, t]) => {
+    vm.theme.accent = a; vm.theme.name = t
+    return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => {
+      const cs = getComputedStyle(document.body)
+      r({ accent: cs.getPropertyValue('--accent').trim(), ring: cs.getPropertyValue('--focus-ring').trim() })
+    })))
+  }, [accent, theme])
+
+  for (const [accent, theme] of [['amber', 'light'], ['amber', 'dark'], ['rose', 'dark'], ['green', 'light']]) {
+    const got = await ring(accent, theme)
+    expect(got.ring.toLowerCase(), `${theme}/${accent}`).toBe(got.accent.toLowerCase())
+  }
+})
+
+test('marking read/starred still updates the UI when feed stats are missing', async ({ page }) => {
+  // Regression: feedStats[feed_id] was indexed unguarded inside the update
+  // callback, so a feed absent from stats (not loaded yet, deleted elsewhere)
+  // threw and aborted the status update — the server recorded the change while
+  // the UI kept the old state.
+  await page.goto('/')
+  const errors = []
+  page.on('pageerror', e => errors.push(String(e)))
+  await page.evaluate(() => {
+    var item = { id: 800009, feed_id: 4242, title: 'No Stats', status: 'read', media_links: [], link: 'https://example.com/x', content: '<p>body</p>' }
+    api.items.get = function () { return Promise.resolve(item) }
+    api.items.update = function () { return Promise.resolve() }
+    vm.feedStats = {}                       // feed 4242 deliberately absent
+    vm.itemSelected = 800009
+  })
+  await expect(page.getByRole('heading', { name: 'No Stats' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Star article' }).click()
+  await expect.poll(() => page.evaluate(() => vm.itemSelectedDetails.status)).toBe('starred')
+  expect(errors).toEqual([])
+})
