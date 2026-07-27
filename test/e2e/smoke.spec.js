@@ -810,9 +810,10 @@ test('copy link: reports failure instead of claiming success', async ({ page }) 
   await expect(page.getByTestId('reader-copy-link')).toHaveAttribute('title', 'Copy Link')
 })
 
-test('link-less item: Open Link and Copy Link both read as disabled', async ({ page }) => {
-  // Some feeds ship content with no canonical URL. Neither control has
-  // anything to act on, so neither may look or behave live.
+test('link-less item: every link-dependent reader control reads as disabled', async ({ page }) => {
+  // Some feeds ship content with no canonical URL. Open Link, Copy Link,
+  // Read Here (nothing to crawl) and Save to Instapaper (nothing to send)
+  // all no-op there, so none of them may look or behave live.
   await page.goto('/')
   await page.evaluate(() => {
     var item = { id: 800005, feed_id: 1, title: 'No Link Here', status: 'read', media_links: [], content: '<p>body</p>' }
@@ -829,4 +830,16 @@ test('link-less item: Open Link and Copy Link both read as disabled', async ({ p
   expect(await open.getAttribute('href')).toBeNull()   // not a link, not focusable
   const dimmed = await open.evaluate(el => getComputedStyle(el).opacity)
   expect(Number(dimmed)).toBeLessThan(1)
+
+  await expect(page.locator('#col-item .toolbar button[title="Read Here"]')).toBeDisabled()
+  await expect(page.locator('#col-item .toolbar button[title="Save to Instapaper"]')).toBeDisabled()
+
+  // the command palette offers the same verdict — it must not drift from the toolbar
+  const offered = await page.evaluate(() => vm.paletteCommands()
+    .filter(c => c.enabled !== false)
+    .map(c => c.label))
+  expect(offered).not.toContain('Copy link')
+  expect(offered).not.toContain('Open original link')
+  expect(offered).not.toContain('Read here (readability)')
+  expect(offered).not.toContain('Save to Instapaper')
 })

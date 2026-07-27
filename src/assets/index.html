@@ -421,6 +421,7 @@
                 </dropdown>
                 <button class="toolbar-item"
                         :class="{active: itemSelectedReadability}"
+                        :disabled="!itemSelectedDetails.link"
                         @click="toggleReadability()"
                         title="Read Here"
                         aria-label="Read here"
@@ -441,7 +442,7 @@
                 </button>
                 <button class="toolbar-item"
                         :class="{active: itemSelectedDetails.instapaper_saved}"
-                        :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper"
+                        :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper || !itemSelectedDetails.link"
                         @click="saveToInstapaper(itemSelectedDetails)"
                         title="Save to Instapaper"
                         aria-label="Save to Instapaper"
