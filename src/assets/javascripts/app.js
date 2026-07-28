@@ -423,7 +423,7 @@ vueApp.component('relative-time', {
     }.bind(this), 600000)  // every 10 minutes
   },
   unmounted: function() {
-    clearInterval(this.interval)
+    clearTimeout(this.interval)
   },
 })
 
@@ -474,7 +474,10 @@ function rootComponent() { return {
     var view = (new URLSearchParams(location.search)).get('view')
     var initialFilter = (view === 'unread' || view === 'starred') ? view
                       : (view === 'all') ? ''
-                      : s.filter
+                      : (function() {
+                          var valid = ['unread', 'starred', 'triage', ''];
+                          return valid.includes(s.filter) ? s.filter : '';
+                        })()
     return {
       'filterSelected': initialFilter,
       'folders': [],
@@ -517,7 +520,7 @@ function rootComponent() { return {
         // 'auto' follows the OS; legacy night -> dark, sepia -> light
         'name': normalizeThemePref(s.theme_name),
         'font': s.theme_font,
-        'size': s.theme_size,
+        'size': Math.min(Math.max(s.theme_size || 1.0, 0.8), 1.8),
         'accent': s.theme_accent || 'blue',
         'density': s.theme_density || 'comfortable',
         'motion': s.theme_motion || 'system',
@@ -659,6 +662,7 @@ function rootComponent() { return {
     },
     refreshRateTitle: function () {
       const entry = this.refreshRateOptions.find(o => o.value === this.refreshRate)
+      if (entry && entry.value === 0) return 'Off'
       return entry ? entry.title : '0'
     },
     cardMode: function() {
@@ -1294,9 +1298,17 @@ function rootComponent() { return {
       if (!item) return
       if (item.link) {
         this.loading.readability = true
+        // Capturar el botón para dar feedback visual
+        var btn = document.querySelector('[data-testid="reader-listen"]')
+        if (btn) btn.textContent = 'Loading...'
         api.crawl(item.link).then(function(data) {
           vm.itemSelectedReadability = data && data.content
           vm.loading.readability = false
+          if (btn) btn.textContent = 'Read Here'
+        }).catch(function() {
+          vm.loading.readability = false
+          if (btn) btn.textContent = 'Read Here'
+          alert('Failed to fetch readability content.')
         })
       }
     },
@@ -1690,3 +1702,9 @@ if ('serviceWorker' in navigator) {
     }
   })
 })();
+
+// Hide keyboard shortcuts hint on touch-only devices
+if ('ontouchstart' in window) {
+    var hint = document.querySelector('.kbd-hint')
+    if (hint) hint.style.display = 'none'
+}

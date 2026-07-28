@@ -189,7 +189,7 @@
                 </div>
                 <!-- undo last swipe -->
                 <transition name="undo">
-                    <div class="card-undo-toast" v-if="cardUndo">
+                    <div class="card-undo-toast" v-if="cardUndo" role="status" aria-live="polite">
                         <span class="card-undo-label">{{ cardUndoLabel }}</span>
                         <button type="button" class="card-undo-btn" @click="undoCardAction()">Undo</button>
                     </div>
@@ -641,7 +641,7 @@
                         <a href="#" class="float-right text-decoration-none" @click.prevent="createNewFeedFolder()">new folder</a>
                     </label>
                     <select class="form-control" id="feed-folder" name="folder_id" ref="newFeedFolder">
-                        <option value="">---</option>
+                        <option value="">No folder</option>
                         <option :value="folder.id" v-for="folder in folders" :selected="folder.id === current.feed.folder_id || folder.id === current.folder.id">{{ folder.title }}</option>
                     </select>
                     <div class="mt-4" v-if="feedNewChoice.length">
