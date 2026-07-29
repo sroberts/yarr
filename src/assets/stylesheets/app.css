@@ -50,10 +50,6 @@ html {
   /* the single fixed brand action color (Instapaper), both themes */
   --instapaper: #FF6600;
 
-  /* accent derivations — identical formula in both themes */
-  --accent-hover: color-mix(in oklab, var(--accent) 82%, var(--text-primary));
-  --focus-ring: var(--accent);
-
   /* blue fallback if [data-accent] is somehow absent */
   --accent: #2563EB;
   --on-accent: #FFFFFF;
@@ -114,7 +110,16 @@ html {
 [data-accent="slate"]              { --accent: #475569; --on-accent: #FFFFFF; }
 .theme-dark[data-accent="slate"]   { --accent: #94A3B8; --on-accent: #0E1116; }
 
+/* Accent derivations — identical formula in both themes, but they MUST be
+   declared here rather than on :root. A custom property substitutes at the
+   element that declares it, so --focus-ring: var(--accent) written on :root
+   locks in :root's blue fallback and inherits that fixed blue downward; the
+   [data-accent] overrides land on <body> and never reach it. Declared on body,
+   they resolve against the accent that's actually selected. */
 body {
+  --accent-hover: color-mix(in oklab, var(--accent) 82%, var(--text-primary));
+  --focus-ring: var(--accent);
+
   overscroll-behavior: none;
   background-color: var(--surface-base);
   color: var(--text-primary);
@@ -441,8 +446,13 @@ select.form-control:not([multiple]):not([size]) {
   outline: none;
 }
 
+/* Disabled controls: opacity .4 composited to 2.5:1 in light and 3.4:1 in dark
+   — below the 3:1 non-text floor on one side and visibly unequal across the
+   two themes. A tertiary-text color plus a lighter dim reads as "off" in both
+   and clears the floor in both. */
 .toolbar-item:disabled {
-  opacity: 0.4;
+  color: var(--text-secondary);
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
@@ -608,10 +618,21 @@ select.form-control:not([multiple]):not([size]) {
   line-height: var(--article-body-leading);
 }
 
+/* The Measure Rule targets ~70 characters per line. `ch` can't deliver that:
+   it's the advance of "0" in whatever font is active, and the reader ships
+   three. 70ch rendered ~77 characters in Inter; 56ch fixed Inter but left
+   Source Serif at 56 and JetBrains Mono at 54, and switching reading font
+   reflowed the column by 100px. So the measure is `em` — which tracks the
+   reading size, not glyph metrics — with a per-font value measured against
+   real prose until each lands at ~70 characters per line. */
 .content-wrapper {
-  max-width: 70ch;
+  max-width: var(--measure, 35em);
   margin: 0 auto;
 }
+
+/* Measured at 18px: Inter and Source Serif 4 both land at ~71 characters on
+   35em; JetBrains Mono's fixed advance needs 44em to reach the same count. */
+.content.font-monospace { --measure: 44em; }
 
 .content img, .content video {
   max-width: 100%;
@@ -645,15 +666,49 @@ select.form-control:not([multiple]):not([size]) {
   height: 100%;
 }
 
+/* Code blocks routinely run wider than the measure — a Go snippet measured
+   1506px inside a 648px column, 58% of it clipped with nothing to say so.
+   The surface step makes the block legible AS a block (a border alone is
+   invisible in dark), and a persistent scrollbar admits there's more to the
+   right on platforms that hide overlay scrollbars. Keyboard reach is granted
+   in app.js, which gives every rendered <pre> a tabindex. */
 .content pre {
   overflow-x: auto;
   color: inherit;
   font-family: var(--font-mono);
+  background-color: var(--surface-raised);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius);
   margin-left: -0.5rem;
   margin-right: -0.5rem;
   padding: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* Right-edge fade on blocks that actually overflow (class set in app.js),
+   removed once scrolled to the end. The mask covers the whole element, so the
+   block's border softens at that edge too — which reads as "this continues"
+   rather than as a broken frame. */
+.content pre.pre-overflow {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent 100%);
+  transition: -webkit-mask-image .12s ease, mask-image .12s ease;
+}
+
+.content pre.pre-overflow.pre-at-end {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.content pre::-webkit-scrollbar {
+  height: 8px;
+  -webkit-appearance: none;
+}
+
+.content pre::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 4px;
 }
 
 .content a {
@@ -1234,6 +1289,12 @@ a:focus-visible,
 }
 
 /* inset rings inside clipped/scrolling containers so they aren't cropped */
+.content:focus-visible,
+.content pre:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
 .settings-dropdown .dropdown-item:focus-visible,
 .dropdown-item:focus-visible {
   outline: 2px solid var(--focus-ring);

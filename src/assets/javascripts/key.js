@@ -141,8 +141,11 @@ var triageBindings = {
 
 function isTextBox(element) {
   var tagName = element.tagName.toLowerCase()
-  // Input elements that aren't text
-  var inputBlocklist = ['button','checkbox','color','file','hidden','image','radio','range','reset','search','submit']
+  // Input elements that aren't text. `search` is deliberately NOT here: the
+  // article search field is type="search", and listing it let every letter
+  // shortcut fire mid-query while preventDefault() ate the character — typing
+  // "crypto code" left "yt de" behind, plus a stray copy and a talking article.
+  var inputBlocklist = ['button','checkbox','color','file','hidden','image','radio','range','reset','submit']
   // An input with no type attribute reports null here; treat it as 'text'.
   var inputType = (element.getAttribute('type') || 'text').toLowerCase()
 
