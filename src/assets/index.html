@@ -421,6 +421,7 @@
                 </dropdown>
                 <button class="toolbar-item"
                         :class="{active: itemSelectedReadability}"
+                        :disabled="!itemSelectedDetails.link"
                         @click="toggleReadability()"
                         title="Read Here"
                         aria-label="Read here"
@@ -441,7 +442,7 @@
                 </button>
                 <button class="toolbar-item"
                         :class="{active: itemSelectedDetails.instapaper_saved}"
-                        :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper"
+                        :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper || !itemSelectedDetails.link"
                         @click="saveToInstapaper(itemSelectedDetails)"
                         title="Save to Instapaper"
                         aria-label="Save to Instapaper"
@@ -451,7 +452,26 @@
                         <template v-else>{% inline "bookmark.svg" %}</template>
                     </span>
                 </button>
-                <a class="toolbar-item" :href="itemSelectedDetails.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
+                <button class="toolbar-item"
+                        data-testid="reader-copy-link"
+                        :disabled="!itemSelectedDetails.link"
+                        @click="copyItemLink(itemSelectedDetails)"
+                        :title="linkCopied ? 'Link Copied' : 'Copy Link'"
+                        :aria-label="linkCopied ? 'Link copied to clipboard' : 'Copy article link'">
+                    <span class="icon">
+                        <template v-if="linkCopied">{% inline "check.svg" %}</template>
+                        <template v-else>{% inline "link.svg" %}</template>
+                    </span>
+                </button>
+                <!-- An item with no link (some feeds ship content only) leaves
+                     nothing to open: drop the href so it stops being a link at
+                     all — unfocusable, no navigation — and mark it disabled to
+                     match the Copy Link button beside it. -->
+                <a class="toolbar-item"
+                   :class="{disabled: !itemSelectedDetails.link}"
+                   :href="itemSelectedDetails.link || null"
+                   :aria-disabled="!itemSelectedDetails.link"
+                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <div class="flex-grow-1"></div>
@@ -668,6 +688,7 @@
                     <tr><td><kbd>r</kbd></td>               <td>mark read / unread</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>mark starred / unstarred</td></tr>
                     <tr><td><kbd>o</kbd></td>               <td>open link</td></tr>
+                    <tr><td><kbd>c</kbd></td>               <td>copy link</td></tr>
                     <tr><td><kbd>i</kbd></td>               <td>read here</td> </tr>
                     <tr><td><kbd>I</kbd></td>               <td>save to Instapaper</td></tr>
                     <tr><td><kbd>p</kbd></td>               <td>listen to article (play / pause)</td></tr>
