@@ -419,7 +419,12 @@
                         <button class="dropdown-item" style="font-size: 1.2rem" @click.stop="incrFont(1)">A</button>
                     </div>
                 </dropdown>
-                <button class="toolbar-item"
+                <!-- The four secondary actions below are desktop/tablet-only:
+                     on phones they live in the overflow menu further down, so
+                     the six controls that stay get real 44px touch targets
+                     instead of being packed to 32px. d-md-* keeps the two sets
+                     exclusive — a control is never in both places at once. -->
+                <button class="toolbar-item d-none d-md-inline-flex"
                         :class="{active: itemSelectedReadability}"
                         :disabled="!itemSelectedDetails.link"
                         @click="toggleReadability()"
@@ -428,7 +433,7 @@
                         :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
                 </button>
-                <button class="toolbar-item"
+                <button class="toolbar-item d-none d-md-inline-flex"
                         v-if="ttsSupported"
                         data-testid="reader-listen"
                         :class="{active: ttsPlaying}"
@@ -452,7 +457,7 @@
                         <template v-else>{% inline "bookmark.svg" %}</template>
                     </span>
                 </button>
-                <button class="toolbar-item"
+                <button class="toolbar-item d-none d-md-inline-flex"
                         data-testid="reader-copy-link"
                         :disabled="!itemSelectedDetails.link"
                         @click="copyItemLink(itemSelectedDetails)"
@@ -467,13 +472,65 @@
                      nothing to open: drop the href so it stops being a link at
                      all — unfocusable, no navigation — and mark it disabled to
                      match the Copy Link button beside it. -->
-                <a class="toolbar-item"
+                <a class="toolbar-item d-none d-md-inline-flex"
                    :class="{disabled: !itemSelectedDetails.link}"
                    :href="itemSelectedDetails.link || null"
                    :aria-disabled="!itemSelectedDetails.link"
                    rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
+                <!-- Phone overflow: nine 44px controls need 412px plus padding,
+                     which no common phone has in portrait. Rather than shrink
+                     every target to 32px (what the old packing breakpoints did),
+                     the four secondary actions move in here and the six that
+                     remain keep full-size targets down to 320px.
+                     The toggle carries the readability spinner because the
+                     inline button that used to show it isn't rendered here. -->
+                <dropdown class="settings-dropdown d-md-none"
+                          toggle-class="toolbar-item px-2"
+                          data-testid="reader-more"
+                          drop="right"
+                          title="More actions">
+                    <template v-slot:button>
+                        <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "more-horizontal.svg" %}</span>
+                    </template>
+
+                    <button class="dropdown-item"
+                            :class="{active: itemSelectedReadability}"
+                            :disabled="!itemSelectedDetails.link"
+                            :aria-pressed="itemSelectedReadability ? 'true' : 'false'"
+                            @click="toggleReadability()">
+                        <span class="icon mr-1">{% inline "book-open.svg" %}</span>
+                        Read here
+                    </button>
+                    <button class="dropdown-item"
+                            v-if="ttsSupported"
+                            :class="{active: ttsPlaying}"
+                            :aria-pressed="ttsPlaying ? 'true' : 'false'"
+                            @click="toggleListen()">
+                        <span class="icon mr-1" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
+                        <span class="icon mr-1" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
+                        <span class="icon mr-1" v-else>{% inline "pause.svg" %}</span>
+                        {{ ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen' }}
+                    </button>
+                    <!-- No copied-check here the way the inline button has one:
+                         activating a menu item closes the menu, so the toast is
+                         what actually reports back. -->
+                    <button class="dropdown-item"
+                            :disabled="!itemSelectedDetails.link"
+                            @click="copyItemLink(itemSelectedDetails)">
+                        <span class="icon mr-1">{% inline "link.svg" %}</span>
+                        Copy link
+                    </button>
+                    <a class="dropdown-item"
+                       :class="{disabled: !itemSelectedDetails.link}"
+                       :href="itemSelectedDetails.link || null"
+                       :aria-disabled="!itemSelectedDetails.link"
+                       rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer">
+                        <span class="icon mr-1">{% inline "external-link.svg" %}</span>
+                        Open link
+                    </a>
+                </dropdown>
                 <div class="flex-grow-1"></div>
                 <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
                      and swipe navigation cover them, and keeping them here
