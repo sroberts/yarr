@@ -630,10 +630,14 @@ func (s *Server) handleLogout(c *router.Context) {
 	c.Out.WriteHeader(http.StatusNoContent)
 }
 
+// handleHealth answers "is this process able to serve", nothing more. A
+// supervisor probes it every few seconds, so it does no i/o and takes no locks,
+// and it deliberately does not ping the database: a restart cannot fix a broken
+// database, it only throws away a working process.
 func (s *Server) handleHealth(c *router.Context) {
-	if err := s.db.Ping(); err != nil {
+	if !s.ready.Load() {
 		c.Out.WriteHeader(http.StatusServiceUnavailable)
-		_, _ = c.Out.Write([]byte("ERROR"))
+		_, _ = c.Out.Write([]byte("STARTING"))
 		return
 	}
 	c.Out.WriteHeader(http.StatusOK)

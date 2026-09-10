@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -35,16 +36,23 @@ type Server struct {
 	// once
 	SecretKeyBase string
 	SecureCookie  bool
+
+	// ready gates the healthcheck: false while starting up or shutting down.
+	ready atomic.Bool
 }
 
 func NewServer(db *storage.Storage, addr string) *Server {
-	return &Server{
+	s := &Server{
 		db:          db,
 		Addr:        addr,
 		worker:      worker.NewWorker(db),
 		cache:       make(map[string]interface{}),
 		cache_mutex: &sync.Mutex{},
 	}
+	// A handler used directly (tests, embedding) can serve straight away.
+	// Start() flips this off for the duration of its own startup work.
+	s.ready.Store(true)
+	return s
 }
 
 func (h *Server) GetAddr() string {
@@ -55,7 +63,22 @@ func (h *Server) GetAddr() string {
 	return proto + "://" + h.Addr + h.BasePath
 }
 
-func (s *Server) Start() {
+// listen binds the configured address. A stale unix socket left behind by an
+// unclean exit is removed first, so restarts never need manual repair.
+func (s *Server) listen() (net.Listener, error) {
+	if path, isUnix := strings.CutPrefix(s.Addr, "unix:"); isUnix {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			log.Print(err)
+		}
+		return net.Listen("unix", path)
+	}
+	return net.Listen("tcp", s.Addr)
+}
+
+// startup does the work that has to happen before yarr can serve real traffic.
+// It runs after the listener is bound so the healthcheck can answer "not ready"
+// rather than refuse the connection.
+func (s *Server) startup() {
 	refreshRate := s.db.GetSettingsValueInt64("refresh_rate")
 	s.worker.FindFavicons()
 	s.worker.StartFeedCleaner()
@@ -63,38 +86,52 @@ func (s *Server) Start() {
 	if refreshRate > 0 {
 		s.worker.RefreshFeeds()
 	}
+	s.ready.Store(true)
+	log.Printf("ready at %s", s.GetAddr())
+}
 
-	var ln net.Listener
-	var err error
+// shutdown stops taking new work and flushes what has to reach disk. A
+// supervisor sends SIGKILL 10 seconds after SIGTERM, so this leaves headroom.
+func (s *Server) shutdown(httpserver *http.Server) {
+	log.Print("shutting down server...")
+	s.ready.Store(false)
 
-	if path, isUnix := strings.CutPrefix(s.Addr, "unix:"); isUnix {
-		err = os.Remove(path)
-		if err != nil {
-			log.Print(err)
-		}
-		ln, err = net.Listen("unix", path)
-	} else {
-		ln, err = net.Listen("tcp", s.Addr)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	if err := httpserver.Shutdown(shutdownCtx); err != nil {
+		log.Printf("shutdown error: %v", err)
 	}
 
+	// Stop the auto-refresh ticker before closing the database, so no fetch
+	// starts against a connection that is about to go away.
+	s.worker.SetRefreshRate(0)
+	if err := s.db.Close(); err != nil {
+		log.Printf("failed to close database: %v", err)
+	}
+	log.Print("stopped")
+}
+
+func (s *Server) Start() {
+	ln, err := s.listen()
 	if err != nil {
+		// Non-zero exit: an address we cannot bind is not recoverable here.
 		log.Fatal(err)
 	}
 
 	httpserver := &http.Server{Handler: s.handler()}
 
-	// Graceful shutdown: listen for SIGTERM/SIGINT
+	s.ready.Store(false)
+	go s.startup()
+
+	// SIGTERM is a stop request, never a reload.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
+	done := make(chan struct{})
 	go func() {
+		defer close(done)
 		<-ctx.Done()
-		log.Print("shutting down server...")
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
-		if err := httpserver.Shutdown(shutdownCtx); err != nil {
-			log.Printf("shutdown error: %v", err)
-		}
+		s.shutdown(httpserver)
 	}()
 
 	if s.CertFile != "" && s.KeyFile != "" {
@@ -106,4 +143,7 @@ func (s *Server) Start() {
 	if err != http.ErrServerClosed {
 		log.Fatal(err)
 	}
+
+	// Serve returns as soon as Shutdown is called; wait for the flush.
+	<-done
 }

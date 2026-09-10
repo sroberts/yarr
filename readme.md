@@ -29,6 +29,21 @@ Usage instructions:
 
 For self-hosting, see `yarr -h` for auth, tls & server configuration flags.
 
+## running under outpost
+
+yarr conforms to the Outpost service spec, so it can be supervised as a native
+process: it takes `--port` (or `$OUTPOST_PORT`) and binds loopback, keeps all
+of its state in `$OUTPOST_STORAGE_DIR` so backup and restore capture
+everything, answers a cheap unauthenticated `GET /up`, logs to stdout, and shuts
+down on SIGTERM well inside the ten second deadline.
+
+```sh
+yarr --port 8090            # or: OUTPOST_PORT=8090 yarr
+```
+
+See [doc/outpost.md](doc/outpost.md) and the sample manifest in
+[etc/outpost/yarr.toml](etc/outpost/yarr.toml).
+
 ## deploying with once
 
 yarr is compatible with [Basecamp Once](https://github.com/basecamp/once). To deploy with authentication:
