@@ -273,6 +273,52 @@ func TestMethodNotAllowed(t *testing.T) {
 	}
 }
 
+// A JSON content type is required, which is what stops a cross-site POST from
+// reaching a mutating tool on the session cookie: text/plain or a form encoding
+// would be a CORS simple request and skip the preflight.
+func TestContentTypeRequired(t *testing.T) {
+	h := newTestHandler(nil)
+	body := `{"jsonrpc":"2.0","id":1,"method":"ping"}`
+	for _, tt := range [...]struct {
+		contentType string
+		status      int
+	}{
+		{"application/json", http.StatusOK},
+		{"application/json; charset=utf-8", http.StatusOK},
+		{"application/vnd.yarr+json", http.StatusOK},
+		{"text/plain", http.StatusUnsupportedMediaType},
+		{"text/plain;charset=UTF-8", http.StatusUnsupportedMediaType},
+		{"application/x-www-form-urlencoded", http.StatusUnsupportedMediaType},
+		{"multipart/form-data; boundary=x", http.StatusUnsupportedMediaType},
+		{"", http.StatusUnsupportedMediaType},
+	} {
+		t.Run(tt.contentType, func(t *testing.T) {
+			req := httptest.NewRequest("POST", "/mcp", strings.NewReader(body))
+			if tt.contentType != "" {
+				req.Header.Set("Content-Type", tt.contentType)
+			}
+			rec := httptest.NewRecorder()
+			h.ServeHTTP(rec, req)
+			if rec.Code != tt.status {
+				t.Errorf("content-type %q: status = %d, want %d", tt.contentType, rec.Code, tt.status)
+			}
+		})
+	}
+}
+
+// A method spelled like a notification but carrying an id is a request, and
+// JSON-RPC owes every request an answer.
+func TestNotificationSpellingWithIDGetsAnswered(t *testing.T) {
+	h := newTestHandler(nil)
+	rec, resp := post(t, h, `{"jsonrpc":"2.0","id":7,"method":"notifications/foo"}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+	if resp.Error == nil || resp.Error.Code != codeMethodNotFound {
+		t.Fatalf("expected a method-not-found error, got %+v", resp.Error)
+	}
+}
+
 func TestOriginGuard(t *testing.T) {
 	h := newTestHandler(nil)
 	tests := []struct {
@@ -287,6 +333,7 @@ func TestOriginGuard(t *testing.T) {
 	}
 	for _, tt := range tests {
 		req := httptest.NewRequest("POST", "/mcp", strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"ping"}`))
+		req.Header.Set("Content-Type", "application/json")
 		req.Host = "example.com"
 		if tt.origin != "" {
 			req.Header.Set("Origin", tt.origin)

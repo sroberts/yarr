@@ -120,15 +120,29 @@ func plainText(link, content string) string {
 	return htmlutil.ExtractText(sanitizer.Sanitize(link, content))
 }
 
+// clampText truncates on a word boundary where there is one, and hard-cuts
+// where there is not. htmlutil.TruncateText scans backwards for whitespace and
+// returns the whole input when it finds none, so on a feed without spaces
+// between words - Chinese and Japanese, most obviously - it is not a limit at
+// all, and a page of "snippets" would be a page of entire article bodies.
+func clampText(s string, max int) string {
+	truncated := htmlutil.TruncateText(s, max)
+	clamped, cut := truncateChars(truncated, max)
+	if cut {
+		return clamped + " ..."
+	}
+	return clamped
+}
+
 func snippet(link, content string) string {
-	return htmlutil.TruncateText(plainText(link, content), snippetChars)
+	return clampText(plainText(link, content), snippetChars)
 }
 
 func itemTitle(title, link, content string) string {
 	if title != "" {
 		return title
 	}
-	return htmlutil.TruncateText(plainText(link, content), titleChars)
+	return clampText(plainText(link, content), titleChars)
 }
 
 func truncateChars(s string, max int) (string, bool) {

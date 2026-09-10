@@ -54,10 +54,9 @@ func TestOpenAPIHandlerRejectsNonGET(t *testing.T) {
 	}
 }
 
-// TestOpenAPIRouteWired checks the target end-to-end behavior of
-// GET /v1/openapi.json through the real router. It is expected to fail
-// (404) until routes.go registers the route — that wiring is out of scope
-// for this file; see CLAUDE.md and the task that introduced it.
+// TestOpenAPIRouteWired checks GET /v1/openapi.json end to end through the
+// real router, so the document cannot become unreachable by losing its route
+// registration.
 func TestOpenAPIRouteWired(t *testing.T) {
 	log.SetOutput(io.Discard)
 	db, _ := storage.New(":memory:")

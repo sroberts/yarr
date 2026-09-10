@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -234,33 +235,32 @@ func warnSupervisedConflicts(addr, certfile, keyfile, logfile string) {
 	}
 }
 
-// trapEarlyStop handles SIGTERM from the first instant, covering the window
-// before the http server installs its own handler -- database migrations can
-// take a while, and a supervisor may stop us in the middle of one. Without
-// this the default disposition kills the process with a signal status, which
-// reads as a crash and gets us restarted rather than left stopped.
+// trapStop registers the one signal handler this process has, from the first
+// instant. Database migrations can take a while and a supervisor may stop us in
+// the middle of one, long before the http server is up; the default
+// disposition would kill us with a signal status, which reads as a crash and
+// gets us restarted rather than left stopped.
 //
-// The returned function disarms it once the server is ready to take over.
-func trapEarlyStop() func() {
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+// Until the server is watching the returned context, the goroutine here is what
+// acts on a stop. The returned handoff retires it. Note it does not unregister
+// the signal -- the context stays armed, so a stop that lands in the instant of
+// the handoff is still delivered to the server rather than dropped on the floor.
+func trapStop() (context.Context, func(), func()) {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 
-	disarmed := make(chan struct{})
+	handedOff := make(chan struct{})
 	go func() {
 		select {
-		case <-signals:
+		case <-ctx.Done():
 			// Nothing is serving yet and migrations roll back on their own,
-			// so there is nothing to drain: this is a clean, deliberate stop.
+			// so there is nothing to drain: a clean, deliberate stop.
 			log.Print("stopped before startup finished")
 			os.Exit(0)
-		case <-disarmed:
+		case <-handedOff:
 		}
 	}()
 
-	return func() {
-		signal.Stop(signals)
-		close(disarmed)
-	}
+	return ctx, func() { close(handedOff) }, stop
 }
 
 func main() {
@@ -303,7 +303,8 @@ func main() {
 	}
 
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	disarmEarlyStop := trapEarlyStop()
+	stopCtx, stopHandoff, stopRelease := trapStop()
+	defer stopRelease()
 	if logfile != "" {
 		file, err := os.OpenFile(logfile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err != nil {
@@ -391,8 +392,11 @@ func main() {
 	srv.SecretKeyBase = secretKeyBase
 	srv.SecureCookie = secureCookie
 
-	// Hand signal handling over to the server, which drains before exiting.
-	disarmEarlyStop()
+	// The server drains before exiting, and retires the early handler itself
+	// once it is watching -- so the browser launch below, and the systray
+	// startup in the gui build, stay covered.
+	srv.StopCtx = stopCtx
+	srv.StopHandoff = stopHandoff
 
 	log.Printf("starting server at %s", srv.GetAddr())
 	if open {

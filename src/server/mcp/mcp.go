@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"log"
+	"mime"
 	"net"
 	"net/http"
 	"net/url"
@@ -58,6 +59,17 @@ func (h *Handler) Handle(c *router.Context) {
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
+	// MCP requires application/json, and requiring it here is also what keeps
+	// a mutating tool out of reach of a cross-site POST. yarr's session cookie
+	// is SameSite=Lax, but "site" ignores the port, so a page on another
+	// localhost port is same-site and its fetch() carries the cookie; text/plain
+	// or a form encoding would make that a CORS simple request with no
+	// preflight. Insisting on a JSON content type forces the preflight, which
+	// this endpoint answers with no CORS headers at all.
+	if !isJSONContentType(r.Header.Get("Content-Type")) {
+		w.WriteHeader(http.StatusUnsupportedMediaType)
+		return
+	}
 
 	// The MCP-Protocol-Version request header is ignored on purpose. The spec
 	// says to answer 400 when it names a revision the server does not support,
@@ -103,7 +115,10 @@ func (h *Handler) Handle(c *router.Context) {
 	}
 
 	// Notifications get no response at all, whether or not we know the method.
-	if req.isNotification() || strings.HasPrefix(req.Method, "notifications/") {
+	// An id makes it a request even when the method is spelled like a
+	// notification, and JSON-RPC owes every request an answer -- swallowing one
+	// leaves the client waiting on an id that will never come back.
+	if req.isNotification() {
 		w.WriteHeader(http.StatusAccepted)
 		return
 	}
@@ -214,6 +229,16 @@ func (h *Handler) run(t *tool, args json.RawMessage) (res *toolResult, rpcerr *r
 // originAllowed implements the Streamable HTTP transport's DNS-rebinding
 // protection: a browser-supplied Origin must match the host being served or be
 // loopback. Non-browser clients send no Origin and pass straight through.
+// isJSONContentType accepts application/json with any parameters, and the
+// +json structured suffix, case-insensitively.
+func isJSONContentType(value string) bool {
+	mediatype, _, err := mime.ParseMediaType(value)
+	if err != nil {
+		return false
+	}
+	return mediatype == "application/json" || strings.HasSuffix(mediatype, "+json")
+}
+
 func originAllowed(r *http.Request) bool {
 	origin := r.Header.Get("Origin")
 	if origin == "" {

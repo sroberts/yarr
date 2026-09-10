@@ -351,8 +351,10 @@ func listItems(db *storage.Storage, args json.RawMessage) (*toolResult, *rpcErro
 		})
 	}
 
+	// Only when there is another page: a cursor on the last page sends a
+	// client that pages off next_cursor into a guaranteed empty extra call.
 	var nextCursor *int64
-	if len(out) > 0 {
+	if hasMore && len(out) > 0 {
 		last := out[len(out)-1].ID
 		nextCursor = &last
 	}
