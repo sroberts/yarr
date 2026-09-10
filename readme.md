@@ -41,6 +41,11 @@ down on SIGTERM well inside the ten second deadline.
 yarr --port 8090            # or: OUTPOST_PORT=8090 yarr
 ```
 
+It also describes itself: `GET /v1/openapi.json` serves an OpenAPI 3.1 document
+for the HTTP API, and `POST /mcp` serves the Model Context Protocol, so an MCP
+client can browse, search, read and triage feeds. `/mcp` is protected by the
+same auth as `/api/*`.
+
 See [doc/outpost.md](doc/outpost.md) and the sample manifest in
 [etc/outpost/yarr.toml](etc/outpost/yarr.toml).
 
