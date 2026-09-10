@@ -26,6 +26,9 @@ type Server struct {
 
 	BasePath string
 
+	// Version is yarr's release, reported in the MCP handshake.
+	Version string
+
 	// auth
 	Username string
 	Password string
@@ -112,20 +115,15 @@ func (s *Server) shutdown(httpserver *http.Server) {
 }
 
 func (s *Server) Start() {
-	ln, err := s.listen()
-	if err != nil {
-		// Non-zero exit: an address we cannot bind is not recoverable here.
-		log.Fatal(err)
-	}
-
-	httpserver := &http.Server{Handler: s.handler()}
-
 	s.ready.Store(false)
-	go s.startup()
 
-	// SIGTERM is a stop request, never a reload.
+	// SIGTERM is a stop request, never a reload. It is trapped before the
+	// listener binds so that a stop arriving during startup still drains
+	// cleanly instead of killing the process with a signal status.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
+
+	httpserver := &http.Server{Handler: s.handler()}
 
 	done := make(chan struct{})
 	go func() {
@@ -133,6 +131,20 @@ func (s *Server) Start() {
 		<-ctx.Done()
 		s.shutdown(httpserver)
 	}()
+
+	ln, err := s.listen()
+	if err != nil {
+		// Non-zero exit: an address we cannot bind is not recoverable here.
+		log.Fatal(err)
+	}
+
+	select {
+	case <-ctx.Done():
+		// Stopped before we got going: skip the startup work rather than
+		// begin fetching feeds on the way out.
+	default:
+		go s.startup()
+	}
 
 	if s.CertFile != "" && s.KeyFile != "" {
 		err = httpserver.ServeTLS(ln, s.CertFile, s.KeyFile)

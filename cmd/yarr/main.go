@@ -8,9 +8,11 @@ import (
 	"log"
 	"net"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/nkanaev/yarr/src/platform"
 	"github.com/nkanaev/yarr/src/server"
@@ -232,6 +234,35 @@ func warnSupervisedConflicts(addr, certfile, keyfile, logfile string) {
 	}
 }
 
+// trapEarlyStop handles SIGTERM from the first instant, covering the window
+// before the http server installs its own handler -- database migrations can
+// take a while, and a supervisor may stop us in the middle of one. Without
+// this the default disposition kills the process with a signal status, which
+// reads as a crash and gets us restarted rather than left stopped.
+//
+// The returned function disarms it once the server is ready to take over.
+func trapEarlyStop() func() {
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT)
+
+	disarmed := make(chan struct{})
+	go func() {
+		select {
+		case <-signals:
+			// Nothing is serving yet and migrations roll back on their own,
+			// so there is nothing to drain: this is a clean, deliberate stop.
+			log.Print("stopped before startup finished")
+			os.Exit(0)
+		case <-disarmed:
+		}
+	}()
+
+	return func() {
+		signal.Stop(signals)
+		close(disarmed)
+	}
+}
+
 func main() {
 	_ = platform.FixConsoleIfNeeded()
 
@@ -272,6 +303,7 @@ func main() {
 	}
 
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	disarmEarlyStop := trapEarlyStop()
 	if logfile != "" {
 		file, err := os.OpenFile(logfile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err != nil {
@@ -340,6 +372,7 @@ func main() {
 
 	worker.SetVersion(Version)
 	srv := server.NewServer(store, addr)
+	srv.Version = Version
 
 	if basepath != "" {
 		srv.BasePath = "/" + strings.Trim(basepath, "/")
@@ -357,6 +390,9 @@ func main() {
 
 	srv.SecretKeyBase = secretKeyBase
 	srv.SecureCookie = secureCookie
+
+	// Hand signal handling over to the server, which drains before exiting.
+	disarmEarlyStop()
 
 	log.Printf("starting server at %s", srv.GetAddr())
 	if open {

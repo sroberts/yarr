@@ -231,9 +231,12 @@ func (s *Storage) CountItems(filter ItemFilter) int {
 	predicate, args := listQueryPredicate(filter, false)
 
 	var count int
+	// The predicate refers to the items table as `i`, so the alias here is
+	// load-bearing: without it every filtered count fails to compile as SQL
+	// and silently returns 0.
 	query := fmt.Sprintf(`
 		select count(*)
-		from items
+		from items i
 		where %s
 		`, predicate)
 	err := s.db.QueryRow(query, args...).Scan(&count)
