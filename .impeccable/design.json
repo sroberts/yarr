@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-16T15:00:00Z",
+  "title": "Design System: yarr",
+  "extensions": {
+    "colorMeta": {
+      "signal-blue": {
+        "role": "primary",
+        "displayName": "Signal Blue",
+        "canonical": "#0080d4",
+        "tonalRamp": ["#012438", "#01405f", "#015888", "#0067ab", "#0080d4", "#33a0e0", "#7cc4ee", "#cce8f8"]
+      },
+      "instapaper-orange": {
+        "role": "secondary",
+        "displayName": "Instapaper Orange",
+        "canonical": "#ff6600",
+        "tonalRamp": ["#3d1900", "#5c2600", "#8a3900", "#c25100", "#ff6600", "#ff8c40", "#ffb380", "#ffe0cc"]
+      },
+      "alert-red": {
+        "role": "tertiary",
+        "displayName": "Alert Red",
+        "canonical": "#e74c3c",
+        "tonalRamp": ["#3a0f0a", "#5c1810", "#8a2519", "#c0392b", "#e74c3c", "#ee7a6f", "#f4a89f", "#fbd9d4"]
+      },
+      "light-ink": {
+        "role": "neutral",
+        "displayName": "Light Ink",
+        "canonical": "#212529",
+        "tonalRamp": ["#212529", "#3a3f44", "#565c63", "#6c757d", "#adb5bd", "#dee2e6", "#f0f0f0", "#ffffff"]
+      },
+      "sepia-ink": {
+        "role": "neutral",
+        "displayName": "Sepia Ink",
+        "canonical": "#433422",
+        "tonalRamp": ["#2b2014", "#433422", "#5c4a33", "#8a7a66", "#b3a589", "#e0d6ba", "#ede8d8", "#f4f0e5"]
+      },
+      "night-ink": {
+        "role": "neutral",
+        "displayName": "Night Ink",
+        "canonical": "#d1d1d1",
+        "tonalRamp": ["#0e0e0e", "#1a1a1a", "#2b2b2b", "#444444", "#888888", "#aaaaaa", "#d1d1d1", "#f0f0f0"]
+      }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Article title in the reader pane; the single largest type in the app." },
+      "title": { "displayName": "Title", "purpose": "Triage-card article title and section emphasis." },
+      "body": { "displayName": "Body", "purpose": "Item titles, article body, most UI text; reader prose capped at 60rem." },
+      "label": { "displayName": "Label", "purpose": "Feed names, timestamps, counters, swipe hints — secondary metadata, often muted." },
+      "reading-serif": { "displayName": "Reading Serif", "purpose": "Reader-pane preference only (Georgia). Never in chrome." },
+      "reading-mono": { "displayName": "Reading Mono", "purpose": "Reader-pane preference only (SFMono/Menlo/Consolas). Never in chrome." }
+    },
+    "shadows": [
+      { "name": "hairline", "value": "0 1px 2px rgba(0,0,0,0.1)", "purpose": "Default buttons and selects — barely-there pressable edge." },
+      { "name": "inset-field", "value": "inset 0 1px 1px rgba(0,0,0,0.07)", "purpose": "Form inputs — recessed well." },
+      { "name": "menu", "value": "0 1px 5px rgba(0,0,0,0.07)", "purpose": "Settings dropdown — separates it from the list beneath." },
+      { "name": "floating-card", "value": "0 4px 24px rgba(0,0,0,0.12)", "purpose": "The triage card — the one genuinely lifted reading surface." },
+      { "name": "toast", "value": "0 4px 16px rgba(0,0,0,0.25)", "purpose": "The undo toast — floats above everything in the thumb zone." }
+    ],
+    "motion": [
+      { "name": "state", "value": "0.15s ease", "purpose": "Action-pill fade, quick state feedback." },
+      { "name": "transition", "value": "0.2s ease", "purpose": "Pull-to-refresh height/opacity, offline banner, toast fade." },
+      { "name": "card-move", "value": "0.3s ease", "purpose": "Triage card snap-back and fly-away; indicator enter/leave." },
+      { "name": "reduced", "value": "0.001ms", "purpose": "All motion collapses to instant under prefers-reduced-motion." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "767.98px", "purpose": "Single-pane: one column at a time (feeds → items → article)." },
+      { "name": "tablet", "value": "991.98px", "purpose": "Two-pane (feeds + items); triage card mode is shown at/below this width." },
+      { "name": "desktop", "value": "992px", "purpose": "Full three-pane terminal." }
+    ],
+    "zIndex": [
+      { "name": "drag-handle", "value": 900 },
+      { "name": "offline-banner", "value": 1000 },
+      { "name": "undo-toast", "value": 1100 }
+    ]
+  },
+  "components": [
+    {
+      "name": "Toolbar Item (active)",
+      "kind": "button",
+      "refersTo": "toolbar-item-active",
+      "description": "Icon button in the 2rem toolbar band; the active/selected state fills with the accent.",
+      "html": "<button class=\"ds-toolbar-item ds-active\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\"><circle cx=\"12\" cy=\"12\" r=\"8\"/></svg></button>",
+      "css": ".ds-toolbar-item { display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#212529; border:1px solid transparent; padding:0.25rem 0.5rem; border-radius:3px; line-height:1; cursor:pointer; } .ds-toolbar-item:hover { background:#f0f0f0; } .ds-toolbar-item.ds-active { background:#0067ab; color:#fff; } .ds-toolbar-item:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+    },
+    {
+      "name": "List Row (selected)",
+      "kind": "nav",
+      "refersTo": "selectgroup-item-selected",
+      "description": "Feed/item list row (radio rendered as a full-width row); selected state uses the accent fill.",
+      "html": "<div class=\"ds-row ds-selected\"><span class=\"ds-row-title\">All Unread</span><span class=\"ds-row-count\">128</span></div>",
+      "css": ".ds-row { display:flex; align-items:center; width:100%; padding:0.375rem 0.5rem; border-radius:4px; color:#212529; cursor:pointer; } .ds-row:hover { background:#f0f0f0; } .ds-row-title { flex:1 1 auto; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ds-row-count { padding-left:0.5rem; opacity:0.6; } .ds-row.ds-selected { background:#0067ab; color:#fff; } .ds-row.ds-selected .ds-row-count { opacity:0.85; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Standard pressable button with a hairline shadow.",
+      "html": "<button class=\"ds-btn-default\">Add</button>",
+      "css": ".ds-btn-default { background:#fff; color:#212529; border:1px solid #ced4da; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.1); padding:0.375rem 0.75rem; cursor:pointer; } .ds-btn-default:active { background:#f5f7f9; box-shadow:none; } .ds-btn-default:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Toolbar search / text field with a recessed well and accent focus.",
+      "html": "<input class=\"ds-input\" type=\"search\" placeholder=\"Search\">",
+      "css": ".ds-input { background:#fff; color:#212529; border:1px solid #ced4da; border-radius:4px; box-shadow:inset 0 1px 1px rgba(0,0,0,0.07); padding:0.375rem 0.75rem; width:100%; } .ds-input:focus { border-color:#0080d4; outline:none; } .ds-input:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+    },
+    {
+      "name": "Triage Card",
+      "kind": "card",
+      "refersTo": "triage-card",
+      "description": "The mobile core-loop card. Swipe right = read, left = Instapaper/keep, tap = open.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-feed\"><span>Hacker News</span><span>2h</span></div><div class=\"ds-card-domain\">example.com</div><div class=\"ds-card-title\">A clean, just-the-facts headline</div><div class=\"ds-card-excerpt\">The excerpt uses a dedicated token so it clears 4.5:1 in light, sepia, and night themes alike.</div><div class=\"ds-card-footer\"><span>tap to read full article</span><span>3 / 47</span></div></div>",
+      "css": ".ds-card { width:100%; max-width:400px; background:#fff; color:#222; border-radius:16px; padding:1.5rem; box-shadow:0 4px 24px rgba(0,0,0,0.12); } .ds-card-feed { display:flex; justify-content:space-between; font-size:0.8rem; color:#888; margin-bottom:0.75rem; } .ds-card-domain { font-size:0.75rem; color:#888; margin-bottom:0.75rem; } .ds-card-title { font-size:1.25rem; font-weight:600; line-height:1.3; margin-bottom:0.75rem; } .ds-card-excerpt { font-size:0.9rem; line-height:1.6; color:#595959; } .ds-card-footer { display:flex; justify-content:space-between; margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid rgba(128,128,128,0.1); font-size:0.75rem; opacity:0.5; }"
+    },
+    {
+      "name": "Undo Toast",
+      "kind": "custom",
+      "refersTo": "undo-toast",
+      "description": "Thumb-zone toast after a triage swipe; the server write is deferred until it dismisses.",
+      "html": "<div class=\"ds-toast\"><span class=\"ds-toast-label\">Marked read</span><button class=\"ds-toast-btn\">Undo</button></div>",
+      "css": ".ds-toast { display:inline-flex; align-items:center; gap:0.5rem; padding:0 0.25rem 0 1rem; border-radius:1.5rem; background:rgba(20,20,20,0.92); color:#fff; font-size:0.875rem; box-shadow:0 4px 16px rgba(0,0,0,0.25); } .ds-toast-label { white-space:nowrap; } .ds-toast-btn { min-height:44px; min-width:44px; padding:0 1rem; border:none; border-radius:1.25rem; background:transparent; color:#4db4ff; font-weight:600; font-size:0.875rem; cursor:pointer; } .ds-toast-btn:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+    },
+    {
+      "name": "Offline Banner",
+      "kind": "custom",
+      "refersTo": "offline-banner",
+      "description": "Full-width top bar shown when the network drops.",
+      "html": "<div class=\"ds-offline\">Offline — showing cached items</div>",
+      "css": ".ds-offline { width:100%; background:#e74c3c; color:#fff; text-align:center; padding:0.375rem; font-size:0.8rem; font-weight:600; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The News Terminal",
+    "overview": "yarr is a clean, just-the-facts instrument — a Bloomberg terminal for the feeds you chose. It is not a magazine, not a discovery engine, not a place to linger over chrome. The whole surface exists to move a backlog of unread items past your eyes quickly, let you keep the few that matter, and get out of the way. Density and speed are the aesthetic; the interface should feel like a well-worn CLI that happens to have a screen — instant, predictable, unsurprising. Three columns carry the desktop experience (feeds → items → article), collapsing to one at a time on a phone with no duplicate markup. There is exactly one accent color, and it never decorates — it only signals state.",
+    "keyCharacteristics": [
+      "Information-dense, three-pane terminal that collapses to single-pane on mobile.",
+      "One accent (Signal Blue), used only for state — selection, active, focus.",
+      "Three first-class themes; every surface must read in all three.",
+      "Keyboard is a primary path, not a power-user extra; visible focus is required.",
+      "Flat by default; lift is reserved for the triage card and the undo toast."
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "Signal Blue is the only accent and it only ever means state — selected, active, focused, or a link. Orange means one thing (Instapaper); red means one thing (error/offline). Three functional colors, zero decorative ones.", "section": "colors" },
+      { "name": "The Filled-State Rule", "body": "When white text sits on the accent (selected row, active filter), use Signal Blue Deep (#0067ab), not Signal Blue — #fff on #0080d4 is only ~3.9:1 and fails AA.", "section": "colors" },
+      { "name": "The Three-Equal-Themes Rule", "body": "Light, sepia, and night are equal citizens. Any new surface must be designed and contrast-checked in all three before it ships.", "section": "colors" },
+      { "name": "The No-Display-Face Rule", "body": "UI labels, buttons, and data never use a display or decorative font. Hierarchy comes from weight and size on one sans.", "section": "typography" },
+      { "name": "The Reader-Only Serif Rule", "body": "Georgia and the mono stack appear only in the article reading pane as a user preference; never in chrome.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadow is reserved for the two objects that float over content (triage card, undo toast) and hairline pressable affordances.", "section": "elevation" },
+      { "name": "The One Selection Vocabulary Rule", "body": "Selected/active looks the same everywhere — accent fill, white text — so the eye learns it once.", "section": "components" }
+    ],
+    "dos": [
+      "Do keep Signal Blue (#0080d4) for state only, and reach for Signal Blue Deep (#0067ab) whenever white text sits on the accent.",
+      "Do design and contrast-check every new surface in light, sepia, AND night before shipping; AA (4.5:1 body) is the floor.",
+      "Do keep chrome to the 2rem toolbar band (3rem mobile) and a single 1px divider.",
+      "Do give every interactive element a full keyboard path and a visible :focus-visible ring.",
+      "Do provide a prefers-reduced-motion alternative for every animation.",
+      "Do keep one type family in chrome; build hierarchy from weight and size.",
+      "Do keep touch targets >=44px on mobile."
+    ],
+    "donts": [
+      "Don't add promoted content, discover rails, engagement nudges, or celebratory confetti/emoji. yarr is not Feedly.",
+      "Don't drift the themes toward the AI-cream aesthetic — no warm-neutral paper backgrounds, no tracked-uppercase eyebrows, no identical icon-heading-text card grids.",
+      "Don't introduce a second accent or use the accent decoratively.",
+      "Don't use a display or decorative font anywhere in the UI; serif/mono live only inside the reader pane.",
+      "Don't add drop shadows for looks. Flat by default; only the triage card and undo toast float.",
+      "Don't use border-left/border-right greater than 1px as a colored accent stripe.",
+      "Don't ship a surface that's legible in light but muddy in sepia or night."
+    ]
+  }
+}

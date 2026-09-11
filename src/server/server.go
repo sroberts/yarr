@@ -26,7 +26,7 @@ type Server struct {
 
 	BasePath string
 
-	// Version is yarr's release, reported in the MCP handshake.
+	// build
 	Version string
 
 	// StopCtx, when set, is the stop signal Start watches instead of trapping

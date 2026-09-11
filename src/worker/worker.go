@@ -28,7 +28,9 @@ func NewWorker(db *storage.Storage) *Worker {
 }
 
 func (w *Worker) FeedsPending() int32 {
-	return *w.pending
+	// atomic load: the refresher mutates this concurrently and the HTTP
+	// status handler polls it during a refresh.
+	return atomic.LoadInt32(w.pending)
 }
 
 func (w *Worker) StartFeedCleaner() {

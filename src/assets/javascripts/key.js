@@ -20,6 +20,11 @@ var shortcutFunctions = {
       window.open(vm.itemSelectedDetails.link, '_blank', 'noopener,noreferrer')
     }
   },
+  copyItemLink: function() {
+    if (vm.itemSelectedDetails && vm.itemSelectedDetails.link) {
+      vm.copyItemLink(vm.itemSelectedDetails)
+    }
+  },
   toggleReadability: function() {
     vm.toggleReadability()
   },
@@ -43,6 +48,9 @@ var shortcutFunctions = {
     if (vm.itemSelected != null) {
       vm.saveToInstapaper(vm.itemSelectedDetails)
     }
+  },
+  toggleListen: function() {
+    vm.toggleListen()
   },
   focusSearch: function() {
     document.getElementById("searchbar").focus()
@@ -77,16 +85,21 @@ var shortcutFunctions = {
   showStarred() {
     vm.filterSelected = 'starred'
   },
+  showShortcuts: function() {
+    vm.showSettings('shortcuts')
+  },
 }
 
 // If you edit, make sure you update the help modal
 var keybindings = {
   "o": shortcutFunctions.openItemLink,
+  "c": shortcutFunctions.copyItemLink,
   "i": shortcutFunctions.toggleReadability,
   "r": shortcutFunctions.toggleItemRead,
   "R": shortcutFunctions.markAllRead,
   "s": shortcutFunctions.toggleItemStarred,
   "I": shortcutFunctions.saveToInstapaper,
+  "p": shortcutFunctions.toggleListen,
   "/": shortcutFunctions.focusSearch,
   "j": shortcutFunctions.nextItem,
   "k": shortcutFunctions.previousItem,
@@ -98,14 +111,17 @@ var keybindings = {
   "1": shortcutFunctions.showUnread,
   "2": shortcutFunctions.showStarred,
   "3": shortcutFunctions.showAll,
+  "?": shortcutFunctions.showShortcuts,
 }
 
 var codebindings = {
   "KeyO": shortcutFunctions.openItemLink,
+  "KeyC": shortcutFunctions.copyItemLink,
   "KeyI": shortcutFunctions.toggleReadability,
   //"r": shortcutFunctions.toggleItemRead,
   //"KeyR": shortcutFunctions.markAllRead,
   "KeyS": shortcutFunctions.toggleItemStarred,
+  "KeyP": shortcutFunctions.toggleListen,
   "Slash": shortcutFunctions.focusSearch,
   "KeyJ": shortcutFunctions.nextItem,
   "KeyK": shortcutFunctions.previousItem,
@@ -119,14 +135,30 @@ var codebindings = {
   "Digit3": shortcutFunctions.showAll,
 }
 
+// Card triage mode runs its own keyboard map: the swipe loop, by keyboard.
+// Mirrors the touch gestures in swipe.js (left = instapaper/keep, right = read).
+var triageBindings = {
+  "ArrowRight": function() { vm.cardSwipeRight() },
+  "ArrowLeft":  function() { vm.cardSwipeLeft() },
+  "Enter":      function() { vm.cardTap() },
+  "p":          function() { vm.toggleListen() },
+  "u":          function() { vm.undoCardAction() },
+  "Escape":     function() { vm.exitCardMode() },
+}
+
 function isTextBox(element) {
   var tagName = element.tagName.toLowerCase()
-  // Input elements that aren't text
-  var inputBlocklist = ['button','checkbox','color','file','hidden','image','radio','range','reset','search','submit']
+  // Input elements that aren't text. `search` is deliberately NOT here: the
+  // article search field is type="search", and listing it let every letter
+  // shortcut fire mid-query while preventDefault() ate the character — typing
+  // "crypto code" left "yt de" behind, plus a stray copy and a talking article.
+  var inputBlocklist = ['button','checkbox','color','file','hidden','image','radio','range','reset','submit']
+  // An input with no type attribute reports null here; treat it as 'text'.
+  var inputType = (element.getAttribute('type') || 'text').toLowerCase()
 
   return tagName === 'textarea' ||
     ( tagName === 'input'
-      && inputBlocklist.indexOf(element.getAttribute('type').toLowerCase()) == -1
+      && inputBlocklist.indexOf(inputType) == -1
     )
 }
 
@@ -134,6 +166,15 @@ document.addEventListener('keydown',function(event) {
   // Ignore while focused on text or
   // when using modifier keys (to not clash with browser behaviour)
   if (isTextBox(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
+    return
+  }
+  // In triage card mode the list/reader shortcuts don't apply; use the card map.
+  if (vm.cardMode) {
+    var triageFunction = triageBindings[event.key]
+    if (triageFunction) {
+      event.preventDefault()
+      triageFunction()
+    }
     return
   }
   var keybindFunction = keybindings[event.key] || codebindings[event.code]

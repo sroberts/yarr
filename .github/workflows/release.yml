@@ -1,0 +1,125 @@
+name: Release
+
+# Cut a tagged release from environments that cannot push tag refs
+# directly (e.g. Claude Code web sessions, whose git proxy only accepts
+# branch pushes). Reads the version from the makefile, creates the
+# matching vX.Ys tag on the released commit, and dispatches the build and
+# docker workflows against that tag — reproducing exactly what a manual
+# tag push does.
+#
+# Triggers:
+#   * automatically on every push to `master` — the run is idempotent, so
+#     ordinary merges (where VERSION is unchanged and vX.Ys already exists)
+#     skip, and a release is cut only when a `release: bump VERSION` commit
+#     lands. This is the primary path: bump VERSION in a PR, merge, ship.
+#   * push the `release` branch, to force a (re-)release from a web session
+#   * Actions tab → Release → Run workflow (workflow_dispatch)
+#
+# Mechanism note: a tag pushed with GITHUB_TOKEN does not auto-trigger the
+# `on: push: tags` workflows (GitHub's anti-recursion rule), so this job
+# dispatches them explicitly. workflow_dispatch is an explicit exception to
+# that rule and is allowed with GITHUB_TOKEN.
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - release
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  tag-and-build:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Derive version and tag
+        id: ver
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^VERSION=//p' makefile | head -n1)"
+          if [ -z "$version" ]; then
+            echo "::error::could not read VERSION from makefile"; exit 1
+          fi
+          tag="v${version}s"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Release tag: $tag"
+
+      - name: Check whether the tag exists
+        id: tagcheck
+        run: |
+          set -euo pipefail
+          tag="${{ steps.ver.outputs.tag }}"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.tagcheck.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          tag="${{ steps.ver.outputs.tag }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "$tag"
+          git push origin "refs/tags/$tag"
+
+      - name: Dispatch build and docker workflows on the tag
+        if: steps.tagcheck.outputs.exists == 'false'
+        run: |
+          set -euo pipefail
+          tag="${{ steps.ver.outputs.tag }}"
+          for wf in build.yml build-docker.yml build-docker-once.yml; do
+            echo "Dispatching $wf on $tag"
+            gh workflow run "$wf" --ref "$tag"
+          done
+
+      # The GitHub Release is created here, independent of build.yml — whose
+      # macOS/Windows binary jobs can stall in the runner queue and would
+      # otherwise leave a tagged version with no release. This also backfills:
+      # if the tag exists but its release is missing, it gets created now.
+      - name: Create GitHub Release if missing
+        id: release
+        run: |
+          set -euo pipefail
+          tag="${{ steps.ver.outputs.tag }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "::notice::release $tag already exists"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+          else
+            gh release create "$tag" --title "$tag" --generate-notes --verify-tag
+            echo "::notice::created release $tag"
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Summary
+        run: |
+          {
+            echo "## Release ${{ steps.ver.outputs.tag }}"
+            echo
+            if [ "${{ steps.tagcheck.outputs.exists }}" = "false" ]; then
+              echo "- Tag created and build/docker workflows dispatched."
+            else
+              echo "- Tag already existed; no new build dispatched."
+            fi
+            if [ "${{ steps.release.outputs.created }}" = "true" ]; then
+              echo "- GitHub Release created with generated notes."
+            else
+              echo "- GitHub Release already present."
+            fi
+            echo
+            echo "Binaries (when the build job completes) attach to this release; Docker images publish to \`ghcr.io/sroberts/yarr\`."
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -17,7 +17,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '^1.23'
+        go-version: '1.23'
 
     - name: Lint
       uses: golangci/golangci-lint-action@v6
@@ -33,7 +33,7 @@ jobs:
     - name: Coverage gate
       run: |
         # Coverage threshold (percent). PRs that drop below this fail CI.
-        THRESHOLD=20
+        THRESHOLD=40
         COVERAGE=$(go tool cover -func=coverage.out | awk '/^total:/ {gsub("%","",$3); print $3}')
         echo "Coverage: ${COVERAGE}% (threshold ${THRESHOLD}%)"
         awk -v c="$COVERAGE" -v t="$THRESHOLD" \
@@ -48,4 +48,6 @@ jobs:
         path: coverage.out
 
     - name: Build binary
-      run: make host
+      run: |
+        go build -tags "sqlite_foreign_keys sqlite_json" \
+          -o out/yarr ./cmd/yarr

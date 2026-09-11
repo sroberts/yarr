@@ -6,8 +6,124 @@ html {
   font-size: 15px !important;
 }
 
+/* ============================================================
+   Design tokens — one semantic layer, two co-equal themes.
+   Components reference ROLES only (--surface-*, --text-*, --accent…),
+   never raw colors. Accent is a separate, theme-independent axis
+   selected via [data-accent] on <body>. (UI Design Spec v1.0 §3.)
+   ============================================================ */
+
+/* Self-hosted variable fonts (SIL OFL — see fonts/LICENSE-*). */
+@font-face {
+  font-family: 'InterVar';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/inter.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Source Serif 4 Var';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../fonts/source-serif-4.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono Var';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('../fonts/jetbrains-mono.woff2') format('woff2');
+}
+
+:root {
+  --font-sans: 'InterVar', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: 'Source Serif 4 Var', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono Var', SFMono-Regular, Menlo, Consolas, monospace;
+
+  --radius: 6px;
+
+  /* reading view (article pane) */
+  --article-h1-leading: 1.2;
+  --article-body-leading: 1.6;
+
+  /* the single fixed brand action color (Instapaper), both themes */
+  --instapaper: #FF6600;
+
+  /* blue fallback if [data-accent] is somehow absent */
+  --accent: #2563EB;
+  --on-accent: #FFFFFF;
+}
+
+.theme-light {
+  color-scheme: light;
+  --surface-base: #FFFFFF;
+  --surface-raised: #F7F8FA;
+  --surface-hover: #EEF1F5;
+  --border-subtle: #E2E6EC;
+  --border-strong: #C7CDD6;
+  --text-primary: #16191D;   /* ~15.8:1 on base — AAA */
+  --text-secondary: #4A515B; /* ~8.3:1 — AAA */
+  --text-tertiary: #666D79;  /* 5.2:1 base, 4.6:1 on hover surface — AA */
+  --status-success: #15803D;
+  --status-attention: #B45309;
+  --status-error: #DC2626;
+  --scrollbar-thumb: #C7CDD6;
+  --scrollbar-thumb-hover: #A9B1BC;
+}
+
+.theme-dark {
+  color-scheme: dark;
+  --surface-base: #0E1116;
+  --surface-raised: #161B22;
+  --surface-hover: #1F2630;
+  --border-subtle: #262D38;
+  --border-strong: #38414F;
+  --text-primary: #E6EAF0;   /* ~13.5:1 on base — AAA */
+  --text-secondary: #A4ADBA; /* ~7.4:1 — AAA */
+  --text-tertiary: #868FA0;  /* 5.8:1 base, 5.3:1 raised, 4.7:1 hover — AA */
+  --status-success: #4ADE80;
+  --status-attention: #FBBF24;
+  --status-error: #F87171;
+  --scrollbar-thumb: #38414F;
+  --scrollbar-thumb-hover: #4F5A6B;
+  /* accent fallback for dark when no [data-accent] is present */
+  --accent: #5B8DEF;
+  --on-accent: #0E1116;
+}
+
+/* Selectable accent (Spec §3.5). Each option: a light value + a dark
+   override; --on-accent flips (deep light accents take white, bright dark
+   accents take near-black). Every pair clears contrast in both themes. */
+[data-accent="blue"]               { --accent: #2563EB; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="blue"]    { --accent: #5B8DEF; --on-accent: #0E1116; }
+[data-accent="teal"]               { --accent: #0F766E; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="teal"]    { --accent: #2DD4BF; --on-accent: #0E1116; }
+[data-accent="green"]              { --accent: #15803D; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="green"]   { --accent: #4ADE80; --on-accent: #0E1116; }
+[data-accent="violet"]             { --accent: #7C3AED; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="violet"]  { --accent: #A78BFA; --on-accent: #0E1116; }
+[data-accent="rose"]               { --accent: #BE123C; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="rose"]    { --accent: #FB7185; --on-accent: #0E1116; }
+[data-accent="amber"]              { --accent: #B45309; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="amber"]   { --accent: #FBBF24; --on-accent: #0E1116; }
+[data-accent="slate"]              { --accent: #475569; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="slate"]   { --accent: #94A3B8; --on-accent: #0E1116; }
+
+/* Accent derivations — identical formula in both themes, but they MUST be
+   declared here rather than on :root. A custom property substitutes at the
+   element that declares it, so --focus-ring: var(--accent) written on :root
+   locks in :root's blue fallback and inherits that fixed blue downward; the
+   [data-accent] overrides land on <body> and never reach it. Declared on body,
+   they resolve against the accent that's actually selected. */
 body {
+  --accent-hover: color-mix(in oklab, var(--accent) 82%, var(--text-primary));
+  --focus-ring: var(--accent);
+
   overscroll-behavior: none;
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
 }
 
 /* PWA standalone: safe area insets for notched devices */
@@ -57,8 +173,11 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .settings-dropdown .dropdown-toggle {
-  padding-left: 0;
-  padding-right: 0;
+  /* Match .toolbar-item's horizontal padding so dropdown toggles are the same
+     width as sibling icon buttons (the markup already asks for px-2). Zeroing
+     it here made the Appearance gear narrower than its neighbours (uneven). */
+  padding-left: .5rem;
+  padding-right: .5rem;
 }
 
 .settings-dropdown .dropdown-menu {
@@ -118,11 +237,11 @@ select.form-control:not([multiple]):not([size]) {
 /* custom elements */
 
 .font-serif {
-  font-family: Georgia, serif;
+  font-family: var(--font-serif);
 }
 
 .font-monospace {
-  font-family: SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-mono);
 }
 
 .icon {
@@ -158,7 +277,10 @@ select.form-control:not([multiple]):not([size]) {
 
 .counter {
   padding-left: .5rem;
-  opacity: .6;
+  /* De-emphasise unread counts with a real token (AAA on every surface)
+     rather than opacity — .6 opacity on a selected row's on-accent text
+     dropped below AA in every accent. */
+  color: var(--text-secondary);
 }
 
 .light {
@@ -201,11 +323,19 @@ select.form-control:not([multiple]):not([size]) {
   cursor: pointer;
 }
 
-.toolbar-item:hover,
-.toolbar-search:hover,
-.selectgroup-label:hover,
-.dropdown-item:hover {
-  background-color: #f0f0f0;
+.toolbar-search:focus {
+  background-color: var(--surface-hover);
+}
+
+/* Hover feedback only on real pointers — avoids sticky-hover on touch,
+   where a tapped row/button would keep the highlight until the next tap. */
+@media (hover: hover) {
+  .toolbar-item:hover,
+  .toolbar-search:hover,
+  .selectgroup-label:hover,
+  .dropdown-item:hover {
+    background-color: var(--surface-hover);
+  }
 }
 
 .expanded {
@@ -231,7 +361,7 @@ select.form-control:not([multiple]):not([size]) {
 
 .loading::after {
   animation: rotate .5s infinite linear;
-  border: .1rem solid #6c757d;
+  border: .1rem solid var(--text-tertiary);
   border-radius: 50%;
   border-right-color: transparent;
   border-top-color: transparent;
@@ -253,40 +383,31 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .btn-default {
-  border: 1px solid #ced4da;
-  border-radius: .25rem;
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .btn-default:active {
-  background: #f5f7f9;
+  background: var(--surface-hover);
   box-shadow: none;
 }
 
 .btn-outline {
-  border: 1px solid #ced4da;
-  border-radius: .25rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
 }
 
 .btn-outline:hover {
-  background-color: #f8f9fa;
+  background-color: var(--surface-hover);
 }
 
 /* column dividers: border starts below the toolbar, not at window top */
 #col-feed-list,
 #col-item-list {
-  border-right: 1px solid;
-  border-image: linear-gradient(to bottom, transparent 2rem, #dee2e6 2rem) 1;
-}
-
-.theme-sepia #col-feed-list,
-.theme-sepia #col-item-list {
-  border-image: linear-gradient(to bottom, transparent 2rem, #e0d6ba 2rem) 1;
-}
-
-.theme-night #col-feed-list,
-.theme-night #col-item-list {
-  border-image: linear-gradient(to bottom, transparent 2rem, #1a1a1a 2rem) 1;
+  border-right: 1px solid var(--border-subtle);
 }
 
 .toolbar {
@@ -294,8 +415,16 @@ select.form-control:not([multiple]):not([size]) {
   max-height: 2rem !important;
 }
 
+/* Empty reading-pane header: continues the top-bar divider across the pane
+   when no article is open, so the rule spans the full width. */
+.reader-blank-toolbar {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
 .toolbar-item {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background-color: transparent;
   text-decoration: none;
   user-select: none;
@@ -317,9 +446,21 @@ select.form-control:not([multiple]):not([size]) {
   outline: none;
 }
 
-.toolbar-item:disabled {
-  opacity: 0.4;
+/* Disabled controls: opacity .4 composited to 2.5:1 in light and 3.4:1 in dark
+   — below the 3:1 non-text floor on one side and visibly unequal across the
+   two themes. A tertiary-text color plus a lighter dim reads as "off" in both
+   and clears the floor in both. */
+.toolbar-item:disabled,
+/* anchors can't carry :disabled — the class is how a link-shaped control
+   (Open Link with nothing to open) says the same thing */
+.toolbar-item.disabled {
+  color: var(--text-secondary);
+  opacity: 0.7;
   cursor: not-allowed;
+}
+
+.toolbar-item.disabled {
+  pointer-events: none;
 }
 
 .cursor-pointer {
@@ -367,7 +508,6 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .toolbar-search:hover, .toolbar-search:focus {
-  background-color: #f3f3f3;
   outline: none;
 }
 
@@ -383,17 +523,123 @@ select.form-control:not([multiple]):not([size]) {
   display: block !important;
 }
 
+/* Command palette (Cmd/Ctrl+K) — Spotlight-style overlay reusing the modal
+   backdrop; quiet chrome, accent only on the selected row. */
+.command-palette-dialog {
+  margin: 12vh auto 2rem;
+  width: min(560px, 92vw);
+  max-height: 66vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.command-palette-input {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: transparent;
+  color: var(--text-primary);
+  font-size: 1rem;
+  padding: 0.8rem 1rem;
+  outline: none;
+}
+
+.command-palette-input::placeholder { color: var(--text-tertiary); }
+
+.command-palette-results {
+  overflow-y: auto;
+  padding: 0.25rem 0;
+}
+
+.command-palette-group {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-tertiary);
+  padding: 0.5rem 1rem 0.2rem;
+}
+
+.command-palette-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  min-height: 40px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.command-palette-row.selected {
+  background-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.command-palette-row .cmd-label {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-palette-row .cmd-hint {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  color: var(--text-tertiary);
+}
+
+.command-palette-row.selected .cmd-hint {
+  color: var(--on-accent);
+  border-color: var(--on-accent);
+}
+
+.command-palette-empty {
+  padding: 1rem;
+  color: var(--text-tertiary);
+}
+
+/* Smart Filters rule list (Settings > Filters) */
+.filter-row {
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.filter-row:last-of-type { border-bottom: 0; }
+
 /* content */
 
+/* Reading view: comfort-optimized. The article font-size is driven by the
+   user's size control (inline rem on .content); headings use em so they scale
+   with it. Measure is capped to a comfortable line length regardless of width. */
 .content {
   overflow-wrap: break-word;
-  line-height: 1.5;
+  line-height: var(--article-body-leading);
 }
 
+/* The Measure Rule targets ~70 characters per line. `ch` can't deliver that:
+   it's the advance of "0" in whatever font is active, and the reader ships
+   three. 70ch rendered ~77 characters in Inter; 56ch fixed Inter but left
+   Source Serif at 56 and JetBrains Mono at 54, and switching reading font
+   reflowed the column by 100px. So the measure is `em` — which tracks the
+   reading size, not glyph metrics — with a per-font value measured against
+   real prose until each lands at ~70 characters per line. */
 .content-wrapper {
-  max-width: 60rem;
+  max-width: var(--measure, 35em);
   margin: 0 auto;
 }
+
+/* Measured at 18px: Inter and Source Serif 4 both land at ~71 characters on
+   35em; JetBrains Mono's fixed advance needs 44em to reach the same count. */
+.content.font-monospace { --measure: 44em; }
 
 .content img, .content video {
   max-width: 100%;
@@ -427,14 +673,49 @@ select.form-control:not([multiple]):not([size]) {
   height: 100%;
 }
 
+/* Code blocks routinely run wider than the measure — a Go snippet measured
+   1506px inside a 648px column, 58% of it clipped with nothing to say so.
+   The surface step makes the block legible AS a block (a border alone is
+   invisible in dark), and a persistent scrollbar admits there's more to the
+   right on platforms that hide overlay scrollbars. Keyboard reach is granted
+   in app.js, which gives every rendered <pre> a tabindex. */
 .content pre {
   overflow-x: auto;
   color: inherit;
-  border: 1px solid #dee2e6;
-  border-radius: 3px;
+  font-family: var(--font-mono);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
   margin-left: -0.5rem;
   margin-right: -0.5rem;
   padding: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* Right-edge fade on blocks that actually overflow (class set in app.js),
+   removed once scrolled to the end. The mask covers the whole element, so the
+   block's border softens at that edge too — which reads as "this continues"
+   rather than as a broken frame. */
+.content pre.pre-overflow {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent 100%);
+  transition: -webkit-mask-image .12s ease, mask-image .12s ease;
+}
+
+.content pre.pre-overflow.pre-at-end {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.content pre::-webkit-scrollbar {
+  height: 8px;
+  -webkit-appearance: none;
+}
+
+.content pre::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border-radius: 4px;
 }
 
 .content a {
@@ -443,23 +724,26 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .content blockquote {
-  border-left: 3px solid #22262a;
+  border-left: 3px solid var(--border-strong);
   padding-left: 1rem;
+  color: var(--text-secondary);
 }
 
+/* em-relative so headings scale with the reading size control */
 .content h1 {
-  font-size: 1.8rem;
+  font-size: 1.6em;
+  line-height: var(--article-h1-leading);
 }
 .content h2 {
-  font-size: 1.5rem;
+  font-size: 1.4em;
 }
 .content h3 {
-  font-size: 1.17rem;
+  font-size: 1.2em;
 }
 .content h4,
 .content h5,
 .content h6 {
-  font-size: 1rem;
+  font-size: 1em;
 }
 
 .content p {
@@ -467,94 +751,97 @@ select.form-control:not([multiple]):not([size]) {
   margin-bottom: 1rem;
 }
 
-/* theme: light */
+/* ── Surfaces & components (token-driven, theme-agnostic) ──────── */
 
-button.theme-light {
-  background-color: #fff !important;
+/* raised surfaces: menus and modals sit a step above the page */
+.dropdown-menu,
+.modal-content {
+  background-color: var(--surface-raised);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
 }
 
+/* inputs and search field sit on the base surface */
+.form-control,
+.toolbar-search {
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+}
+
+/* night-mode dropdown items inherit the menu surface explicitly so the
+   bootstrap default light text/background never leaks through */
+.dropdown-item {
+  color: var(--text-primary);
+}
+
+/* Destructive / muted menu items keep their semantic color despite the
+   .dropdown-item base color above. Declared before the accent-fill :active rule
+   below so a pressed item still flips to --on-accent. */
+.dropdown-item.text-danger {
+  color: var(--status-error);
+}
+.dropdown-item.text-muted {
+  color: var(--text-secondary);
+}
+
+/* links + the accent-filled selected/active states */
 a,
 .btn-link:hover {
-  color: #0080d4;
+  color: var(--accent);
 }
 
 .toolbar-item.active,
 .dropdown-item.active,
 .dropdown-item:active,
 .selectgroup input:checked + .selectgroup-label {
-  color: #fff;
-  background-color: #0080d4 !important;
+  color: var(--on-accent);
+  background-color: var(--accent) !important;
+}
+
+/* On a selected row the counter must ride the accent, not the muted token. */
+.selectgroup input:checked + .selectgroup-label .counter {
+  color: var(--on-accent);
 }
 
 .btn-default:focus,
 .form-control:focus {
-  border-color: #0080d4;
+  border-color: var(--accent);
 }
 
-/* theme: sepia */
-
-.theme-sepia,
-.theme-sepia .btn-default,
-.theme-sepia .dropdown-menu,
-.theme-sepia .form-control,
-.theme-sepia .modal-content,
-.theme-sepia .toolbar-search {
-  background-color: #f4f0e5 !important;
-}
-.theme-sepia .content hr,
-.theme-sepia .content pre,
-.theme-sepia .border-right,
-.theme-sepia .border-top {
-  border-color: #e0d6ba !important;
-}
-.theme-sepia .selectgroup-label:hover,
-.theme-sepia .toolbar-item:hover,
-.theme-sepia .toolbar-search:hover,
-.theme-sepia .dropdown-item:hover,
-.theme-sepia .toolbar-search:focus {
-  background-color: #e0d6ba;
+/* hairline borders */
+.content hr,
+.border-right,
+.border-top,
+.dropdown-divider {
+  border-color: var(--border-subtle) !important;
 }
 
-/* theme: night */
-
-.theme-night,
-.theme-night .btn-default,
-.theme-night .dropdown-menu,
-.theme-night .dropdown-item,
-.theme-night .form-control,
-.theme-night .modal-content,
-.theme-night .toolbar-search {
-  color: #d1d1d1;
-  background-color: #0e0e0e;
-}
-.theme-night .content hr,
-.theme-night .content pre,
-.theme-night .border-right,
-.theme-night .border-top,
-.theme-night .dropdown-divider {
-  border-color: #1a1a1a !important;
-}
-.theme-night .selectgroup-label:hover,
-.theme-night .dropdown-item:hover,
-.theme-night .toolbar-item:hover,
-.theme-night .toolbar-search:hover,
-.theme-night .toolbar-search:focus {
-  background-color: #1a1a1a;
+/* scrollbars: quiet, terminal-style, driven by a muted per-theme token —
+   never the accent — so the chrome stays out of the way. color-scheme keeps
+   native UI in step; scrollbar-color/-width drive Firefox + Chromium, the
+   ::-webkit-* rules cover Safari. */
+.theme-light,
+.theme-dark {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-.theme-night .dropdown-menu,
-.theme-night .modal-content {
-  border-color: #1a1a1a;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
-
-.theme-night .offline-banner {
-  background-color: #c0392b;
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
-
-.theme-night .pull-to-refresh-spinner {
-  border-color: #555;
-  border-top-color: transparent;
-  border-right-color: transparent;
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
 }
 
 /* offline banner */
@@ -564,7 +851,7 @@ a,
   left: 0;
   right: 0;
   z-index: 1000;
-  background-color: #e74c3c;
+  background-color: #C2362C;  /* fixed deep red, white text clears AA in both themes */
   color: #fff;
   text-align: center;
   padding: .375rem;
@@ -601,7 +888,7 @@ a,
 .pull-to-refresh-spinner {
   width: 1.25rem;
   height: 1.25rem;
-  border: .15rem solid #6c757d;
+  border: .15rem solid var(--text-tertiary);
   border-radius: 50%;
   border-top-color: transparent;
   border-right-color: transparent;
@@ -615,7 +902,7 @@ a,
 .indicator-enter-active, .indicator-leave-active {
   transition: all .3s;
 }
-.indicator-enter, .indicator-leave-to {
+.indicator-enter-from, .indicator-leave-to {
   width: 0;
   opacity: 0;
   margin: 0 !important;
@@ -728,15 +1015,7 @@ a,
   }
   #col-feed-list,
   #col-item-list {
-    border-image: linear-gradient(to bottom, transparent 3rem, #dee2e6 3rem) 1;
-  }
-  .theme-sepia #col-feed-list,
-  .theme-sepia #col-item-list {
-    border-image: linear-gradient(to bottom, transparent 3rem, #e0d6ba 3rem) 1;
-  }
-  .theme-night #col-feed-list,
-  .theme-night #col-item-list {
-    border-image: linear-gradient(to bottom, transparent 3rem, #1a1a1a 3rem) 1;
+    border-image: linear-gradient(to bottom, transparent 3rem, var(--border-subtle) 3rem) 1;
   }
   .toolbar-item,
   .toolbar-search {
@@ -744,10 +1023,11 @@ a,
     min-height: 44px;
     min-width: 44px;
   }
+  /* Touch height only — the labels set their own flex direction/alignment.
+     Forcing align-items:center here horizontally-centered the flex-column
+     item rows (broken on tablet/mobile). */
   .selectgroup-label {
     min-height: 44px;
-    display: flex;
-    align-items: center;
   }
   .dropdown-item {
     min-height: 44px;
@@ -756,35 +1036,38 @@ a,
   }
 }
 
+/* Phones: nine reader actions (back, star, read, appearance, read-here,
+   listen, save, copy link, open) at 44px wide need 412px plus the toolbar's
+   own padding, so anything narrower than a Pro Max would clip controls
+   off-screen (#123). Pack them horizontally instead — the 44px touch height
+   set above stays, only the width compresses. */
+@media (max-width: 430px) {
+  #col-item .toolbar-item {
+    min-width: 36px;
+    padding-left: .3rem;
+    padding-right: .3rem;
+  }
+}
+
+/* Smallest phones (~320px) can't afford even 36px nine times over — measured,
+   the row runs 15px past the edge — so give back another 4px each. The 1rem
+   icon still clears its padding, and the touch height is untouched. */
+@media (max-width: 340px) {
+  #col-item .toolbar-item {
+    min-width: 32px;
+    padding-left: .2rem;
+    padding-right: .2rem;
+  }
+}
+
 /* ── Card triage mode ────────────────────────── */
 
 
 #card-view {
-  background: var(--card-bg, #fff);
+  background: var(--surface-base);
   overflow: hidden;
   min-height: 0;
 }
-
-.theme-night #card-view {
-  --card-bg: #0e0e0e;
-  --card-surface: #1a1a2e;
-  --card-text: #e0e0e0;
-  --card-muted: #888;
-}
-.theme-sepia #card-view {
-  --card-bg: #f4f0e5;
-  --card-surface: #ede8d8;
-  --card-text: #433422;
-  --card-muted: #8a7a66;
-}
-
-.theme-light #card-view {
-  --card-bg: #f5f5f5;
-  --card-surface: #fff;
-  --card-text: #222;
-  --card-muted: #888;
-}
-
 
 .card-view-area {
   padding: 1.25rem;
@@ -797,8 +1080,14 @@ a,
 .triage-card {
   width: 100%;
   max-width: 400px;
-  background: var(--card-surface, #fff);
-  color: var(--card-text, #222);
+  /* never exceed the swipe area: the excerpt scrolls inside, the footer
+     stays pinned, and the bottom rounded corners are never clipped */
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
   border-radius: 16px;
   padding: 1.5rem;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
@@ -814,13 +1103,23 @@ a,
   justify-content: space-between;
   align-items: center;
   font-size: 0.8rem;
-  color: var(--card-muted, #888);
+  color: var(--text-tertiary);
   margin-bottom: 0.75rem;
 }
 
 .triage-card-date {
   flex-shrink: 0;
   margin-left: 0.5rem;
+}
+
+.triage-card-domain {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-top: -0.5rem;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .triage-card-title {
@@ -833,10 +1132,12 @@ a,
 .triage-card-excerpt {
   font-size: 0.9rem;
   line-height: 1.6;
-  color: var(--card-muted, #888);
-}
-
-.triage-card-excerpt {
+  color: var(--text-secondary);
+  /* the one growable region: takes the slack and scrolls when content is
+     long, so the card itself stays within bounds (min-height:0 lets it
+     shrink below content size inside the flex column) */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -848,7 +1149,8 @@ a,
   padding-top: 0.5rem;
   border-top: 1px solid rgba(128,128,128,0.1);
   font-size: 0.75rem;
-  opacity: 0.35;
+  /* Muted but legible — 0.35 opacity was well below AA (detector-flagged). */
+  color: var(--text-tertiary);
 }
 
 .card-view-action {
@@ -875,11 +1177,12 @@ a,
 }
 
 .card-action-pill.action-instapaper {
-  background: #ff6600;
+  background: var(--instapaper);
 }
 
 .card-action-pill.action-read {
-  background: #0080d4;
+  background: var(--accent);
+  color: var(--on-accent);
 }
 
 .card-view-hints {
@@ -911,11 +1214,11 @@ a,
 }
 
 .card-stat-read {
-  color: #0080d4;
+  color: var(--accent);
 }
 
 .card-stat-instapaper {
-  color: #ff6600;
+  color: var(--instapaper);
 }
 
 .triage-card.swiping {
@@ -940,3 +1243,415 @@ a,
     display: inline-block !important;
   }
 }
+
+/* swipe undo toast (thumb zone) */
+.card-undo-toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100% - 2rem);
+  padding: 0 0.25rem 0 1rem;
+  border-radius: 1.5rem;
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.card-undo-label {
+  white-space: nowrap;
+}
+
+.card-undo-btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1rem;
+  border: none;
+  border-radius: 1.25rem;
+  background: transparent;
+  /* the toast is always dark; lighten the chosen accent for legibility on it */
+  color: color-mix(in oklab, var(--accent), white 35%);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.undo-enter-active, .undo-leave-active {
+  transition: opacity .2s ease;
+}
+.undo-enter-from, .undo-leave-to {
+  opacity: 0;
+}
+
+/* ── Keyboard focus ──────────────────────────────
+   The accent doubles as the focus ring in both themes; pointer
+   interactions stay quiet, only keyboard/AT focus surfaces a ring. */
+.toolbar-item:focus-visible,
+.toolbar-search:focus-visible,
+.btn:focus-visible,
+.btn-link:focus-visible,
+a:focus-visible,
+.card-folder-select:focus-visible,
+.card-undo-btn:focus-visible,
+.search-clear:focus-visible,
+.form-control:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* inset rings inside clipped/scrolling containers so they aren't cropped */
+.content:focus-visible,
+.content pre:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.settings-dropdown .dropdown-item:focus-visible,
+.dropdown-item:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.selectgroup input:focus-visible + .selectgroup-label {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+/* Respect reduced-motion: collapse all motion to effectively instant.
+   Honors the OS preference AND the in-app toggle (body[data-motion="reduce"]),
+   so users can force it on regardless of system setting (Spec §1.4, §7). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+body[data-motion="reduce"] *,
+body[data-motion="reduce"] *::before,
+body[data-motion="reduce"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ── Compact density ──────────────────────────────
+   Tighten the feed/item rows on fine pointers only; coarse-pointer (touch)
+   keeps the 44px targets enforced in the responsive block (Spec §2, §9). */
+@media (pointer: fine) {
+  body[data-density="compact"] .selectgroup-label {
+    padding-top: .15rem;
+    padding-bottom: .15rem;
+  }
+  body[data-density="compact"] #item-list-scroll .selectgroup-label {
+    line-height: 1.25;
+  }
+  body[data-density="compact"] .settings-dropdown .dropdown-item,
+  body[data-density="compact"] .settings-dropdown .dropdown-header {
+    padding-top: .2rem;
+    padding-bottom: .2rem;
+  }
+}
+
+/* ── Settings: accent picker & segmented toggles ───────
+   The accent picker is the one place chroma appears in the chrome on
+   purpose; swatches preview each option's light value. */
+.accent-swatches {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  padding: .25rem 1rem .5rem;
+}
+
+.accent-swatch {
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--swatch);
+}
+
+.accent-swatch[aria-pressed="true"] {
+  border-color: var(--text-primary);
+}
+
+.accent-swatch:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Swatch preview colors mirror the [data-accent] --accent values above so the
+   dot matches the color selecting it paints. Each has a dark override, since
+   the applied accent shifts in dark mode (e.g. amber #B45309 → #FBBF24). */
+.swatch-blue   { --swatch: #2563EB; }
+.swatch-teal   { --swatch: #0F766E; }
+.swatch-green  { --swatch: #15803D; }
+.swatch-violet { --swatch: #7C3AED; }
+.swatch-rose   { --swatch: #BE123C; }
+.swatch-amber  { --swatch: #B45309; }
+.swatch-slate  { --swatch: #475569; }
+.theme-dark .swatch-blue   { --swatch: #5B8DEF; }
+.theme-dark .swatch-teal   { --swatch: #2DD4BF; }
+.theme-dark .swatch-green  { --swatch: #4ADE80; }
+.theme-dark .swatch-violet { --swatch: #A78BFA; }
+.theme-dark .swatch-rose   { --swatch: #FB7185; }
+.theme-dark .swatch-amber  { --swatch: #FBBF24; }
+.theme-dark .swatch-slate  { --swatch: #94A3B8; }
+
+/* coarse-pointer: keep accent swatches a comfortable tap target */
+@media (pointer: coarse) {
+  .accent-swatch {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+  }
+  /* "Press ? for shortcuts" is meaningless without a keyboard (#120). */
+  .kbd-hint {
+    display: none;
+  }
+}
+
+/* ── App toast (lightweight action confirmation) ───────
+   Always-dark pill, bottom-center, auto-dismissing. Reuses the undo-toast
+   look; used for actions whose result isn't already visible in the list
+   (e.g. Save to Instapaper). */
+.app-toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  z-index: 1100;
+  max-width: calc(100% - 2rem);
+  padding: 0.5rem 1rem;
+  border-radius: 1.5rem;
+  background: rgba(20, 20, 20, 0.92);
+  color: #fff;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.toast-enter-active, .toast-leave-active { transition: opacity .2s ease, transform .2s ease; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translate(-50%, 0.5rem); }
+
+/* Undo variant of the toast: same dark pill, but interactive (the Undo button
+   needs pointer events, which the plain toast disables). */
+.app-toast-undo {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  pointer-events: auto;
+}
+.app-toast-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  /* Lighten the accent toward white for legibility on the always-dark pill,
+     matching the swipe undo button. */
+  color: color-mix(in srgb, var(--accent) 65%, white);
+}
+.app-toast-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Per-row feed-actions trigger (⋯): muted at rest, full on hover/focus. On
+   touch (no hover) it stays lightly visible so the affordance is discoverable. */
+.feed-row-menu {
+  border: 0;
+  background: none;
+  padding: 0 .25rem;
+  margin-left: .125rem;
+  color: inherit;
+  cursor: pointer;
+  opacity: .3;
+  transition: opacity .1s ease;
+}
+@media (hover: hover) {
+  .selectgroup-label:hover .feed-row-menu { opacity: .6; }
+  .feed-row-menu:hover { opacity: 1; }
+}
+.feed-row-menu:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+@media (hover: none) {
+  .feed-row-menu { opacity: .45; }
+}
+
+/* search clear button (sits at the right of the search field) */
+.input-icon .search-clear {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.input-icon .search-clear:hover { color: var(--text-primary); }
+/* hide the native search clear so we use ours */
+.toolbar-search[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+/* ── Empty states ──────────────────────────────────── */
+.empty-hint {
+  max-width: 18rem;
+  margin: 2rem auto 0;
+  padding: 0 .5rem;
+  text-align: center;
+}
+/* The item-pane first-run CTA only earns its place in single-column layouts
+   (≤991.98px), where the feed list is slid away. On the 3-pane desktop the
+   feed-list CTA already covers it, so hide this one to avoid a double CTA. */
+@media (min-width: 992px) {
+  #col-item-list .empty-hint { display: none; }
+}
+.reader-empty .icon {
+  width: 2rem;
+  height: 2rem;
+}
+.reader-empty .icon > svg { width: 2rem; height: 2rem; }
+
+/* ── Settings modal panel ──────────────────────────── */
+/* Grouped settings: chunk the eight controls into labelled clusters with
+   rhythm — generous space between groups, tight within — so the modal reads
+   as four scannable sections instead of a flat list (#86 P2). */
+.settings-panel .settings-group { margin-bottom: 2rem; }
+.settings-panel .settings-group:last-child { margin-bottom: .5rem; }
+.settings-panel .settings-title {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding-bottom: .35rem;
+  margin-bottom: .9rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.settings-panel .settings-section { margin-bottom: 1rem; }
+.settings-panel .settings-section:last-child { margin-bottom: 0; }
+
+/* On phones let the modal use more width so controls aren't cramped (#86). */
+@media (max-width: 480px) {
+  .modal-dialog { margin: 1rem .5rem; max-width: none; }
+}
+.settings-panel .settings-label {
+  display: block;
+  font-size: .8rem;
+  color: var(--text-tertiary);
+  margin-bottom: .35rem;
+}
+
+/* ── Purposeful motion ─────────────────────────────────
+   Smooth the high-frequency state changes (hover/selection) and gently
+   fade a freshly opened article in. Both collapse under the reduced-motion
+   media query / [data-motion="reduce"] above. */
+.selectgroup-label,
+.toolbar-item,
+.dropdown-item,
+.btn,
+.accent-swatch {
+  transition: background-color .12s ease, color .12s ease, border-color .12s ease;
+}
+
+.content-wrapper {
+  animation: article-in .18s ease both;
+}
+@keyframes article-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ── Hardening: real feeds inject arbitrary HTML ──────── */
+/* wide tables scroll instead of breaking the column */
+.content table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+/* long unbroken title words wrap instead of overflowing */
+.content-title {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  text-wrap: balance;
+}
+/* the dialog is programmatically focused on open; don't show a ring for it */
+.modal-content:focus { outline: none; }
+
+/* accent selection cue that survives grayscale / colorblindness */
+.accent-swatch { position: relative; }
+.accent-check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-accent);
+}
+.accent-check > svg { width: .9rem; height: .9rem; }
+
+/* Polish: placeholders default to a too-faint browser color; pin them to the
+   AA-checked tertiary token (opacity:1 so it isn't dimmed further). */
+.form-control::placeholder,
+.toolbar-search::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+
+/* ── Segmented control (settings toggles) ──────────────
+   A bordered track of equal segments so inactive options read as
+   selectable, not as floating text. Fixes the dense/ambiguous mobile
+   Settings toggles (#86). Active = accent fill; dividers between segments. */
+.segmented {
+  display: flex;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented > * {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: .4rem .5rem;
+  text-align: center;
+  border-left: 1px solid var(--border-subtle);
+}
+.segmented > *:first-child { border-left: 0; }
+.segmented > button {
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+@media (hover: hover) { .segmented > button:hover { background: var(--surface-hover); } }
+.segmented > button.active { background: var(--accent); color: var(--on-accent); }
+.segmented > button:disabled { opacity: .4; cursor: not-allowed; }
+.segmented > button:disabled:hover { background: transparent; }
+.segmented > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.segmented-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }

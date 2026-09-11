@@ -32,10 +32,12 @@ func (s *Server) handler() http.Handler {
 
 	if s.Username != "" && s.Password != "" {
 		a := &auth.Middleware{
-			BasePath:      s.BasePath,
-			Username:      s.Username,
-			Password:      s.Password,
-			Public:        []string{"/static", "/fever", "/manifest.json", "/sw.js", "/up", "/v1/openapi.json"},
+			BasePath: s.BasePath,
+			Username: s.Username,
+			Password: s.Password,
+			// /mcp carries its own bearer auth (see mcp.go); /v1/openapi.json
+			// is a schema, not data.
+			Public:        []string{"/static", "/fever", "/mcp", "/manifest.json", "/sw.js", "/up", "/v1/openapi.json"},
 			DB:            s.db,
 			SecretKeyBase: s.SecretKeyBase,
 			SecureCookie:  s.SecureCookie,
@@ -45,7 +47,6 @@ func (s *Server) handler() http.Handler {
 
 	r.For("/up", s.handleHealth)
 	r.For("/v1/openapi.json", s.handleOpenAPI)
-	r.For("/mcp", s.handleMCP)
 	r.For("/", s.handleIndex)
 	r.For("/manifest.json", s.handleManifest)
 	r.For("/sw.js", s.handleServiceWorker)
@@ -61,12 +62,15 @@ func (s *Server) handler() http.Handler {
 	r.For("/api/items", s.handleItemList)
 	r.For("/api/items/:id/instapaper", s.handleItemInstapaper)
 	r.For("/api/items/:id", s.handleItem)
+	r.For("/api/filters", s.handleFilterList)
+	r.For("/api/filters/:id", s.handleFilter)
 	r.For("/api/settings", s.handleSettings)
 	r.For("/opml/import", s.handleOPMLImport)
 	r.For("/opml/export", s.handleOPMLExport)
 	r.For("/page", s.handlePageCrawl)
 	r.For("/logout", s.handleLogout)
 	r.For("/fever/", s.handleFever)
+	r.For("/mcp", s.handleMCP)
 
 	return r
 }
@@ -75,6 +79,7 @@ func (s *Server) handleIndex(c *router.Context) {
 	c.HTML(http.StatusOK, assets.Template("index.html"), map[string]interface{}{
 		"settings":      s.db.GetSettings(),
 		"authenticated": s.Username != "" && s.Password != "",
+		"version":       s.Version,
 	})
 }
 
@@ -91,15 +96,17 @@ func (s *Server) handleStatic(c *router.Context) {
 func (s *Server) handleManifest(c *router.Context) {
 	startURL := "/" + strings.TrimPrefix(s.BasePath, "/")
 	c.JSON(http.StatusOK, map[string]interface{}{
-		"$schema":          "https://json.schemastore.org/web-manifest-combined.json",
-		"name":             "yarr!",
-		"short_name":       "yarr",
-		"description":      "yet another rss reader",
-		"display":          "standalone",
-		"start_url":        startURL,
-		"scope":            startURL,
-		"background_color": "#1a1a2e",
-		"theme_color":      "#ffffff",
+		"$schema":     "https://json.schemastore.org/web-manifest-combined.json",
+		"name":        "yarr!",
+		"short_name":  "yarr",
+		"description": "yet another rss reader",
+		"display":     "standalone",
+		"start_url":   startURL,
+		"scope":       startURL,
+		// match the dark base surface (#0E1116); the running chrome tracks the
+		// active theme via <meta name="theme-color"> media queries in the page.
+		"background_color": "#0E1116",
+		"theme_color":      "#0E1116",
 		"categories":       []string{"news", "productivity"},
 		"icons": []map[string]interface{}{
 			{
@@ -124,11 +131,25 @@ func (s *Server) handleManifest(c *router.Context) {
 				"type":    "image/png",
 				"purpose": "any",
 			},
+			// full-bleed variant so Android adaptive icons aren't letterboxed
+			{
+				"src":     s.BasePath + "/static/graphicarts/icon-maskable.svg",
+				"sizes":   "any",
+				"type":    "image/svg+xml",
+				"purpose": "maskable",
+			},
 			{
 				"src":   s.BasePath + "/static/graphicarts/apple-touch-icon.png",
 				"sizes": "180x180",
 				"type":  "image/png",
 			},
+		},
+		// app-icon long-press shortcuts jump straight to a view (see the
+		// ?view= reader in app.js that maps these onto filterSelected).
+		"shortcuts": []map[string]interface{}{
+			{"name": "Unread", "url": startURL + "?view=unread"},
+			{"name": "Starred", "url": startURL + "?view=starred"},
+			{"name": "Triage", "url": startURL + "?view=triage"},
 		},
 	})
 }
@@ -198,6 +219,45 @@ func (s *Server) handleFolder(c *router.Context) {
 	} else if c.Req.Method == "DELETE" {
 		s.db.DeleteFolder(id)
 		c.Out.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func (s *Server) handleFilterList(c *router.Context) {
+	if c.Req.Method == "GET" {
+		c.JSON(http.StatusOK, s.db.ListFilters())
+	} else if c.Req.Method == "POST" {
+		var body FilterCreateForm
+		if err := json.NewDecoder(c.Req.Body).Decode(&body); err != nil {
+			log.Print(err)
+			c.Out.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		body.Keyword = strings.TrimSpace(body.Keyword)
+		if !storage.ValidFilterAction(body.Action) || len(body.Keyword) == 0 {
+			c.JSON(http.StatusBadRequest, map[string]string{"error": "Filter needs an action and a keyword."})
+			return
+		}
+		filter := s.db.CreateFilter(body.Action, body.Keyword, body.FeedID)
+		if body.ApplyNow {
+			s.db.ApplyFiltersToUnread()
+		}
+		c.JSON(http.StatusCreated, filter)
+	} else {
+		c.Out.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleFilter(c *router.Context) {
+	id, err := c.VarInt64("id")
+	if err != nil {
+		c.Out.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if c.Req.Method == "DELETE" {
+		s.db.DeleteFilter(id)
+		c.Out.WriteHeader(http.StatusNoContent)
+	} else {
+		c.Out.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 

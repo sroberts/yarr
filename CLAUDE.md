@@ -64,6 +64,28 @@ JavaScript bundler — edit the `.js`/`.css` directly.
   `local.db`.
 - Always run `gofmt`, `go vet`, and `make test` before saying a change
   is ready.
+- Land every change through a pull request to `master` — never push
+  feature work straight to `master`.
+
+## Releasing
+
+- Cut a new release after every merged PR that ships a code change
+  (skip docs-only or CI-only PRs).
+- Releases are automatic on a VERSION bump. Open a PR that bumps
+  `VERSION` in `makefile` to the next `X.Y` and commits as
+  `release: bump VERSION to X.Y for vX.Ys` (the `s` suffix marks this
+  fork); merging it is all that's needed.
+- On the push to `master`, `.github/workflows/release.yml` reads
+  `VERSION`, creates the matching `vX.Ys` tag, and dispatches the build
+  workflows on it. The job is idempotent: ordinary merges (VERSION
+  unchanged, tag already exists) skip, so only the bump ships a release.
+- The tagged build runs `build.yml` (macOS/Windows/Linux artifacts +
+  draft GitHub release) and `build-docker.yml` / `build-docker-once.yml`
+  (multi-arch images to `ghcr.io/sroberts/yarr`).
+- Manual overrides (re-release, or shipping without a bump): push the
+  `release` branch — works from web sessions, which can push branches but
+  not tags — or run the Release workflow from the Actions tab. Both reuse
+  the same idempotent job.
 
 ## Where to look
 
@@ -72,3 +94,13 @@ JavaScript bundler — edit the `.js`/`.css` directly.
 - Docs: `readme.md`, `doc/`
 - CI: `.github/workflows/`
 - Build: `makefile`
+
+## Design Context
+
+Frontend design work is anchored by `PRODUCT.md` at the repo root (strategic:
+register, users, brand personality, anti-references, design principles). The
+register is **product**; the personality is *quiet, fast, utilitarian*, and the
+core loop is feed triage (read / star / save / next) on desk and phone. Read it
+before changing the web UI in `src/assets/`. A `DESIGN.md` (visual tokens, the
+light/sepia/night themes, typography, components) can be generated with
+`/impeccable document` when needed.

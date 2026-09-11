@@ -19,3 +19,10 @@ type FeedCreateForm struct {
 	Url      string `json:"url"`
 	FolderID *int64 `json:"folder_id,omitempty"`
 }
+
+type FilterCreateForm struct {
+	Action   string `json:"action"`
+	Keyword  string `json:"keyword"`
+	FeedID   *int64 `json:"feed_id,omitempty"`
+	ApplyNow bool   `json:"apply_now,omitempty"`
+}

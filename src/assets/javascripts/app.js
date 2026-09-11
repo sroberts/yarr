@@ -2,6 +2,203 @@
 
 var TITLE = document.title
 
+// Reading time: computed client-side from an item's content (the list payload
+// already ships content), memoized per item id so re-renders are cheap.
+// Returns whole minutes at ~200 wpm (min 1), '60+' past an hour, or null when
+// there's no prose to estimate (link-only posts) so the UI shows nothing.
+var readingTimeCache = {}
+function readingMinutes(item) {
+  if (!item || item.id == null) return null
+  if (readingTimeCache[item.id] !== undefined) return readingTimeCache[item.id]
+  var text = (item.content || '').replace(/<[^>]+>/g, ' ').replace(/&[a-z#0-9]+;/gi, ' ').trim()
+  var words = text ? text.split(/\s+/).length : 0
+  var mins = words ? Math.max(1, Math.round(words / 200)) : null
+  if (mins && mins > 60) mins = '60+'
+  readingTimeCache[item.id] = mins
+  return mins
+}
+
+// Fuzzy matcher for the command palette: subsequence match with a score so
+// tighter/earlier/word-start matches rank first. Returns a score (higher is
+// better) or -1 when query isn't a subsequence of text. No dependency.
+function fuzzyMatch(query, text) {
+  if (!query) return 0
+  var q = query.toLowerCase(), t = (text || '').toLowerCase()
+  var qi = 0, score = 0, streak = 0, ti = 0
+  for (; ti < t.length && qi < q.length; ti++) {
+    if (t[ti] === q[qi]) {
+      qi++
+      streak++
+      score += streak                                   // reward consecutive hits
+      if (ti === 0 || /[\s\W_]/.test(t[ti - 1])) score += 6  // word-start bonus
+    } else {
+      streak = 0
+    }
+  }
+  return qi === q.length ? score - ti * 0.01 : -1       // tiebreak: earlier finish
+}
+
+// Resume position: remember where you left off in a long article. Per-device,
+// per-item scroll offsets in localStorage — ephemeral, no server round-trip.
+// Bounded (oldest evicted past CAP) so it never grows without limit.
+var readingScroll = (function() {
+  var KEY = 'yarr:scroll', CAP = 100, map = {}
+  try { map = JSON.parse(localStorage.getItem(KEY)) || {} } catch (e) { map = {} }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(map)) } catch (e) {} }
+  return {
+    get: function(id) { return (map[id] && map[id].y) || 0 },
+    set: function(id, y) {
+      map[id] = {y: y, t: Date.now()}
+      var keys = Object.keys(map)
+      if (keys.length > CAP) {
+        keys.sort(function(a, b) { return map[a].t - map[b].t })
+        delete map[keys[0]]
+        persist()
+      } else {
+        persist()
+      }
+    },
+  }
+})()
+
+// Clipboard write, with a fallback. navigator.clipboard only exists in a
+// secure context (https or localhost) and a self-hosted yarr is routinely
+// reached over plain http on a LAN address, so keep the legacy path: a
+// throwaway textarea plus execCommand. Returns a promise resolving to whether
+// the text made it to the clipboard — nothing here reports success blindly.
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text)
+      .then(function() { return true })
+      .catch(function() { return copyTextLegacy(text) })
+  }
+  return Promise.resolve(copyTextLegacy(text))
+}
+
+function copyTextLegacy(text) {
+  var el = document.createElement('textarea')
+  el.value = text
+  el.setAttribute('readonly', '')
+  // Off-screen but focusable; display:none or visibility:hidden won't select.
+  el.style.position = 'fixed'
+  el.style.top = '0'
+  el.style.left = '-9999px'
+  el.style.opacity = '0'
+  document.body.appendChild(el)
+
+  // Preserve whatever the user had selected — copying a link shouldn't wipe a
+  // text selection in the article.
+  var selection = window.getSelection ? window.getSelection() : null
+  var previous = selection && selection.rangeCount > 0 ? selection.getRangeAt(0) : null
+
+  el.select()
+  el.setSelectionRange(0, text.length)  // iOS Safari ignores select() alone
+  var ok = false
+  try { ok = document.execCommand('copy') } catch (e) { ok = false }
+  document.body.removeChild(el)
+  if (previous && selection) {
+    selection.removeAllRanges()
+    selection.addRange(previous)
+  }
+  return ok
+}
+
+// Listen to article: on-device text-to-speech via the browser's Web Speech
+// API. No network, no deps, no telemetry. speechSynthesis is browser-global
+// (keeps talking across SPA state changes), so a single engine owns all of it
+// and cancellation is centralized. Long text is split into sentence-sized
+// chunks and spoken in sequence: Chrome truncates a single long utterance, and
+// the per-chunk queue gives a reliable "finished" signal for triage continuation.
+var ttsEngine = (function() {
+  var supported = typeof window !== 'undefined' && 'speechSynthesis' in window
+  var chunks = [], index = 0, playing = false, paused = false
+  var onEnd = null
+
+  // Split into ~200-char pieces on sentence boundaries, falling back to hard
+  // slices for runaway sentences so no chunk trips the engine's length limit.
+  function chunkText(text) {
+    var sentences = (text || '').replace(/\s+/g, ' ').trim().match(/[^.!?]+[.!?]+|\S[^.!?]*$/g) || []
+    var out = [], buf = ''
+    sentences.forEach(function(s) {
+      s = s.trim()
+      while (s.length > 220) { out.push(s.slice(0, 220)); s = s.slice(220) }
+      if ((buf + ' ' + s).trim().length > 200) { if (buf) out.push(buf.trim()); buf = s }
+      else { buf = (buf + ' ' + s).trim() }
+    })
+    if (buf) out.push(buf.trim())
+    return out
+  }
+
+  function speakNext() {
+    if (index >= chunks.length) { finish(); return }
+    var u = new SpeechSynthesisUtterance(chunks[index])
+    u.onend = function() { if (!playing) return; index++; speakNext() }
+    u.onerror = function() { if (!playing) return; index++; speakNext() }
+    window.speechSynthesis.speak(u)
+  }
+
+  function finish() {
+    var cb = onEnd
+    reset()
+    if (cb) cb()
+  }
+
+  function reset() { chunks = []; index = 0; playing = false; paused = false; onEnd = null }
+
+  return {
+    supported: supported,
+    playing: function() { return playing && !paused },
+    paused: function() { return paused },
+    active: function() { return playing },
+    // Speak text to completion. opts.onend fires only on natural completion
+    // (not on stop/replacement), which triage uses to advance to the next card.
+    speak: function(text, opts) {
+      if (!supported) return
+      window.speechSynthesis.cancel()
+      chunks = chunkText(text)
+      index = 0
+      onEnd = (opts && opts.onend) || null
+      if (!chunks.length) { reset(); return }
+      playing = true; paused = false
+      speakNext()
+    },
+    pause: function() {
+      if (!supported || !playing || paused) return
+      paused = true
+      window.speechSynthesis.pause()
+    },
+    resume: function() {
+      if (!supported || !playing || !paused) return
+      paused = false
+      window.speechSynthesis.resume()
+    },
+    stop: function() {
+      if (!supported) return
+      reset()
+      window.speechSynthesis.cancel()
+    },
+  }
+})()
+
+// Theme preference is one of auto/light/dark (persisted as theme_name).
+// 'auto' follows the OS; legacy values map night -> dark, sepia -> light.
+function normalizeThemePref(pref) {
+  if (pref === 'night') return 'dark'
+  if (pref === 'sepia') return 'light'
+  if (pref === 'light' || pref === 'dark' || pref === 'auto') return pref
+  return 'auto'
+}
+
+function systemTheme() {
+  var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+  return dark ? 'dark' : 'light'
+}
+
+// Resolve a preference to a concrete theme (auto -> the OS theme).
+function resolveTheme(pref) {
+  return pref === 'auto' ? systemTheme() : pref
+}
+
 function scrollto(target, scroll) {
   var padding = 10
   var targetRect = target.getBoundingClientRect()
@@ -33,21 +230,26 @@ var debounce = function(callback, wait) {
   }
 }
 
-Vue.directive('scroll', {
-  inserted: function(el, binding) {
+// Vue 3: create the app from the root options (defined below; the function
+// declaration is hoisted), register directives/components on it, then mount
+// at the bottom.
+var vueApp = Vue.createApp(rootComponent())
+
+vueApp.directive('scroll', {
+  mounted: function(el, binding) {
     el.addEventListener('scroll', debounce(function(event) {
       binding.value(event, el)
     }, 200))
   },
 })
 
-Vue.directive('focus', {
-  inserted: function(el) {
+vueApp.directive('focus', {
+  mounted: function(el) {
     el.focus()
   }
 })
 
-Vue.component('drag', {
+vueApp.component('drag', {
   props: ['width'],
   template: '<div class="drag"></div>',
   mounted: function() {
@@ -72,14 +274,23 @@ Vue.component('drag', {
   },
 })
 
-Vue.component('dropdown', {
-  props: ['class', 'toggle-class', 'ref', 'drop', 'title'],
+vueApp.component('dropdown', {
+  // Vue 3: `class`/`ref` are reserved and can't be props; a passed class now
+  // auto-merges onto the root element, so we drop the explicit :class binding.
+  // `fixed` opts the menu into viewport-fixed positioning so it isn't clipped
+  // by an overflow:auto ancestor (the sidebar feed list scrolls).
+  props: {
+    toggleClass: String,
+    drop: String,
+    title: String,
+    fixed: Boolean,
+  },
   data: function() {
     return {open: false}
   },
   template: `
-    <div class="dropdown" :class="$attrs.class">
-      <button ref="btn" @click="toggle" :class="btnToggleClass" :title="$props.title"><slot name="button"></slot></button>
+    <div class="dropdown">
+      <button ref="btn" @click="toggle" :class="btnToggleClass" :title="$props.title" :aria-label="$props.title" aria-haspopup="true" :aria-expanded="open ? 'true' : 'false'"><slot name="button"></slot></button>
       <div ref="menu" class="dropdown-menu" :class="{show: open}"><slot v-if="open"></slot></div>
     </div>
   `,
@@ -97,40 +308,75 @@ Vue.component('dropdown', {
     },
     show: function(e) {
       this.open = true
-      this.$refs.menu.style.top = this.$refs.btn.offsetHeight + 'px'
+      var menu = this.$refs.menu
       var drop = this.$props.drop
 
+      // Feed-row menus sit inside an overflow:auto scroll container that would
+      // clip an absolutely-positioned menu; position:fixed escapes the clip.
+      // Measure after the slot renders (nextTick) so the menu can flip above
+      // the button when there isn't room below, and hide on scroll since a
+      // fixed menu no longer tracks the row it belongs to.
+      if (this.$props.fixed) {
+        menu.style.position = 'fixed'
+        menu.style.visibility = 'hidden'
+        this.$nextTick(function() {
+          var r = this.$refs.btn.getBoundingClientRect()
+          var mh = menu.offsetHeight, mw = menu.offsetWidth
+          var flipUp = (r.bottom + mh > window.innerHeight) && (r.top - mh > 0)
+          menu.style.top = (flipUp ? r.top - mh : r.bottom) + 'px'
+          menu.style.left = Math.max(4, r.right - mw) + 'px'
+          menu.style.right = 'auto'
+          menu.style.visibility = ''
+        }.bind(this))
+        document.addEventListener('click', this.clickHandler)
+        document.addEventListener('keydown', this.keyHandler)
+        window.addEventListener('scroll', this.hide, true)
+        return
+      }
+
+      menu.style.top = this.$refs.btn.offsetHeight + 'px'
       if (drop === 'right') {
-        this.$refs.menu.style.left = 'auto'
-        this.$refs.menu.style.right = '0'
+        menu.style.left = 'auto'
+        menu.style.right = '0'
       } else if (drop === 'center') {
         this.$nextTick(function() {
           var btnWidth = this.$refs.btn.getBoundingClientRect().width
-          var menuWidth = this.$refs.menu.getBoundingClientRect().width
-          this.$refs.menu.style.left = '-' + ((menuWidth - btnWidth) / 2) + 'px'
+          var menuWidth = menu.getBoundingClientRect().width
+          menu.style.left = '-' + ((menuWidth - btnWidth) / 2) + 'px'
         }.bind(this))
       }
 
       document.addEventListener('click', this.clickHandler)
+      document.addEventListener('keydown', this.keyHandler)
     },
     hide: function() {
       this.open = false
+      if (this.$refs.menu) {
+        var s = this.$refs.menu.style
+        s.position = s.visibility = s.top = s.left = s.right = ''
+      }
       document.removeEventListener('click', this.clickHandler)
+      document.removeEventListener('keydown', this.keyHandler)
+      window.removeEventListener('scroll', this.hide, true)
     },
     clickHandler: function(e) {
       var dropdown = e.target.closest('.dropdown')
       if (dropdown == null || dropdown != this.$el) return this.hide()
       if (e.target.closest('.dropdown-item') != null) return this.hide()
+    },
+    keyHandler: function(e) {
+      if (e.key === 'Escape') { this.hide(); this.$refs.btn.focus() }
     }
   },
 })
 
-Vue.component('modal', {
+vueApp.component('modal', {
   props: ['open'],
+  emits: ['hide'],
   template: `
     <div class="modal custom-modal" tabindex="-1" v-if="$props.open">
       <div class="modal-dialog">
-        <div class="modal-content" ref="content">
+        <div class="modal-content" ref="content" tabindex="-1">
           <div class="modal-body">
             <slot v-if="$props.open"></slot>
           </div>
@@ -145,9 +391,18 @@ Vue.component('modal', {
     'open': function(newVal) {
       if (newVal) {
         this.opening = true
+        this._prevFocus = document.activeElement
         document.addEventListener('click', this.handleClick)
+        document.addEventListener('keydown', this.handleKey)
+        // move focus into the dialog for keyboard/screen-reader users
+        this.$nextTick(function() {
+          if (this.$refs.content) this.$refs.content.focus()
+        }.bind(this))
       } else {
         document.removeEventListener('click', this.handleClick)
+        document.removeEventListener('keydown', this.handleKey)
+        // restore focus to whatever opened the modal
+        if (this._prevFocus && this._prevFocus.focus) this._prevFocus.focus()
       }
     },
   },
@@ -158,6 +413,9 @@ Vue.component('modal', {
         return
       }
       if (e.target.closest('.modal-content') == null) this.$emit('hide')
+    },
+    handleKey: function(e) {
+      if (e.key === 'Escape') this.$emit('hide')
     },
   },
 })
@@ -181,7 +439,7 @@ function dateRepr(d) {
   return out
 }
 
-Vue.component('relative-time', {
+vueApp.component('relative-time', {
   props: ['val'],
   data: function() {
     var d = new Date(this.val)
@@ -192,18 +450,37 @@ Vue.component('relative-time', {
     }
   },
   template: '<time :datetime="val">{{ formatted }}</time>',
+  watch: {
+    // React to `val` changing on a reused instance. The triage card keeps one
+    // <relative-time> mounted and swaps currentCard.date through it; without
+    // this the first card's date would stick to every later card.
+    'val': function(newVal) {
+      this.date = new Date(newVal)
+      this.formatted = dateRepr(this.date)
+    },
+  },
   mounted: function() {
     this.interval = setInterval(function() {
       this.formatted = dateRepr(this.date)
     }.bind(this), 600000)  // every 10 minutes
   },
-  destroyed: function() {
+  unmounted: function() {
     clearInterval(this.interval)
   },
 })
 
-var vm = new Vue({
+function rootComponent() { return {
   created: function() {
+    // Consume the PWA shortcut param: clean it from the URL so a reload doesn't
+    // re-apply it, and route triage through filterSelected (its watcher enters
+    // card mode). unread/starred/all were already set as the initial filter.
+    var view = (new URLSearchParams(location.search)).get('view')
+    if (view) {
+      if (window.history && history.replaceState) {
+        history.replaceState(null, '', location.pathname + location.hash)
+      }
+      if (view === 'triage') this.filterSelected = 'triage'
+    }
     this.refreshStats()
       .then(this.refreshFeeds.bind(this))
       .then(this.refreshItems.bind(this, false))
@@ -211,14 +488,41 @@ var vm = new Vue({
     api.feeds.list_errors().then(function(errors) {
       vm.feed_errors = errors
     })
-    this.updateMetaTheme(app.settings.theme_name)
+    this.loadFilters()
+    this.updateMetaTheme(resolveTheme(this.theme.name))
+    // Cmd/Ctrl+K opens the command palette from anywhere (key.js ignores
+    // modifier chords, so this needs its own listener).
+    document.addEventListener('keydown', function(e) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault()
+        vm.togglePalette()
+      }
+    })
+    // when following the OS, react to OS theme changes live
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+        if (vm.theme.name !== 'auto') return
+        var resolved = systemTheme()
+        vm.updateMetaTheme(resolved)
+        document.body.classList.value = 'theme-' + resolved
+      })
+    }
   },
   data: function() {
     var s = app.settings
+    // PWA app-icon shortcuts land on ?view=<name> (manifest shortcuts). Apply
+    // unread/starred/all as the initial filter so there's no persist or extra
+    // fetch; triage is applied in created() so its watcher enters card mode.
+    var view = (new URLSearchParams(location.search)).get('view')
+    var initialFilter = (view === 'unread' || view === 'starred') ? view
+                      : (view === 'all') ? ''
+                      : s.filter
     return {
-      'filterSelected': s.filter,
+      'filterSelected': initialFilter,
       'folders': [],
       'feeds': [],
+      'filters': [],
+      'filterDraft': {action: 'read', keyword: '', feedId: null, applyNow: false},
       'feedSelected': s.feed,
       'feedListWidth': s.feed_list_width || 300,
       'feedNewChoice': [],
@@ -229,6 +533,19 @@ var vm = new Vue({
       'itemSelectedDetails': null,
       'itemSelectedReadability': '',
       'itemSearch': '',
+      'paletteOpen': false,
+      'paletteQuery': '',
+      'paletteIndex': 0,
+      // {feed, x, y} while a feed row's right-click menu is open, else null
+      'feedContextMenu': null,
+      // {title, value, confirmLabel, onConfirm} while the themed input prompt
+      // (rename/change-link/new-folder) is open, else null
+      'promptModal': null,
+      // {label, onUndo, onCommit, timer} while a reversible feed action (delete,
+      // move) is within its undo window, else null
+      'feedUndo': null,
+      'ttsPlaying': false,
+      'ttsPaused': false,
       'itemSortNewestFirst': s.sort_newest_first,
       'itemListWidth': s.item_list_width || 300,
 
@@ -247,17 +564,21 @@ var vm = new Vue({
       'fonts': ['', 'serif', 'monospace'],
       'feedStats': {},
       'theme': {
-        'name': s.theme_name,
+        // 'auto' follows the OS; legacy night -> dark, sepia -> light
+        'name': normalizeThemePref(s.theme_name),
         'font': s.theme_font,
         'size': s.theme_size,
+        'accent': s.theme_accent || 'blue',
+        'density': s.theme_density || 'comfortable',
+        'motion': s.theme_motion || 'system',
       },
       'themeColors': {
-        'night': '#0e0e0e',
-        'sepia': '#f4f0e5',
-        'light': '#fff',
+        'light': '#FFFFFF',
+        'dark': '#0E1116',
       },
       'refreshRate': s.refresh_rate,
       'authenticated': app.authenticated,
+      'version': app.version || '',
       'feed_errors': {},
 
       'instapaperUsername': s.instapaper_username || '',
@@ -266,7 +587,13 @@ var vm = new Vue({
       'cardIndex': 0,
       'cardStats': { read: 0, instapaper: 0, kept: 0 },
       'cardLoading': false,
+      'cardUndo': null,
+      'toast': null,
+      'linkCopied': false,
+      'itemOffline': false,
+      'itemUnavailable': false,
       'cardFolder': '',
+      'previousFilter': '',
       'refreshRateOptions': [
         { title: "0", value: 0 },
         { title: "10m", value: 10 },
@@ -280,6 +607,20 @@ var vm = new Vue({
     }
   },
   computed: {
+    ttsSupported: function() {
+      return ttsEngine.supported
+    },
+    // Responsive layout classes for the #app container. These drive the mobile
+    // single-column view (app.css @media max-width): feed list -> article list
+    // -> reader. Applied imperatively via a watcher because #app is the Vue
+    // *mount container* and Vue 3 ignores :class bindings on the mount host.
+    appLayoutClasses: function() {
+      return {
+        'feed-selected': this.feedSelected !== null,
+        'item-selected': this.itemSelected !== null,
+        'card-mode': this.cardMode,
+      }
+    },
     foldersWithFeeds: function() {
       var feedsByFolders = this.feeds.reduce(function(folders, feed) {
         if (!folders[feed.folder_id])
@@ -314,6 +655,38 @@ var vm = new Vue({
         folder = this.foldersById[guid] || {}
 
       return {type: type, feed: feed, folder: folder}
+    },
+    // Command-palette candidates: enabled actions, then feeds, then folders,
+    // fuzzy-ranked against the query (or default order when empty), plus an
+    // article-search escape hatch. Capped so a huge feed list stays instant.
+    paletteResults: function() {
+      var q = this.paletteQuery.trim()
+      var all = this.paletteCommands().filter(function(c) { return c.enabled !== false })
+      this.feeds.forEach(function(f) {
+        all.push({group: 'Feeds', label: f.title || f.feed_link, run: function() {
+          vm.feedSelected = 'feed:' + f.id; vm.itemSelected = null
+        }})
+      })
+      this.folders.forEach(function(fo) {
+        all.push({group: 'Folders', label: fo.title, run: function() {
+          vm.feedSelected = 'folder:' + fo.id; vm.itemSelected = null
+        }})
+      })
+      var results
+      if (!q) {
+        results = all
+      } else {
+        results = all
+          .map(function(c) { return {c: c, s: fuzzyMatch(q, c.label)} })
+          .filter(function(x) { return x.s >= 0 })
+          .sort(function(a, b) { return b.s - a.s })
+          .map(function(x) { return x.c })
+        results.push({group: 'Search', label: 'Search articles for “' + q + '”', run: function() {
+          vm.itemSearch = q
+          var box = document.getElementById('searchbar'); if (box) box.focus()
+        }})
+      }
+      return results.slice(0, 50)
     },
     itemSelectedContent: function() {
       if (!this.itemSelected) return ''
@@ -359,17 +732,47 @@ var vm = new Vue({
       var text = tmp.textContent || tmp.innerText || ''
       return text.length > 600 ? text.substring(0, 600) + '…' : text
     },
+    cardDomain: function() {
+      if (!this.currentCard || !this.currentCard.link) return ''
+      try {
+        var url = new URL(this.currentCard.link)
+        return url.hostname.replace(/^www\./, '')
+      } catch (e) {
+        return ''
+      }
+    },
+    cardUndoLabel: function() {
+      if (!this.cardUndo) return ''
+      if (this.cardUndo.action === 'instapaper') return 'Saved to Instapaper'
+      if (this.cardUndo.action === 'read') return 'Marked read'
+      return 'Kept unread'
+    },
   },
   watch: {
+    'appLayoutClasses': {
+      immediate: true,
+      handler: function(classes) {
+        var el = document.getElementById('app')
+        if (!el) return
+        Object.keys(classes).forEach(function(name) { el.classList.toggle(name, classes[name]) })
+      },
+    },
     'theme': {
       deep: true,
       handler: function(theme) {
-        this.updateMetaTheme(theme.name)
-        document.body.classList.value = 'theme-' + theme.name
+        var resolved = resolveTheme(theme.name)
+        this.updateMetaTheme(resolved)
+        document.body.classList.value = 'theme-' + resolved
+        document.body.dataset.accent = theme.accent
+        document.body.dataset.density = theme.density
+        document.body.dataset.motion = theme.motion
         api.settings.update({
           theme_name: theme.name,
           theme_font: theme.font,
           theme_size: theme.size,
+          theme_accent: theme.accent,
+          theme_density: theme.density,
+          theme_motion: theme.motion,
         })
       },
     },
@@ -394,14 +797,42 @@ var vm = new Vue({
         this.computeStats()
       }, 500),
     },
+    // Feeds ship arbitrary HTML, so the rendered article is the one place we
+    // can't put attributes in the template. A <pre> that scrolls is a
+    // scrollable region and needs a keyboard path (WCAG 2.1.1) — measured, a
+    // Go snippet ran 1506px inside a 648px column with no way to reach the
+    // rest without a mouse.
+    'itemSelectedContent': function() {
+      this.$nextTick(function() {
+        var root = this.$refs.content
+        if (!root) return
+        Array.prototype.forEach.call(root.querySelectorAll('pre'), function(pre) {
+          if (pre.scrollWidth <= pre.clientWidth) return   // nothing to scroll to
+          pre.setAttribute('tabindex', '0')
+          pre.setAttribute('role', 'region')
+          pre.setAttribute('aria-label', 'Code block, scrolls horizontally')
+          // Overlay scrollbars show nothing at rest, so a block can hide 80% of
+          // itself in silence. The fade says "more to the right" and clears
+          // once you're there.
+          pre.classList.add('pre-overflow')
+          pre.addEventListener('scroll', function() {
+            var atEnd = pre.scrollLeft + pre.clientWidth >= pre.scrollWidth - 1
+            pre.classList.toggle('pre-at-end', atEnd)
+          })
+        })
+      }.bind(this))
+    },
     'filterSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
+      this.stopListen()  // halt read-aloud when leaving/entering triage or switching views
       if (oldVal === 'triage') {
+        this.flushCardAction()
         this.cardItems = []
         this.cardIndex = 0
         this.refreshStats()
       }
       if (newVal === 'triage') {
+        this.previousFilter = oldVal || ''
         this.enterCardMode()
         return
       }
@@ -420,7 +851,13 @@ var vm = new Vue({
       if (this.$refs.itemlist) this.$refs.itemlist.scrollTop = 0
     },
     'itemSelected': function(newVal, oldVal) {
+      this.stopListen()  // halt any read-aloud when the article changes or closes
       this.itemSelectedReadability = ''
+      // the copy-link check belongs to the article you copied, not the next one
+      clearTimeout(this._linkCopiedTimer)
+      this.linkCopied = false
+      this.itemOffline = false
+      this.itemUnavailable = false
       if (newVal === null) {
         this.itemSelectedDetails = null
         return
@@ -429,19 +866,47 @@ var vm = new Vue({
 
       api.items.get(newVal).then(function(item) {
         this.itemSelectedDetails = item
+        this.restoreScroll(newVal)
+        // keep the offline copy of deliberately-kept articles fresh
+        if (item.status == 'starred' || item.instapaper_saved) {
+          if (window.offlineStore) window.offlineStore.put(item)
+        }
         if (this.itemSelectedDetails.status == 'unread') {
           api.items.update(this.itemSelectedDetails.id, {status: 'read'}).then(function() {
-            this.feedStats[this.itemSelectedDetails.feed_id].unread -= 1
+            // guard the index: stats may not be loaded yet, or the feed may be
+            // gone (deleted in another tab, stale offline item). Unguarded, the
+            // throw aborted the three lines below — the server recorded the read
+            // while the UI kept showing it unread.
+            var stat = this.feedStats[this.itemSelectedDetails.feed_id]
+            if (stat) stat.unread -= 1
             var itemInList = this.items.find(function(i) { return i.id == item.id })
             if (itemInList) itemInList.status = 'read'
             this.itemSelectedDetails.status = 'read'
           }.bind(this))
         }
+      }.bind(this)).catch(function() {
+        // network unavailable — fall back to the offline cache
+        var self = this
+        var lookup = window.offlineStore ? window.offlineStore.get(newVal) : Promise.resolve(null)
+        lookup.then(function(cached) {
+          if (self.itemSelected !== newVal) return  // selection moved on
+          if (cached) {
+            self.itemSelectedDetails = cached
+            self.itemOffline = true
+            self.restoreScroll(newVal)
+          } else {
+            self.itemSelectedDetails = null
+            self.itemUnavailable = true
+          }
+        })
       }.bind(this))
     },
     'itemSearch': debounce(function(newVal) {
       this.refreshItems()
     }, 500),
+    'paletteQuery': function() {
+      this.paletteIndex = 0
+    },
     'itemSortNewestFirst': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
       api.settings.update({sort_newest_first: newVal}).then(vm.refreshItems.bind(this, false))
@@ -461,7 +926,274 @@ var vm = new Vue({
   },
   methods: {
     updateMetaTheme: function(theme) {
-      document.querySelector("meta[name='theme-color']").content = this.themeColors[theme]
+      document.querySelector("meta[name='theme-color']").content = this.themeColors[theme] || this.themeColors.light
+    },
+    // Estimated reading time for an item (see readingMinutes). Template helper.
+    readingTime: function(item) {
+      return readingMinutes(item)
+    },
+    // Remember the reading pane's scroll offset for the open article (debounced
+    // so a scroll gesture stores once, not on every frame).
+    saveScroll: debounce(function() {
+      var el = this.$refs.content
+      if (el && this.itemSelected != null) readingScroll.set(this.itemSelected, el.scrollTop)
+    }, 250),
+    // Restore a stored offset after the article's DOM has rendered.
+    restoreScroll: function(id) {
+      this.$nextTick(function() {
+        var el = this.$refs.content
+        if (el) el.scrollTop = readingScroll.get(id)
+      }.bind(this))
+    },
+    // Listen to article (on-device TTS). Strip HTML to plain text via a temp
+    // element (decodes entities, drops tags) — same approach as cardExcerpt.
+    plainText: function(html) {
+      var tmp = document.createElement('div')
+      tmp.insertAdjacentHTML('afterbegin', html || '')
+      return (tmp.textContent || tmp.innerText || '').trim()
+    },
+    speakArticle: function() {
+      var det = this.itemSelectedDetails
+      if (!det) return
+      var body = this.plainText(this.itemSelectedContent)
+      var text = ((det.title || '') + '. ' + body).trim()
+      var self = this
+      ttsEngine.speak(text, {onend: function() { self.ttsPlaying = false; self.ttsPaused = false }})
+      this.ttsPlaying = true
+      this.ttsPaused = false
+    },
+    speakCard: function() {
+      var card = this.currentCard
+      if (!card) return
+      var text = ((card.title || '') + '. ' + this.plainText(card.content)).trim()
+      var self = this
+      // On natural completion, advance to the next card and keep reading until
+      // the deck is exhausted — the hands-free triage loop.
+      ttsEngine.speak(text, {onend: function() {
+        if (!self.cardMode) { self.ttsPlaying = false; self.ttsPaused = false; return }
+        self.cardListenNext()
+      }})
+      this.ttsPlaying = true
+      this.ttsPaused = false
+    },
+    // Advance triage to the next card and continue reading, or stop at the end.
+    cardListenNext: function() {
+      if (this.cardIndex + 1 >= this.cardItems.length) {
+        this.stopListen()  // deck exhausted (all cards are preloaded)
+        return
+      }
+      this.cardIndex += 1
+      var self = this
+      this.$nextTick(function() { self.speakCard() })
+    },
+    pauseListen: function() {
+      ttsEngine.pause()
+      this.ttsPaused = true
+    },
+    resumeListen: function() {
+      ttsEngine.resume()
+      this.ttsPaused = false
+    },
+    stopListen: function() {
+      ttsEngine.stop()
+      this.ttsPlaying = false
+      this.ttsPaused = false
+    },
+    // Context-aware toggle used by the toolbar button, 'p' key, and palette:
+    // idle -> start (card or article), playing -> pause, paused -> resume.
+    toggleListen: function() {
+      if (!ttsEngine.supported) return
+      if (this.ttsPlaying) {
+        this.ttsPaused ? this.resumeListen() : this.pauseListen()
+      } else if (this.cardMode) {
+        this.speakCard()
+      } else if (this.itemSelected != null) {
+        this.speakArticle()
+      }
+    },
+    // Command-palette actions. Reuse key.js's shortcutFunctions so the palette
+    // and keyboard map can't drift; each entry carries a label, shortcut hint,
+    // and an `enabled` predicate for context-dependent actions.
+    paletteCommands: function() {
+      var S = window.shortcutFunctions || {}
+      var hasItem = this.itemSelected != null
+      var det = this.itemSelectedDetails
+      // Feed management (rare maintenance) is scoped to the selected feed here
+      // and via right-click on a feed row — deliberately not persistent chrome.
+      var feedSel = this.current.type == 'feed'
+      var cf = this.current.feed
+      var cmds = [
+        {group: 'Actions', label: 'New feed',               run: function() { vm.showSettings('create') }},
+        {group: 'Actions', label: 'Refresh feeds',          run: function() { vm.fetchAllFeeds() }},
+        {group: 'Actions', label: 'Mark all read',          hint: 'R', enabled: this.filterSelected == 'unread', run: S.markAllRead},
+        {group: 'Actions', label: 'Show unread',            hint: '1', run: S.showUnread},
+        {group: 'Actions', label: 'Show starred',           hint: '2', run: S.showStarred},
+        {group: 'Actions', label: 'Show all',               hint: '3', run: S.showAll},
+        {group: 'Actions', label: 'Star / unstar article',  hint: 's', enabled: hasItem, run: S.toggleItemStarred},
+        {group: 'Actions', label: 'Mark read / unread',     hint: 'r', enabled: hasItem, run: S.toggleItemRead},
+        {group: 'Actions', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !!det.link && !det.instapaper_saved, run: S.saveToInstapaper},
+        {group: 'Actions', label: 'Read here (readability)', hint: 'i', enabled: hasItem && det && !!det.link, run: S.toggleReadability},
+        {group: 'Actions', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (hasItem || this.cardMode), run: S.toggleListen},
+        {group: 'Actions', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
+        {group: 'Actions', label: 'Copy link',              hint: 'c', enabled: hasItem && det && !!det.link, run: S.copyItemLink},
+        {group: 'Actions', label: 'Theme: Light',           enabled: this.theme.name !== 'light', run: function() { vm.theme.name = 'light' }},
+        {group: 'Actions', label: 'Theme: Dark',            enabled: this.theme.name !== 'dark', run: function() { vm.theme.name = 'dark' }},
+        {group: 'Actions', label: 'Theme: Auto (system)',   enabled: this.theme.name !== 'auto', run: function() { vm.theme.name = 'auto' }},
+        {group: 'Actions', label: 'Settings',               run: function() { vm.showSettings('settings') }},
+        {group: 'Actions', label: 'Keyboard shortcuts',     hint: '?', run: S.showShortcuts},
+        {group: 'Feed', label: 'Rename feed',            enabled: feedSel, run: function() { vm.renameFeed(vm.current.feed) }},
+        {group: 'Feed', label: 'Change feed link',       enabled: feedSel && !!cf.feed_link, run: function() { vm.updateFeedLink(vm.current.feed) }},
+        {group: 'Feed', label: 'Move feed to new folder', enabled: feedSel, run: function() { vm.moveFeedToNewFolder(vm.current.feed) }},
+        {group: 'Feed', label: 'Move feed out of folder', enabled: feedSel && cf.folder_id != null, run: function() { vm.moveFeedWithUndo(vm.current.feed, null) }},
+        {group: 'Feed', label: 'Delete feed',            enabled: feedSel, run: function() { vm.deleteFeed(vm.current.feed) }},
+      ]
+      // One "Move feed to <folder>" per other folder, only with a feed selected.
+      if (feedSel) {
+        this.folders.forEach(function(f) {
+          if (f.id == cf.folder_id) return
+          cmds.push({group: 'Feed', label: 'Move feed to ' + f.title, run: function() { vm.moveFeedWithUndo(vm.current.feed, f) }})
+        })
+      }
+      return cmds
+    },
+    // Feed row actions menu — opened by right-click OR the row's ⋯ button.
+    // Positioned fixed (clamped to the viewport) so the overflow:auto feed list
+    // can't clip it; closes on any click, scroll, resize, or Escape. Opening it
+    // also selects the row, so the menu and the command palette act on the same
+    // feed. `event` is a mouse or keyboard event; keyboard activation has no
+    // cursor, so we fall back to the trigger element's box.
+    openFeedContextMenu: function(feed, event) {
+      this.feedSelected = 'feed:' + feed.id
+      // remember the trigger so focus can return to it when the menu closes
+      this._ctxTrigger = (event && event.currentTarget) || null
+      var x = event && event.clientX, y = event && event.clientY
+      if ((!x && !y) && this._ctxTrigger && this._ctxTrigger.getBoundingClientRect) {
+        var tr = this._ctxTrigger.getBoundingClientRect()
+        x = tr.right; y = tr.bottom
+      }
+      this.feedContextMenu = {feed: feed, x: x || 0, y: y || 0}
+      this.$nextTick(function() {
+        var menu = this.$refs.feedContextMenu
+        if (!menu) return
+        var mw = menu.offsetWidth, mh = menu.offsetHeight
+        var mx = this.feedContextMenu.x, my = this.feedContextMenu.y
+        if (mx + mw > window.innerWidth) mx = Math.max(4, window.innerWidth - mw - 4)
+        if (my + mh > window.innerHeight) my = Math.max(4, window.innerHeight - mh - 4)
+        menu.style.left = mx + 'px'
+        menu.style.top = my + 'px'
+        menu.style.visibility = ''
+        // Focus the first item so keyboard users land inside the menu, matching
+        // the role="menu" contract that feedContextMenuKey then fulfils.
+        var first = menu.querySelector('.dropdown-item')
+        if (first) first.focus(); else menu.focus()
+      }.bind(this))
+      document.addEventListener('click', this.closeFeedContextMenu)
+      document.addEventListener('keydown', this.feedContextMenuKey)
+      window.addEventListener('scroll', this.closeFeedContextMenu, true)
+      window.addEventListener('resize', this.closeFeedContextMenu)
+    },
+    closeFeedContextMenu: function() {
+      if (!this.feedContextMenu) return
+      var focusInMenu = this._ctxMenuHasFocus()
+      this.feedContextMenu = null
+      document.removeEventListener('click', this.closeFeedContextMenu)
+      document.removeEventListener('keydown', this.feedContextMenuKey)
+      window.removeEventListener('scroll', this.closeFeedContextMenu, true)
+      window.removeEventListener('resize', this.closeFeedContextMenu)
+      // Return focus to the trigger only if focus was still inside the menu
+      // (Escape / arrow nav). When an item was activated, its handler owns focus
+      // next (e.g. a prompt modal), so we don't steal it back.
+      if (focusInMenu && this._ctxTrigger && this._ctxTrigger.focus) this._ctxTrigger.focus()
+      this._ctxTrigger = null
+    },
+    _ctxMenuHasFocus: function() {
+      var menu = this.$refs.feedContextMenu
+      return !!(menu && menu.contains(document.activeElement))
+    },
+    // Fulfil the role="menu" keyboard contract: arrows / Home / End move focus
+    // between items (wrapping), Tab is trapped inside, Escape closes.
+    feedContextMenuKey: function(e) {
+      if (e.key === 'Escape') { e.preventDefault(); this.closeFeedContextMenu(); return }
+      var menu = this.$refs.feedContextMenu
+      if (!menu) return
+      var items = Array.prototype.slice.call(menu.querySelectorAll('.dropdown-item'))
+      if (!items.length) return
+      var i = items.indexOf(document.activeElement)
+      var next = null
+      if (e.key === 'ArrowDown') next = items[(i + 1 + items.length) % items.length]
+      else if (e.key === 'ArrowUp') next = items[(i - 1 + items.length) % items.length]
+      else if (e.key === 'Home') next = items[0]
+      else if (e.key === 'End') next = items[items.length - 1]
+      else if (e.key === 'Tab') next = items[(i + (e.shiftKey ? -1 : 1) + items.length) % items.length]
+      if (next) { e.preventDefault(); next.focus() }
+    },
+    // Grab the menu's feed, close, then run the action — so an action that opens
+    // a prompt/confirm replacement isn't racing the menu teardown, and the feed
+    // ref survives the close that nulls feedContextMenu.
+    runFeedCtx: function(fn) {
+      var feed = this.feedContextMenu && this.feedContextMenu.feed
+      this.closeFeedContextMenu()
+      if (feed) fn.call(this, feed)
+    },
+    togglePalette: function() {
+      this.paletteOpen ? this.closePalette() : this.openPalette()
+    },
+    openPalette: function() {
+      this._palettePrevFocus = document.activeElement
+      this.paletteQuery = ''
+      this.paletteIndex = 0
+      this.paletteOpen = true
+      this.$nextTick(function() {
+        if (this.$refs.paletteInput) this.$refs.paletteInput.focus()
+      }.bind(this))
+    },
+    closePalette: function() {
+      this.paletteOpen = false
+      if (this._palettePrevFocus && this._palettePrevFocus.focus) this._palettePrevFocus.focus()
+    },
+    paletteMove: function(delta) {
+      var n = this.paletteResults.length
+      if (!n) return
+      this.paletteIndex = (this.paletteIndex + delta + n) % n
+      this.$nextTick(function() {
+        var el = document.querySelector('.command-palette-row.selected')
+        if (el && el.scrollIntoView) el.scrollIntoView({block: 'nearest'})
+      })
+    },
+    paletteExecute: function(i) {
+      var r = this.paletteResults[i]
+      if (!r) return
+      // close first, then run — so an action that opens a modal (settings) or
+      // moves focus (search) isn't fighting the palette's focus restore.
+      this.paletteOpen = false
+      this.paletteQuery = ''
+      this.$nextTick(function() { if (r && r.run) r.run() })
+    },
+    // Smart Filters (Settings > Filters): rules that pre-triage items on refresh.
+    loadFilters: function() {
+      return api.filters.list().then(function(list) { vm.filters = list || [] })
+    },
+    filterActionLabel: function(action) {
+      return {read: 'Auto-read', star: 'Auto-star', mute: 'Mute'}[action] || action
+    },
+    createFilter: function() {
+      var draft = this.filterDraft
+      var keyword = (draft.keyword || '').trim()
+      if (!keyword) return
+      var payload = {action: draft.action, keyword: keyword, feed_id: draft.feedId, apply_now: draft.applyNow}
+      api.filters.create(payload).then(function(filter) {
+        if (filter && filter.id) vm.filters.push(filter)
+        vm.filterDraft = {action: 'read', keyword: '', feedId: null, applyNow: false}
+        // "apply now" changed existing items server-side — resync the views.
+        if (payload.apply_now) {
+          vm.refreshStats().then(vm.refreshFeeds.bind(vm)).then(vm.refreshItems.bind(vm, false))
+        }
+      })
+    },
+    deleteFilter: function(f) {
+      api.filters.delete(f.id).then(function() {
+        vm.filters = vm.filters.filter(function(x) { return x.id !== f.id })
+      })
     },
     refreshStats: function(loopMode) {
       return api.status().then(function(data) {
@@ -560,7 +1292,14 @@ var vm = new Vue({
       if (this.itemListCloseToBottom()) return this.refreshItems(true)
       if (this.itemSelected && this.itemSelected === this.items[this.items.length - 1].id) return this.refreshItems(true)
     },
+    showToast: function(text) {
+      var self = this
+      this.toast = {text: text}
+      clearTimeout(this._toastTimer)
+      this._toastTimer = setTimeout(function() { self.toast = null }, 2500)
+    },
     markItemsRead: function() {
+      if (!confirm('Mark all articles in this view as read?')) return
       var query = this.getItemsQuery()
       api.items.mark_read(query).then(function() {
         vm.items = []
@@ -581,6 +1320,55 @@ var vm = new Vue({
       }
       return new Date(datestr).toLocaleDateString(undefined, options)
     },
+    // Themed replacement for prompt(): open an in-app input modal. `opts` is
+    // {title, value, confirmLabel, onConfirm}. onConfirm receives the trimmed,
+    // non-empty value; an empty value cancels (matching prompt()'s null).
+    askPrompt: function(opts) {
+      this.promptModal = {
+        title: opts.title,
+        value: opts.value || '',
+        confirmLabel: opts.confirmLabel || 'Save',
+        onConfirm: opts.onConfirm,
+      }
+      // The modal component focuses .modal-content on its own $nextTick; defer a
+      // macrotask so this input focus runs last and actually wins.
+      var self = this
+      setTimeout(function() {
+        var input = self.$refs.promptInput
+        if (input) { input.focus(); input.select() }
+      }, 0)
+    },
+    confirmPrompt: function() {
+      var m = this.promptModal
+      if (!m) return
+      var val = (m.value || '').trim()
+      this.promptModal = null
+      if (val) m.onConfirm(val)
+    },
+    // Show a reversible-action toast. `onCommit` fires when the ~5s window closes
+    // (or is superseded); `onUndo` fires if the user hits Undo instead. Starting a
+    // new undo commits any pending one first, so a deferred server write is never
+    // dropped when actions are chained.
+    showFeedUndo: function(label, onUndo, onCommit) {
+      if (this.feedUndo) this.runFeedUndoCommit()
+      var self = this
+      var timer = setTimeout(function() { self.runFeedUndoCommit() }, 5000)
+      this.feedUndo = {label: label, onUndo: onUndo, onCommit: onCommit, timer: timer}
+    },
+    runFeedUndoCommit: function() {
+      var u = this.feedUndo
+      if (!u) return
+      clearTimeout(u.timer)
+      this.feedUndo = null
+      if (u.onCommit) u.onCommit()
+    },
+    runFeedUndo: function() {
+      var u = this.feedUndo
+      if (!u) return
+      clearTimeout(u.timer)
+      this.feedUndo = null
+      if (u.onUndo) u.onUndo()
+    },
     moveFeed: function(feed, folder) {
       var folder_id = folder ? folder.id : null
       api.feeds.update(feed.id, {folder_id: folder_id}).then(function() {
@@ -588,16 +1376,26 @@ var vm = new Vue({
         vm.refreshStats()
       })
     },
+    // moveFeed + an undo toast that moves the feed back to its previous folder.
+    moveFeedWithUndo: function(feed, folder) {
+      var prevId = feed.folder_id
+      var prevFolder = prevId ? this.folders.find(function(f) { return f.id == prevId }) : null
+      this.moveFeed(feed, folder)
+      var dest = folder ? folder.title : 'Uncategorized'
+      this.showFeedUndo('Moved “' + feed.title + '” to ' + dest, function() {
+        vm.moveFeed(feed, prevFolder || null)
+      }, null)
+    },
     moveFeedToNewFolder: function(feed) {
-      var title = prompt('Enter folder name:')
-      if (!title) return
-      api.folders.create({'title': title}).then(function(folder) {
-        api.feeds.update(feed.id, {folder_id: folder.id}).then(function() {
-          vm.refreshFeeds().then(function() {
-            vm.refreshStats()
+      this.askPrompt({title: 'Move to new folder', confirmLabel: 'Create & move', onConfirm: function(title) {
+        api.folders.create({'title': title}).then(function(folder) {
+          api.feeds.update(feed.id, {folder_id: folder.id}).then(function() {
+            vm.refreshFeeds().then(function() {
+              vm.refreshStats()
+            })
           })
         })
-      })
+      }})
     },
     createNewFeedFolder: function() {
       var title = prompt('Enter folder name:')
@@ -633,29 +1431,35 @@ var vm = new Vue({
       }
     },
     updateFeedLink: function(feed) {
-      var newLink = prompt('Enter feed link', feed.feed_link)
-      if (newLink) {
+      this.askPrompt({title: 'Change feed link', value: feed.feed_link, confirmLabel: 'Change', onConfirm: function(newLink) {
         api.feeds.update(feed.id, {feed_link: newLink}).then(function() {
           feed.feed_link = newLink
         })
-      }
+      }})
     },
     renameFeed: function(feed) {
-      var newTitle = prompt('Enter new title', feed.title)
-      if (newTitle) {
+      this.askPrompt({title: 'Rename feed', value: feed.title, confirmLabel: 'Rename', onConfirm: function(newTitle) {
         api.feeds.update(feed.id, {title: newTitle}).then(function() {
           feed.title = newTitle
         })
-      }
+      }})
     },
+    // Delete optimistically and defer the server write behind an undo toast, so a
+    // mis-delete is one click to reverse (the feed is only really gone once the
+    // undo window closes). Mirrors the swipe-card deferred-write pattern.
     deleteFeed: function(feed) {
-      if (confirm('Are you sure you want to delete ' + feed.title + '?')) {
+      this.feeds = this.feeds.filter(function(f) { return f.id !== feed.id })
+      if (this.feedSelected === 'feed:' + feed.id) this.feedSelected = null
+      this.refreshStats()
+      this.showFeedUndo('Deleted “' + feed.title + '”', function() {
+        // Nothing was deleted server-side; refetch to restore the row.
+        vm.refreshFeeds().then(function() { vm.refreshStats() })
+      }, function() {
         api.feeds.delete(feed.id).then(function() {
-          vm.feedSelected = null
           vm.refreshStats()
           vm.refreshFeeds()
         })
-      }
+      })
     },
     createFeed: function(event) {
       var form = event.target
@@ -687,8 +1491,10 @@ var vm = new Vue({
       var newstatus = item.status !== targetstatus ? targetstatus : fallbackstatus
 
       var updateStats = function(status, incr) {
+        var stat = this.feedStats[item.feed_id]
+        if (!stat) return   // same guard as above: no stats, nothing to adjust
         if ((status == 'unread') || (status == 'starred')) {
-          this.feedStats[item.feed_id][status] += incr
+          stat[status] += incr
         }
       }.bind(this)
 
@@ -699,6 +1505,11 @@ var vm = new Vue({
         var itemInList = this.items.find(function(i) { return i.id == item.id })
         if (itemInList) itemInList.status = newstatus
         item.status = newstatus
+        // cache the open article for offline reading when it's starred
+        if (newstatus == 'starred' && window.offlineStore &&
+            this.itemSelectedDetails && this.itemSelectedDetails.id == item.id) {
+          window.offlineStore.put(this.itemSelectedDetails)
+        }
       }.bind(this))
     },
     toggleItemStarred: function(item) {
@@ -729,13 +1540,39 @@ var vm = new Vue({
       }
       var item = this.itemSelectedDetails
       if (!item) return
-      if (item.link) {
-        this.loading.readability = true
-        api.crawl(item.link).then(function(data) {
-          vm.itemSelectedReadability = data && data.content
-          vm.loading.readability = false
-        })
-      }
+      if (!item.link) return this.showToast('This article has no link to read from')
+      this.loading.readability = true
+      // Without a rejection path the spinner ran forever: on the dominant
+      // LAN deployment the server often can't reach the page at all, and a
+      // feature that claims to still be working is worse than one that fails.
+      api.crawl(item.link).then(function(data) {
+        vm.loading.readability = false
+        if (data && data.content) {
+          vm.itemSelectedReadability = data.content
+        } else {
+          vm.showToast('Could not extract this page')
+        }
+      }).catch(function() {
+        vm.loading.readability = false
+        vm.showToast('Could not extract this page')
+      })
+    },
+    // Copy the article's original URL. Confirmation is doubled deliberately:
+    // the icon flips to a check in place (visible at the desk) and the toast
+    // announces it (visible on a phone, where a thumb covers the button, and
+    // audible to screen readers via the toast's aria-live region).
+    copyItemLink: function(item) {
+      var target = item || this.itemSelectedDetails
+      var link = target && target.link
+      if (!link) return
+      var self = this
+      copyText(link).then(function(ok) {
+        if (!ok) return self.showToast("Couldn't copy link")
+        self.linkCopied = true
+        clearTimeout(self._linkCopiedTimer)
+        self._linkCopiedTimer = setTimeout(function() { self.linkCopied = false }, 1600)
+        self.showToast('Link copied')
+      })
     },
     saveToInstapaper: function(item) {
       if (!item || !item.link || item.instapaper_saved) return
@@ -743,13 +1580,17 @@ var vm = new Vue({
       api.items.saveToInstapaper(item.id).then(function(resp) {
         vm.loading.instapaper = false
         if (!resp.ok) {
+          // toast, not alert(): a blocking unstyled browser dialog is the one
+          // thing in this pane that isn't quiet, and it can't be themed.
           return resp.json().then(function(data) {
-            alert(data.error || 'Failed to save to Instapaper')
+            vm.showToast(data.error || 'Failed to save to Instapaper')
           })
         }
         return resp.json().then(function(data) {
+          vm.showToast('Saved to Instapaper')
           vm.itemSelectedDetails.instapaper_saved = true
           vm.itemSelectedDetails.status = 'read'
+          if (window.offlineStore) window.offlineStore.put(vm.itemSelectedDetails)
           var itemInList = vm.items.find(function(i) { return i.id == item.id })
           if (itemInList) {
             itemInList.status = 'read'
@@ -764,7 +1605,7 @@ var vm = new Vue({
         })
       }.bind(this)).catch(function() {
         vm.loading.instapaper = false
-        alert('Failed to save to Instapaper. Check your connection.')
+        vm.showToast('Failed to save to Instapaper — check your connection')
       })
     },
     updateInstapaperCredentials: function(key, value) {
@@ -783,6 +1624,7 @@ var vm = new Vue({
       this.loadCardItems(null)
     },
     changeCardFolder: function(folderId) {
+      this.flushCardAction()
       this.cardFolder = folderId
       this.cardItems = []
       this.cardIndex = 0
@@ -810,38 +1652,100 @@ var vm = new Vue({
       })
     },
     exitCardMode: function() {
-      this.filterSelected = ''
+      this.filterSelected = this.previousFilter
     },
     cardSwipeLeft: function() {
       var item = this.currentCard
       if (!item) return
+      this.flushCardAction()
+      var index = this.cardIndex
       if (this.instapaperUsername) {
+        this.applyCardRead(item)
+        item.instapaper_saved = true
         this.cardStats.instapaper += 1
-        api.items.saveToInstapaper(item.id).then(function(resp) {
-          if (resp.ok) {
-            item.instapaper_saved = true
-            item.status = 'read'
-            if (vm.feedStats[item.feed_id] && vm.feedStats[item.feed_id].unread > 0) {
-              vm.feedStats[item.feed_id].unread -= 1
-            }
-          }
-        })
+        this.scheduleCardUndo(item, 'instapaper', index)
       } else {
         this.cardStats.kept += 1
+        this.scheduleCardUndo(item, 'kept', index)
       }
       this.cardIndex += 1
     },
     cardSwipeRight: function() {
       var item = this.currentCard
       if (!item) return
+      this.flushCardAction()
+      var index = this.cardIndex
+      this.applyCardRead(item)
       this.cardStats.read += 1
-      api.items.update(item.id, { status: 'read' }).then(function() {
-        if (vm.feedStats[item.feed_id] && vm.feedStats[item.feed_id].unread > 0) {
-          vm.feedStats[item.feed_id].unread -= 1
-        }
-      })
-      item.status = 'read'
+      this.scheduleCardUndo(item, 'read', index)
       this.cardIndex += 1
+    },
+    // Optimistically mark a card read locally; the server write is deferred
+    // until the undo window closes (see flushCardAction).
+    applyCardRead: function(item) {
+      item.status = 'read'
+      if (this.feedStats[item.feed_id] && this.feedStats[item.feed_id].unread > 0) {
+        this.feedStats[item.feed_id].unread -= 1
+      }
+    },
+    revertCardRead: function(item) {
+      item.status = 'unread'
+      if (this.feedStats[item.feed_id]) {
+        this.feedStats[item.feed_id].unread += 1
+      }
+    },
+    scheduleCardUndo: function(item, action, index) {
+      var timer = setTimeout(function() {
+        vm.flushCardAction()
+      }, 4000)
+      this.cardUndo = { item: item, action: action, index: index, timer: timer }
+    },
+    // Reverse the most recent swipe before its server write fires. Because the
+    // write is deferred, nothing has to be undone on the server.
+    undoCardAction: function() {
+      var pending = this.cardUndo
+      if (!pending) return
+      clearTimeout(pending.timer)
+      if (pending.action === 'instapaper' || pending.action === 'read') {
+        this.revertCardRead(pending.item)
+      }
+      if (pending.action === 'instapaper') {
+        pending.item.instapaper_saved = false
+        this.cardStats.instapaper -= 1
+      } else if (pending.action === 'read') {
+        this.cardStats.read -= 1
+      } else {
+        this.cardStats.kept -= 1
+      }
+      this.cardIndex = pending.index
+      this.cardUndo = null
+    },
+    // Commit the pending swipe: fire the deferred server write and clear undo.
+    flushCardAction: function() {
+      var pending = this.cardUndo
+      if (!pending) return
+      clearTimeout(pending.timer)
+      this.cardUndo = null
+      var item = pending.item
+      if (pending.action === 'read') {
+        api.items.update(item.id, { status: 'read' })
+      } else if (pending.action === 'instapaper') {
+        // Capture the stats object so a late failure adjusts the session that
+        // owned this swipe, never a fresh one started by enter/changeCardFolder.
+        var stats = this.cardStats
+        api.items.saveToInstapaper(item.id).then(function(resp) {
+          if (!resp.ok) vm.reconcileFailedInstapaper(item, stats)
+        }).catch(function() {
+          vm.reconcileFailedInstapaper(item, stats)
+        })
+      }
+    },
+    // The Instapaper save we counted optimistically failed; correct the count
+    // and restore the item to unread.
+    reconcileFailedInstapaper: function(item, stats) {
+      item.instapaper_saved = false
+      this.revertCardRead(item)
+      if (stats && stats.instapaper > 0) stats.instapaper -= 1
     },
     cardTap: function() {
       if (this.currentCard && this.currentCard.link) {
@@ -985,13 +1889,14 @@ var vm = new Vue({
         && (!this.itemSelectedDetails || this.itemSelectedDetails.feed_id != feed.id)
     },
   }
-})
+} }
 
-vm.$mount('#app')
+// directives + components are registered above; mount now that they exist.
+var vm = vueApp.mount('#app')
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function(err) {
-    console.log('SW registration failed:', err);
+    console.warn('SW registration failed:', err);
   });
 }
 
