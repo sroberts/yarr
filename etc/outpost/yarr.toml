@@ -1,0 +1,34 @@
+# Example Outpost manifest for yarr.
+# Copy to ~/.outpost/services/yarr.toml and adjust the paths.
+#
+# The port appears twice on purpose: once in `args` so yarr knows where to
+# listen, once in `port` so Outpost knows where to probe. Keep them equal, or
+# set OUTPOST_PORT in `env` instead of passing --port and Outpost's own
+# consistency check has nothing to disagree with.
+
+binary  = "/opt/outpost/bin/yarr"
+args    = ["--port", "8090"]
+port    = 8090
+storage = "~/.outpost/data/yarr"
+
+tailscale_name = "yarr"
+
+# Optional. yarr serves the whole UI unauthenticated by default; on a tailnet
+# that is often what you want. To require a login, keep both secrets in files
+# inside the storage directory -- so a backup carries them, and neither ever
+# lives in this plaintext manifest:
+#
+#   printf 'you:hunter2\n'      > ~/.outpost/data/yarr/auth
+#   openssl rand -hex 32        > ~/.outpost/data/yarr/session.key
+#   chmod 600 ~/.outpost/data/yarr/{auth,session.key}
+#
+# args = [
+#   "--port", "8090",
+#   "--auth-file", "/home/you/.outpost/data/yarr/auth",
+#   "--secret-key-file", "/home/you/.outpost/data/yarr/session.key",
+# ]
+
+# yarr needs no env table. SECRET_KEY_BASE and YARR_AUTH still work, but prefer
+# the file flags above: anything here is readable by anyone who can read
+# ~/.outpost/services/ and appears in the process environment.
+# [env]

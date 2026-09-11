@@ -16,7 +16,10 @@ type Worker struct {
 	pending *int32
 	refresh *time.Ticker
 	reflock sync.Mutex
-	stopper chan bool
+	// ticklock guards refresh & stopper: SetRefreshRate is called from the
+	// settings handler and from server startup and shutdown alike.
+	ticklock sync.Mutex
+	stopper  chan bool
 }
 
 func NewWorker(db *storage.Storage) *Worker {
@@ -60,6 +63,9 @@ func (w *Worker) FindFeedFavicon(feed storage.Feed) {
 }
 
 func (w *Worker) SetRefreshRate(minute int64) {
+	w.ticklock.Lock()
+	defer w.ticklock.Unlock()
+
 	if w.stopper != nil {
 		w.refresh.Stop()
 		w.refresh = nil
@@ -71,7 +77,7 @@ func (w *Worker) SetRefreshRate(minute int64) {
 		return
 	}
 
-	w.stopper = make(chan bool)
+	w.stopper = make(chan bool, 1)
 	w.refresh = time.NewTicker(time.Minute * time.Duration(minute))
 
 	go func(fire <-chan time.Time, stop <-chan bool, m int64) {
