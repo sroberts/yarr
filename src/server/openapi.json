@@ -2,14 +2,18 @@
   "openapi": "3.1.0",
   "info": {
     "title": "yarr",
-    "description": "HTTP API of yarr, a self-hostable RSS/Atom/JSON feed aggregator. This document covers the JSON API served under /api, OPML import/export, the reader-view page-crawl endpoint, and the health check. It does NOT cover the Fever-compatible API served under /fever/ (a separate third-party-compatible surface) or the browser/UI surfaces (/, /static/*, /manifest.json, /sw.js, /logout). When yarr is started with --auth (or --auth-file), every endpoint documented here except GET /up and GET /v1/openapi.json requires a valid `auth` session cookie, obtained by signing in through the HTML login form; requests without it receive a redirect/401 from the auth middleware rather than reaching these handlers. Response bodies and status codes below describe the handlers' actual behavior, including cases where the code returns 200 on what looks like a failure, or falls back to an empty 200 body because a route has no explicit handling for a given HTTP method.",
+    "description": "HTTP API of yarr, a self-hostable RSS/Atom/JSON feed aggregator. This document covers the JSON API served under /api, OPML import/export, the reader-view page-crawl endpoint, and the health check. It does NOT cover the Fever-compatible API served under /fever/ (a separate third-party-compatible surface), the JSON-RPC Model Context Protocol endpoint at POST /mcp (see doc/mcp.md) or the browser/UI surfaces (/, /static/*, /manifest.json, /sw.js, /logout). When yarr is started with --auth (or --auth-file), every endpoint documented here except GET /up and GET /v1/openapi.json requires a valid `auth` session cookie, obtained by signing in through the HTML login form; requests without it receive a redirect/401 from the auth middleware rather than reaching these handlers. Response bodies and status codes below describe the handlers' actual behavior, including cases where the code returns 200 on what looks like a failure, or falls back to an empty 200 body because a route has no explicit handling for a given HTTP method.",
     "version": "2.6"
   },
   "servers": [
-    { "url": "/" }
+    {
+      "url": "/"
+    }
   ],
   "security": [
-    { "cookieAuth": [] }
+    {
+      "cookieAuth": []
+    }
   ],
   "paths": {
     "/up": {
@@ -22,7 +26,10 @@
             "description": "Process is ready to serve traffic.",
             "content": {
               "text/plain": {
-                "schema": { "type": "string", "const": "OK" }
+                "schema": {
+                  "type": "string",
+                  "const": "OK"
+                }
               }
             }
           },
@@ -30,7 +37,10 @@
             "description": "Process is starting up or shutting down.",
             "content": {
               "text/plain": {
-                "schema": { "type": "string", "const": "STARTING" }
+                "schema": {
+                  "type": "string",
+                  "const": "STARTING"
+                }
               }
             }
           }
@@ -47,7 +57,9 @@
             "description": "The OpenAPI document.",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object"
+                }
               }
             }
           },
@@ -76,10 +88,15 @@
                     },
                     "stats": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/FeedStat" }
+                      "items": {
+                        "$ref": "#/components/schemas/FeedStat"
+                      }
                     }
                   },
-                  "required": ["running", "stats"]
+                  "required": [
+                    "running",
+                    "stats"
+                  ]
                 }
               }
             }
@@ -97,7 +114,9 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/Folder" }
+                  "items": {
+                    "$ref": "#/components/schemas/Folder"
+                  }
                 }
               }
             }
@@ -110,7 +129,9 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/FolderCreateForm" }
+              "schema": {
+                "$ref": "#/components/schemas/FolderCreateForm"
+              }
             }
           }
         },
@@ -119,7 +140,9 @@
             "description": "Folder created (or, if a folder with the same title already exists, its title is re-set and its id is returned).",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Folder" }
+                "schema": {
+                  "$ref": "#/components/schemas/Folder"
+                }
               }
             }
           },
@@ -127,7 +150,9 @@
             "description": "Malformed JSON body, or `title` missing/empty. A missing/empty title returns a JSON body `{\"error\": \"Folder title missing.\"}`; a JSON decode failure returns an empty body.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ErrorMessage" }
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
               }
             }
           },
@@ -144,7 +169,10 @@
           "name": "id",
           "in": "path",
           "required": true,
-          "schema": { "type": "integer", "format": "int64" },
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
           "description": "Folder id."
         }
       ],
@@ -155,21 +183,35 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/FolderUpdateForm" }
+              "schema": {
+                "$ref": "#/components/schemas/FolderUpdateForm"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "Updated (empty body).", "content": {} },
-          "400": { "description": "`id` is not an integer, or the JSON body is malformed.", "content": {} }
+          "200": {
+            "description": "Updated (empty body).",
+            "content": {}
+          },
+          "400": {
+            "description": "`id` is not an integer, or the JSON body is malformed.",
+            "content": {}
+          }
         }
       },
       "delete": {
         "summary": "Delete a folder",
         "description": "Feeds inside the folder are not deleted; see the `feeds` table's foreign key behavior in src/storage.",
         "responses": {
-          "204": { "description": "Deleted (empty body). Returned even if no folder with this id existed.", "content": {} },
-          "400": { "description": "`id` is not an integer.", "content": {} }
+          "204": {
+            "description": "Deleted (empty body). Returned even if no folder with this id existed.",
+            "content": {}
+          },
+          "400": {
+            "description": "`id` is not an integer.",
+            "content": {}
+          }
         }
       }
     },
@@ -183,7 +225,9 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/Feed" }
+                  "items": {
+                    "$ref": "#/components/schemas/Feed"
+                  }
                 }
               }
             }
@@ -192,52 +236,80 @@
       },
       "post": {
         "summary": "Subscribe to a feed (or discover candidate feeds at a URL)",
-        "description": "Given a URL, tries to parse it directly as a feed; if that fails, scrapes the page for <link> feed autodiscovery tags. Always responds 200, even when nothing is found or the URL is unreachable — the outcome is communicated only via the `status` field in the body.",
+        "description": "Given a URL, tries to parse it directly as a feed; if that fails, scrapes the page for <link> feed autodiscovery tags. Always responds 200, even when nothing is found or the URL is unreachable \u2014 the outcome is communicated only via the `status` field in the body.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/FeedCreateForm" }
+              "schema": {
+                "$ref": "#/components/schemas/FeedCreateForm"
+              }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "One of three shapes depending on `status`: `notfound` (URL unreachable or no feed/links found), `multiple` (the page links to more than one feed — `choice` lists the candidates), or `success` (a feed was created and its items fetched — `feed` is the new Feed).",
+            "description": "One of three shapes depending on `status`: `notfound` (URL unreachable or no feed/links found), `multiple` (the page links to more than one feed \u2014 `choice` lists the candidates), or `success` (a feed was created and its items fetched \u2014 `feed` is the new Feed).",
             "content": {
               "application/json": {
                 "schema": {
                   "oneOf": [
                     {
                       "type": "object",
-                      "properties": { "status": { "type": "string", "const": "notfound" } },
-                      "required": ["status"]
-                    },
-                    {
-                      "type": "object",
                       "properties": {
-                        "status": { "type": "string", "const": "multiple" },
-                        "choice": {
-                          "type": "array",
-                          "items": { "$ref": "#/components/schemas/FeedSource" }
+                        "status": {
+                          "type": "string",
+                          "const": "notfound"
                         }
                       },
-                      "required": ["status", "choice"]
+                      "required": [
+                        "status"
+                      ]
                     },
                     {
                       "type": "object",
                       "properties": {
-                        "status": { "type": "string", "const": "success" },
-                        "feed": { "$ref": "#/components/schemas/Feed" }
+                        "status": {
+                          "type": "string",
+                          "const": "multiple"
+                        },
+                        "choice": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/FeedSource"
+                          }
+                        }
                       },
-                      "required": ["status", "feed"]
+                      "required": [
+                        "status",
+                        "choice"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "const": "success"
+                        },
+                        "feed": {
+                          "$ref": "#/components/schemas/Feed"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "feed"
+                      ]
                     }
                   ]
                 }
               }
             }
           },
-          "400": { "description": "Malformed JSON body.", "content": {} }
+          "400": {
+            "description": "Malformed JSON body.",
+            "content": {}
+          }
         }
       }
     },
@@ -246,8 +318,14 @@
         "summary": "Trigger a background refresh of all feeds",
         "description": "Enqueues a refresh and returns immediately; refreshing happens asynchronously in the worker.",
         "responses": {
-          "200": { "description": "Refresh triggered (empty body).", "content": {} },
-          "405": { "description": "Method other than POST.", "content": {} }
+          "200": {
+            "description": "Refresh triggered (empty body).",
+            "content": {}
+          },
+          "405": {
+            "description": "Method other than POST.",
+            "content": {}
+          }
         }
       }
     },
@@ -262,7 +340,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "additionalProperties": { "type": "string" },
+                  "additionalProperties": {
+                    "type": "string"
+                  },
                   "description": "Keys are feed ids (stringified int64)."
                 }
               }
@@ -277,7 +357,10 @@
           "name": "id",
           "in": "path",
           "required": true,
-          "schema": { "type": "integer", "format": "int64" },
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
           "description": "Feed id."
         }
       ],
@@ -289,7 +372,9 @@
             "name": "If-None-Match",
             "in": "header",
             "required": false,
-            "schema": { "type": "string" },
+            "schema": {
+              "type": "string"
+            },
             "description": "ETag (md5 of the icon bytes, truncated to 16 hex chars) from a previous response."
           }
         ],
@@ -297,12 +382,26 @@
           "200": {
             "description": "Icon bytes. Content-Type is sniffed from the bytes via http.DetectContentType.",
             "content": {
-              "image/*": { "schema": { "type": "string", "contentEncoding": "binary" } }
+              "image/*": {
+                "schema": {
+                  "type": "string",
+                  "contentEncoding": "binary"
+                }
+              }
             }
           },
-          "304": { "description": "If-None-Match matched the current icon's ETag.", "content": {} },
-          "400": { "description": "`id` is not an integer.", "content": {} },
-          "404": { "description": "Feed does not exist, or has no icon.", "content": {} }
+          "304": {
+            "description": "If-None-Match matched the current icon's ETag.",
+            "content": {}
+          },
+          "400": {
+            "description": "`id` is not an integer.",
+            "content": {}
+          },
+          "404": {
+            "description": "Feed does not exist, or has no icon.",
+            "content": {}
+          }
         }
       }
     },
@@ -312,13 +411,16 @@
           "name": "id",
           "in": "path",
           "required": true,
-          "schema": { "type": "integer", "format": "int64" },
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
           "description": "Feed id."
         }
       ],
       "put": {
         "summary": "Update a feed's title, folder, and/or feed URL",
-        "description": "The request body is decoded into a generic JSON object rather than a fixed struct; only the keys `title` (string), `folder_id` (number or null), and `feed_link` (string) are recognized, and each is applied independently only if present and of the expected JSON type — wrong-typed values for a recognized key are silently ignored rather than rejected. Unrecognized keys are ignored.",
+        "description": "The request body is decoded into a generic JSON object rather than a fixed struct; only the keys `title` (string), `folder_id` (number or null), and `feed_link` (string) are recognized, and each is applied independently only if present and of the expected JSON type \u2014 wrong-typed values for a recognized key are silently ignored rather than rejected. Unrecognized keys are ignored.",
         "requestBody": {
           "required": true,
           "content": {
@@ -326,51 +428,121 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": { "type": "string" },
-                  "folder_id": {
-                    "oneOf": [ { "type": "integer", "format": "int64" }, { "type": "null" } ]
+                  "title": {
+                    "type": "string"
                   },
-                  "feed_link": { "type": "string" }
+                  "folder_id": {
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "format": "int64"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "feed_link": {
+                    "type": "string"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Updated (empty body).", "content": {} },
-          "400": { "description": "`id` is not an integer, no feed with that id exists, or the JSON body is malformed.", "content": {} },
-          "405": { "description": "Method other than PUT or DELETE.", "content": {} }
+          "200": {
+            "description": "Updated (empty body).",
+            "content": {}
+          },
+          "400": {
+            "description": "`id` is not an integer, no feed with that id exists, or the JSON body is malformed.",
+            "content": {}
+          },
+          "405": {
+            "description": "Method other than PUT or DELETE.",
+            "content": {}
+          }
         }
       },
       "delete": {
         "summary": "Unsubscribe from a feed",
         "responses": {
-          "204": { "description": "Deleted (empty body).", "content": {} },
-          "400": { "description": "`id` is not an integer.", "content": {} },
-          "405": { "description": "Method other than PUT or DELETE.", "content": {} }
+          "204": {
+            "description": "Deleted (empty body).",
+            "content": {}
+          },
+          "400": {
+            "description": "`id` is not an integer.",
+            "content": {}
+          },
+          "405": {
+            "description": "Method other than PUT or DELETE.",
+            "content": {}
+          }
         }
       }
     },
     "/api/items": {
       "get": {
         "summary": "List items (paginated)",
-        "description": "Page size is fixed at 20 and is not configurable by the client. `after` is a cursor: it names an existing item id, and the response continues strictly before/after that item's (date, id) position in the requested sort order — it is not a byte/row offset. Items with an empty title have one synthesized from the first 140 characters of their (HTML-stripped) content.",
+        "description": "Page size is fixed at 20 and is not configurable by the client. `after` is a cursor: it names an existing item id, and the response continues strictly before/after that item's (date, id) position in the requested sort order \u2014 it is not a byte/row offset. Items with an empty title have one synthesized from the first 140 characters of their (HTML-stripped) content.",
         "parameters": [
-          { "name": "folder_id", "in": "query", "schema": { "type": "integer", "format": "int64" }, "description": "Restrict to feeds in this folder." },
-          { "name": "feed_id", "in": "query", "schema": { "type": "integer", "format": "int64" }, "description": "Restrict to this feed." },
-          { "name": "after", "in": "query", "schema": { "type": "integer", "format": "int64" }, "description": "Id of an item to page from; results continue after its position in the current sort order." },
+          {
+            "name": "folder_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Restrict to feeds in this folder."
+          },
+          {
+            "name": "feed_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Restrict to this feed."
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Id of an item to page from; results continue after its position in the current sort order."
+          },
           {
             "name": "status",
             "in": "query",
-            "schema": { "type": "string", "enum": ["unread", "read", "starred"] },
-            "description": "Filter by status. Note: an unrecognized value is not rejected — storage.StatusValues[status] returns the zero value (unread) for any string it doesn't recognize, so a typo silently filters for unread items."
+            "schema": {
+              "type": "string",
+              "enum": [
+                "unread",
+                "read",
+                "starred"
+              ]
+            },
+            "description": "Filter by status. Note: an unrecognized value is not rejected \u2014 storage.StatusValues[status] returns the zero value (unread) for any string it doesn't recognize, so a typo silently filters for unread items."
           },
-          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Full-text search (SQLite FTS `search` table) over title/content, tokenized on whitespace with a trailing-wildcard prefix match on each term." },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Full-text search (SQLite FTS `search` table) over title/content, tokenized on whitespace with a trailing-wildcard prefix match on each term."
+          },
           {
             "name": "oldest_first",
             "in": "query",
-            "schema": { "type": "string" },
-            "description": "Sort ascending by date when exactly the string \"true\"; any other value (including absent) sorts newest-first. Not a boolean-typed query param — compared as a literal string."
+            "schema": {
+              "type": "string"
+            },
+            "description": "Sort ascending by date when exactly the string \"true\"; any other value (including absent) sorts newest-first. Not a boolean-typed query param \u2014 compared as a literal string."
           }
         ],
         "responses": {
@@ -383,12 +555,19 @@
                   "properties": {
                     "list": {
                       "type": "array",
-                      "items": { "$ref": "#/components/schemas/Item" },
+                      "items": {
+                        "$ref": "#/components/schemas/Item"
+                      },
                       "description": "Each item's `content` field is the raw, unsanitized content (unlike GET /api/items/{id}, this list endpoint does not run it through the HTML sanitizer)."
                     },
-                    "has_more": { "type": "boolean" }
+                    "has_more": {
+                      "type": "boolean"
+                    }
                   },
-                  "required": ["list", "has_more"]
+                  "required": [
+                    "list",
+                    "has_more"
+                  ]
                 }
               }
             }
@@ -399,11 +578,30 @@
         "summary": "Bulk-mark items as read",
         "description": "Marks every item matching the filter as read, except items that are starred (starred items are never auto-marked read by this endpoint). With no filter parameters, this marks every non-starred item in the database as read.",
         "parameters": [
-          { "name": "folder_id", "in": "query", "schema": { "type": "integer", "format": "int64" }, "description": "Restrict to feeds in this folder." },
-          { "name": "feed_id", "in": "query", "schema": { "type": "integer", "format": "int64" }, "description": "Restrict to this feed." }
+          {
+            "name": "folder_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Restrict to feeds in this folder."
+          },
+          {
+            "name": "feed_id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Restrict to this feed."
+          }
         ],
         "responses": {
-          "200": { "description": "Marked (empty body).", "content": {} }
+          "200": {
+            "description": "Marked (empty body).",
+            "content": {}
+          }
         }
       }
     },
@@ -413,7 +611,10 @@
           "name": "id",
           "in": "path",
           "required": true,
-          "schema": { "type": "integer", "format": "int64" },
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
           "description": "Item id."
         }
       ],
@@ -424,10 +625,17 @@
           "200": {
             "description": "The item.",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/Item" } }
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
             }
           },
-          "400": { "description": "`id` is not an integer, or no item with that id exists.", "content": {} }
+          "400": {
+            "description": "`id` is not an integer, or no item with that id exists.",
+            "content": {}
+          }
         }
       },
       "put": {
@@ -436,14 +644,25 @@
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ItemUpdateForm" }
+              "schema": {
+                "$ref": "#/components/schemas/ItemUpdateForm"
+              }
             }
           }
         },
         "responses": {
-          "200": { "description": "Updated (empty body). A body with `status` omitted is a no-op that still returns 200.", "content": {} },
-          "400": { "description": "`id` is not an integer, or the JSON body is malformed.", "content": {} },
-          "405": { "description": "Method other than GET or PUT.", "content": {} }
+          "200": {
+            "description": "Updated (empty body). A body with `status` omitted is a no-op that still returns 200.",
+            "content": {}
+          },
+          "400": {
+            "description": "`id` is not an integer, or the JSON body is malformed.",
+            "content": {}
+          },
+          "405": {
+            "description": "Method other than GET or PUT.",
+            "content": {}
+          }
         }
       }
     },
@@ -453,7 +672,10 @@
           "name": "id",
           "in": "path",
           "required": true,
-          "schema": { "type": "integer", "format": "int64" },
+          "schema": {
+            "type": "integer",
+            "format": "int64"
+          },
           "description": "Item id."
         }
       ],
@@ -464,21 +686,39 @@
           "200": {
             "description": "Saved to Instapaper. Returns the item as it stands after being updated (instapaper_saved=true, status=read).",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/Item" } }
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
             }
           },
           "400": {
             "description": "`id` is not an integer, or Instapaper credentials are not configured.",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorMessage" } }
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
             }
           },
-          "404": { "description": "No item with that id exists.", "content": {} },
-          "405": { "description": "Method other than POST.", "content": {} },
+          "404": {
+            "description": "No item with that id exists.",
+            "content": {}
+          },
+          "405": {
+            "description": "Method other than POST.",
+            "content": {}
+          },
           "502": {
             "description": "The request to Instapaper's API failed or was rejected.",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/ErrorMessage" } }
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
             }
           }
         }
@@ -487,12 +727,16 @@
     "/api/settings": {
       "get": {
         "summary": "Get settings",
-        "description": "Returns the defaults merged with any stored overrides. The exact key set is fixed (see Settings schema) but the endpoint has no declared response type in the code — it is a plain map[string]interface{}, so `additionalProperties` is intentionally left open here.",
+        "description": "Returns the defaults merged with any stored overrides. The exact key set is fixed (see Settings schema) but the endpoint has no declared response type in the code \u2014 it is a plain map[string]interface{}, so `additionalProperties` is intentionally left open here.",
         "responses": {
           "200": {
             "description": "Current settings.",
             "content": {
-              "application/json": { "schema": { "$ref": "#/components/schemas/Settings" } }
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Settings"
+                }
+              }
             }
           }
         }
@@ -512,15 +756,21 @@
           }
         },
         "responses": {
-          "200": { "description": "Updated (empty body).", "content": {} },
-          "400": { "description": "Malformed JSON body, or the update failed to persist.", "content": {} }
+          "200": {
+            "description": "Updated (empty body).",
+            "content": {}
+          },
+          "400": {
+            "description": "Malformed JSON body, or the update failed to persist.",
+            "content": {}
+          }
         }
       }
     },
     "/opml/import": {
       "post": {
         "summary": "Import subscriptions from an OPML file",
-        "description": "multipart/form-data with the OPML file in a field named `opml`. Imported feeds are not fetched inline; the handler kicks off favicon discovery and a full feed refresh in the background and returns immediately. Note: if the `opml` form field/file is missing or unreadable, the handler logs the error and returns without writing any status, which falls through to an implicit 200 with an empty body — the same as success.",
+        "description": "multipart/form-data with the OPML file in a field named `opml`. Imported feeds are not fetched inline; the handler kicks off favicon discovery and a full feed refresh in the background and returns immediately. Note: if the `opml` form field/file is missing or unreadable, the handler logs the error and returns without writing any status, which falls through to an implicit 200 with an empty body \u2014 the same as success.",
         "requestBody": {
           "required": true,
           "content": {
@@ -528,17 +778,32 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "opml": { "type": "string", "contentEncoding": "binary", "description": "OPML XML document." }
+                  "opml": {
+                    "type": "string",
+                    "contentEncoding": "binary",
+                    "description": "OPML XML document."
+                  }
                 },
-                "required": ["opml"]
+                "required": [
+                  "opml"
+                ]
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Import kicked off (or the form field was missing/unreadable — see description).", "content": {} },
-          "400": { "description": "The uploaded file could not be parsed as OPML.", "content": {} },
-          "405": { "description": "Method other than POST.", "content": {} }
+          "200": {
+            "description": "Import kicked off (or the form field was missing/unreadable \u2014 see description).",
+            "content": {}
+          },
+          "400": {
+            "description": "The uploaded file could not be parsed as OPML.",
+            "content": {}
+          },
+          "405": {
+            "description": "Method other than POST.",
+            "content": {}
+          }
         }
       }
     },
@@ -550,7 +815,11 @@
           "200": {
             "description": "OPML XML document, served as an attachment (Content-Disposition: attachment; filename=\"subscriptions.opml\").",
             "content": {
-              "application/xml": { "schema": { "type": "string" } }
+              "application/xml": {
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           }
         }
@@ -559,9 +828,18 @@
     "/page": {
       "get": {
         "summary": "Fetch a URL server-side and extract readable article content",
-        "description": "Used by the UI's reader view. Does not check the request method — any HTTP method reaches this logic. If the URL is a recognized video page (YouTube/Vimeo), returns a sanitized <iframe> embed instead of crawling. Requests targeting an internal/private IP are refused, but silently: the handler logs a warning server-side and returns without writing any response status or body, which the client sees as 200 with an empty body. If article extraction fails, the error is NOT surfaced as an HTTP error — the handler still returns 200, with `content` set to the string \"error: <message>\".",
+        "description": "Used by the UI's reader view. Does not check the request method \u2014 any HTTP method reaches this logic. If the URL is a recognized video page (YouTube/Vimeo), returns a sanitized <iframe> embed instead of crawling. Requests targeting an internal/private IP are refused, but silently: the handler logs a warning server-side and returns without writing any response status or body, which the client sees as 200 with an empty body. If article extraction fails, the error is NOT surfaced as an HTTP error \u2014 the handler still returns 200, with `content` set to the string \"error: <message>\".",
         "parameters": [
-          { "name": "url", "in": "query", "required": true, "schema": { "type": "string", "format": "uri" }, "description": "The page URL to fetch." }
+          {
+            "name": "url",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "The page URL to fetch."
+          }
         ],
         "responses": {
           "200": {
@@ -570,13 +848,22 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "content": { "type": "string" } },
-                  "required": ["content"]
+                  "properties": {
+                    "content": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "content"
+                  ]
                 }
               }
             }
           },
-          "400": { "description": "The URL could not be fetched.", "content": {} }
+          "400": {
+            "description": "The URL could not be fetched.",
+            "content": {}
+          }
         }
       }
     }
@@ -594,138 +881,296 @@
       "ErrorMessage": {
         "type": "object",
         "properties": {
-          "error": { "type": "string" }
+          "error": {
+            "type": "string"
+          }
         },
-        "required": ["error"]
+        "required": [
+          "error"
+        ]
       },
       "MediaLink": {
         "type": "object",
         "description": "An enclosure/media link extracted from a feed item (podcast audio, images, etc).",
         "properties": {
-          "url": { "type": "string" },
-          "type": { "type": "string", "description": "MIME type, as declared by the feed." },
-          "description": { "type": "string" }
+          "url": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "description": "MIME type, as declared by the feed."
+          },
+          "description": {
+            "type": "string"
+          }
         },
-        "required": ["url", "type"]
+        "required": [
+          "url",
+          "type"
+        ]
       },
       "Item": {
         "type": "object",
         "description": "A feed entry, from src/storage/item.go Item.",
         "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "guid": { "type": "string" },
-          "feed_id": { "type": "integer", "format": "int64" },
-          "title": { "type": "string" },
-          "link": { "type": "string" },
-          "content": { "type": "string", "description": "HTML. Omitted from the JSON body entirely when empty (omitempty)." },
-          "date": { "type": "string", "format": "date-time" },
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "guid": {
+            "type": "string"
+          },
+          "feed_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string",
+            "description": "HTML. Omitted from the JSON body entirely when empty (omitempty)."
+          },
+          "date": {
+            "type": "string",
+            "format": "date-time"
+          },
           "status": {
             "type": "string",
-            "enum": ["unread", "read", "starred"],
+            "enum": [
+              "unread",
+              "read",
+              "starred"
+            ],
             "description": "Stored internally as an integer (0/1/2) but marshaled to/from these string names."
           },
           "media_links": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/MediaLink" }
+            "items": {
+              "$ref": "#/components/schemas/MediaLink"
+            }
           },
-          "instapaper_saved": { "type": "boolean" }
+          "instapaper_saved": {
+            "type": "boolean"
+          }
         },
-        "required": ["id", "guid", "feed_id", "title", "link", "date", "status", "media_links", "instapaper_saved"]
+        "required": [
+          "id",
+          "guid",
+          "feed_id",
+          "title",
+          "link",
+          "date",
+          "status",
+          "media_links",
+          "instapaper_saved"
+        ]
       },
       "Feed": {
         "type": "object",
         "description": "A subscribed feed, from src/storage/feed.go Feed.",
         "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "folder_id": {
-            "oneOf": [ { "type": "integer", "format": "int64" }, { "type": "null" } ]
+          "id": {
+            "type": "integer",
+            "format": "int64"
           },
-          "title": { "type": "string" },
-          "description": { "type": "string" },
-          "link": { "type": "string", "description": "Site (HTML page) URL." },
-          "feed_link": { "type": "string", "description": "Feed (RSS/Atom/JSON) URL." },
+          "folder_id": {
+            "oneOf": [
+              {
+                "type": "integer",
+                "format": "int64"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "description": "Site (HTML page) URL."
+          },
+          "feed_link": {
+            "type": "string",
+            "description": "Feed (RSS/Atom/JSON) URL."
+          },
           "icon": {
             "type": "string",
             "contentEncoding": "base64",
             "description": "Raw icon bytes, base64-encoded by Go's JSON marshaler. Only present when the query that produced this Feed selected it (GET /api/feeds/{id} does; GET /api/feeds does not); omitted from the JSON body when nil (omitempty)."
           },
-          "has_icon": { "type": "boolean" }
+          "has_icon": {
+            "type": "boolean"
+          }
         },
-        "required": ["id", "folder_id", "title", "description", "link", "feed_link", "has_icon"]
+        "required": [
+          "id",
+          "folder_id",
+          "title",
+          "description",
+          "link",
+          "feed_link",
+          "has_icon"
+        ]
       },
       "Folder": {
         "type": "object",
         "description": "From src/storage/folder.go Folder.",
         "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "title": { "type": "string" },
-          "is_expanded": { "type": "boolean" }
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "is_expanded": {
+            "type": "boolean"
+          }
         },
-        "required": ["id", "title", "is_expanded"]
+        "required": [
+          "id",
+          "title",
+          "is_expanded"
+        ]
       },
       "FeedStat": {
         "type": "object",
         "description": "From src/storage/item.go FeedStat.",
         "properties": {
-          "feed_id": { "type": "integer", "format": "int64" },
-          "unread": { "type": "integer", "format": "int64" },
-          "starred": { "type": "integer", "format": "int64" }
+          "feed_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unread": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "starred": {
+            "type": "integer",
+            "format": "int64"
+          }
         },
-        "required": ["feed_id", "unread", "starred"]
+        "required": [
+          "feed_id",
+          "unread",
+          "starred"
+        ]
       },
       "FeedSource": {
         "type": "object",
         "description": "A candidate feed discovered on a page, from src/worker/crawler.go FeedSource.",
         "properties": {
-          "title": { "type": "string" },
-          "url": { "type": "string" }
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
         },
-        "required": ["title", "url"]
+        "required": [
+          "title",
+          "url"
+        ]
       },
       "FolderCreateForm": {
         "type": "object",
         "properties": {
-          "title": { "type": "string" }
+          "title": {
+            "type": "string"
+          }
         },
-        "required": ["title"]
+        "required": [
+          "title"
+        ]
       },
       "FolderUpdateForm": {
         "type": "object",
         "description": "All fields optional; only the fields present are applied.",
         "properties": {
-          "title": { "type": "string" },
-          "is_expanded": { "type": "boolean" }
+          "title": {
+            "type": "string"
+          },
+          "is_expanded": {
+            "type": "boolean"
+          }
         }
       },
       "FeedCreateForm": {
         "type": "object",
         "properties": {
-          "url": { "type": "string", "description": "A feed URL, or a page URL to autodiscover feed(s) on." },
-          "folder_id": { "type": "integer", "format": "int64" }
+          "url": {
+            "type": "string",
+            "description": "A feed URL, or a page URL to autodiscover feed(s) on."
+          },
+          "folder_id": {
+            "type": "integer",
+            "format": "int64"
+          }
         },
-        "required": ["url"]
+        "required": [
+          "url"
+        ]
       },
       "ItemUpdateForm": {
         "type": "object",
         "properties": {
-          "status": { "type": "string", "enum": ["unread", "read", "starred"] }
+          "status": {
+            "type": "string",
+            "enum": [
+              "unread",
+              "read",
+              "starred"
+            ]
+          }
         }
       },
       "Settings": {
         "type": "object",
         "description": "From src/storage/settings.go settingsDefaults(); GET /api/settings returns this shape merged with any stored overrides, so additional keys should not appear but the type itself is a plain map with no server-side schema enforcement.",
         "properties": {
-          "filter": { "type": "string" },
-          "feed": { "type": "string" },
-          "feed_list_width": { "type": "integer" },
-          "item_list_width": { "type": "integer" },
-          "sort_newest_first": { "type": "boolean" },
-          "theme_name": { "type": "string" },
-          "theme_font": { "type": "string" },
-          "theme_size": { "type": "integer" },
-          "refresh_rate": { "type": "integer", "description": "Seconds between automatic refreshes; 0 disables auto-refresh." },
-          "instapaper_username": { "type": "string" },
-          "instapaper_password": { "type": "string" }
+          "filter": {
+            "type": "string"
+          },
+          "feed": {
+            "type": "string"
+          },
+          "feed_list_width": {
+            "type": "integer"
+          },
+          "item_list_width": {
+            "type": "integer"
+          },
+          "sort_newest_first": {
+            "type": "boolean"
+          },
+          "theme_name": {
+            "type": "string"
+          },
+          "theme_font": {
+            "type": "string"
+          },
+          "theme_size": {
+            "type": "integer"
+          },
+          "refresh_rate": {
+            "type": "integer",
+            "description": "Seconds between automatic refreshes; 0 disables auto-refresh."
+          },
+          "instapaper_username": {
+            "type": "string"
+          },
+          "instapaper_password": {
+            "type": "string"
+          }
         },
         "additionalProperties": true
       }

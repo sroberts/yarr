@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/nkanaev/yarr/src/content/htmlutil"
@@ -83,11 +86,74 @@ func (s *Server) mcpAuth(c *router.Context) bool {
 	return auth.StringsEqual(token, s.mcpToken())
 }
 
+// --- request guards ---
+
+// mcpJSONContentType accepts application/json with any parameters, and the
+// +json structured suffix, case-insensitively.
+func mcpJSONContentType(value string) bool {
+	mediatype, _, err := mime.ParseMediaType(value)
+	if err != nil {
+		return false
+	}
+	return mediatype == "application/json" || strings.HasSuffix(mediatype, "+json")
+}
+
+// mcpOriginAllowed rejects a browser Origin that is neither this host nor a
+// loopback address. Non-browser MCP clients send no Origin and pass through.
+func mcpOriginAllowed(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	host := u.Hostname()
+	if host == "" {
+		return false
+	}
+	if strings.EqualFold(u.Host, r.Host) {
+		return true
+	}
+	if requestHost, _, err := net.SplitHostPort(r.Host); err == nil && strings.EqualFold(host, requestHost) {
+		return true
+	}
+	if strings.EqualFold(host, "localhost") || strings.HasSuffix(strings.ToLower(host), ".localhost") {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
 // --- handler ---
 
 func (s *Server) handleMCP(c *router.Context) {
 	if c.Req.Method != "POST" {
+		c.Out.Header().Set("Allow", "POST")
 		c.Out.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if !mcpOriginAllowed(c.Req) {
+		// DNS rebinding protection, required of Streamable HTTP servers.
+		c.Out.WriteHeader(http.StatusForbidden)
+		return
+	}
+	// Browser requests must carry a JSON content type. mcpAuth passes
+	// everything through when no credentials are configured -- the default,
+	// and the usual tailnet posture -- so without this a page on any other
+	// localhost port could call delete_folder or mark_all_read with a
+	// text/plain body: that is a CORS simple request, so it skips the
+	// preflight and runs with whatever ambient authority the browser has.
+	// Requiring JSON forces the preflight, which this endpoint answers with
+	// no CORS headers at all.
+	//
+	// Only browsers are held to it. CSRF needs a browser riding ambient
+	// authority, and a browser always sends Origin on a POST; a client that
+	// sends none has no ambient authority to ride, and MCP clients in the
+	// wild are not all careful about the header.
+	if c.Req.Header.Get("Origin") != "" && !mcpJSONContentType(c.Req.Header.Get("Content-Type")) {
+		c.Out.WriteHeader(http.StatusUnsupportedMediaType)
 		return
 	}
 	if !s.mcpAuth(c) {

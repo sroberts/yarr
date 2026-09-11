@@ -73,7 +73,38 @@ yarr logs to stdout unbuffered, with no ANSI escapes, so `outpost logs yarr`
 shows everything. Do not pass `--log-file` under Outpost: it redirects logs into
 a file Outpost neither captures nor rotates. yarr warns if you do.
 
-## what yarr does not do
+## describing itself
 
-`/mcp` and `/v1/openapi.json` (spec §9) are not implemented. They are optional
-and forward-looking, and nothing in Outpost consumes them today.
+Spec §9 is optional and forward-looking. yarr covers both halves.
+
+`GET /v1/openapi.json` returns a hand-written OpenAPI 3.1 document covering the
+`/api/*` JSON API, OPML import/export, the reader-view page crawl, and `/up`.
+It is reachable without authentication -- it is a schema, not data -- so a
+generator can fetch it from a supervised instance. It describes the handlers'
+real behaviour, including the places where yarr answers 200 or 400 where you
+would expect something else; a test walks every documented path through the
+router so the document cannot drift without CI noticing. `info.version` carries
+the running release, stamped at startup rather than written into the file.
+
+`POST /mcp` serves the Model Context Protocol, documented in [mcp.md](mcp.md).
+It authenticates with a bearer token rather than the session cookie, so an MCP
+client can actually use it, and it sits in the auth middleware's public list for
+that reason.
+
+Two guards sit in front of it, both aimed at the browser:
+
+- **Origin** is checked against `Host`, with loopback allowed. Non-browser MCP
+  clients send no `Origin` and pass through untouched.
+- **A browser must send a JSON content type.** Bearer auth is skipped entirely
+  when no credentials are configured -- the default, and the usual tailnet
+  posture -- so without this a page open on any other localhost port could POST
+  a `text/plain` body and call `delete_folder` or `mark_all_read`. A port is not
+  part of a "site", so the browser treats that as same-site, and `text/plain`
+  makes it a CORS simple request with no preflight. Requiring JSON forces the
+  preflight, which this endpoint answers with no CORS headers at all. Only
+  requests carrying an `Origin` are held to it: CSRF needs a browser riding
+  ambient authority, and a browser always sends `Origin` on a POST.
+
+Running without `--auth` still leaves every MCP tool open to anything that can
+reach the port, which is the same posture `/api/*` already has. On a tailnet
+that is the intended boundary; anywhere else, set credentials.
