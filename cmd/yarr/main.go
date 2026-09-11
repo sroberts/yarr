@@ -45,6 +45,24 @@ func opt(envVar, defaultValue string) string {
 	return defaultValue
 }
 
+// readSecretFile reads a credential from a file, so the secret itself need not
+// live in a supervisor manifest -- which is a plaintext file readable by anyone
+// who can read the service directory, and which puts every value it holds into
+// the process environment.
+func readSecretFile(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	secret := strings.TrimSpace(string(content))
+	if secret == "" {
+		// Silently falling back to an unsigned session key would be worse
+		// than refusing to start.
+		return "", fmt.Errorf("%s is empty", path)
+	}
+	return secret, nil
+}
+
 func parseAuthfile(authfile io.Reader) (username, password string, err error) {
 	scanner := bufio.NewScanner(authfile)
 	if scanner.Scan() {
@@ -267,6 +285,7 @@ func main() {
 	_ = platform.FixConsoleIfNeeded()
 
 	var addr, db, authfile, auth, certfile, keyfile, basepath, logfile string
+	var secretkeyfile string
 	var port int
 	var ver, open bool
 
@@ -289,6 +308,7 @@ func main() {
 	flag.StringVar(&certfile, "cert-file", opt("YARR_CERTFILE", ""), "`path` to cert file for https")
 	flag.StringVar(&keyfile, "key-file", opt("YARR_KEYFILE", ""), "`path` to key file for https")
 	flag.StringVar(&db, "db", opt("YARR_DB", ""), "storage file `path`")
+	flag.StringVar(&secretkeyfile, "secret-key-file", opt("YARR_SECRET_KEY_FILE", ""), "`path` to a file holding the session signing key. Takes precedence over SECRET_KEY_BASE")
 	flag.StringVar(&logfile, "log-file", opt("YARR_LOGFILE", ""), "`path` to log file to use instead of stdout")
 	flag.BoolVar(&ver, "version", false, "print application version")
 	flag.BoolVar(&open, "open", false, "open the server in browser")
@@ -357,6 +377,12 @@ func main() {
 	}
 
 	secretKeyBase := os.Getenv("SECRET_KEY_BASE")
+	if secretkeyfile != "" {
+		secretKeyBase, err = readSecretFile(secretkeyfile)
+		if err != nil {
+			log.Fatal("Failed to read secret key file: ", err)
+		}
+	}
 	secureCookie := true
 	if disableSSL := os.Getenv("DISABLE_SSL"); disableSSL != "" {
 		if parsed, err := strconv.ParseBool(disableSSL); err != nil {

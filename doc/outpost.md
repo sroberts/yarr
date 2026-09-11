@@ -51,6 +51,10 @@ and it answers in well under a millisecond. It deliberately does **not** ping
 the database: a restart cannot fix a broken database, it only discards a working
 process. `/up` is never auth-gated, even when `--auth` is set.
 
+Under `--base`, the healthcheck moves with everything else -- `--base reader`
+puts it at `/reader/up` -- so set `healthcheck` in the manifest to match, or
+Outpost will probe a path that does not exist and restart yarr forever.
+
 Database migrations run before the port is bound, so a first start against an
 empty storage directory refuses connections for a moment before answering `503`.
 That is what `start_grace_seconds` is for; the default 30s is ample for yarr's
@@ -72,6 +76,30 @@ restarts yarr with backoff instead of leaving it down.
 yarr logs to stdout unbuffered, with no ANSI escapes, so `outpost logs yarr`
 shows everything. Do not pass `--log-file` under Outpost: it redirects logs into
 a file Outpost neither captures nor rotates. yarr warns if you do.
+
+## secrets
+
+A manifest is a plaintext file, and everything in its `env` table lands in the
+process environment. yarr takes both of its secrets from a file instead, so the
+manifest holds only a path:
+
+| Secret | From a file | From the environment |
+|---|---|---|
+| Login credentials | `--auth-file` / `$YARR_AUTHFILE` | `--auth` / `$YARR_AUTH` |
+| Session signing key | `--secret-key-file` / `$YARR_SECRET_KEY_FILE` | `$SECRET_KEY_BASE` |
+
+The file wins when both are given. Keep the files inside the storage directory
+so a backup carries them and a restore puts them back; an unreadable or empty
+one is a startup failure rather than a silent fallback, because signing sessions
+with an empty key is worse than not starting.
+
+```toml
+args = [
+  "--port", "8090",
+  "--auth-file", "/home/you/.outpost/data/yarr/auth",
+  "--secret-key-file", "/home/you/.outpost/data/yarr/session.key",
+]
+```
 
 ## describing itself
 

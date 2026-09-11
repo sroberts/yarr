@@ -14,10 +14,21 @@ storage = "~/.outpost/data/yarr"
 tailscale_name = "yarr"
 
 # Optional. yarr serves the whole UI unauthenticated by default; on a tailnet
-# that is often what you want. To require a login, point --auth-file at a file
-# containing `username:password` inside the storage directory, so the secret
-# itself never lives in this manifest.
-# args = ["--port", "8090", "--auth-file", "/home/you/.outpost/data/yarr/auth"]
+# that is often what you want. To require a login, keep both secrets in files
+# inside the storage directory -- so a backup carries them, and neither ever
+# lives in this plaintext manifest:
+#
+#   printf 'you:hunter2\n'      > ~/.outpost/data/yarr/auth
+#   openssl rand -hex 32        > ~/.outpost/data/yarr/session.key
+#   chmod 600 ~/.outpost/data/yarr/{auth,session.key}
+#
+# args = [
+#   "--port", "8090",
+#   "--auth-file", "/home/you/.outpost/data/yarr/auth",
+#   "--secret-key-file", "/home/you/.outpost/data/yarr/session.key",
+# ]
 
-[env]
-# SECRET_KEY_BASE = "..."   # session signing key; only needed with auth
+# yarr needs no env table. SECRET_KEY_BASE and YARR_AUTH still work, but prefer
+# the file flags above: anything here is readable by anyone who can read
+# ~/.outpost/services/ and appears in the process environment.
+# [env]

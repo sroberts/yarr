@@ -218,3 +218,50 @@ func TestIsLoopback(t *testing.T) {
 		})
 	}
 }
+
+// A supervisor manifest is plaintext on disk and everything in it lands in the
+// process environment, so a secret belongs in a file the manifest points at.
+func TestReadSecretFile(t *testing.T) {
+	dir := t.TempDir()
+
+	write := func(name, content string) string {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, []byte(content), 0600); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+
+	t.Run("reads and trims", func(t *testing.T) {
+		secret, err := readSecretFile(write("key", "  s3cret-key\n"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if secret != "s3cret-key" {
+			t.Errorf("got %q", secret)
+		}
+	})
+
+	t.Run("keeps inner whitespace", func(t *testing.T) {
+		secret, err := readSecretFile(write("spaces", "two words\n"))
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if secret != "two words" {
+			t.Errorf("got %q", secret)
+		}
+	})
+
+	// An empty key would silently sign sessions with nothing.
+	t.Run("empty file is an error", func(t *testing.T) {
+		if _, err := readSecretFile(write("empty", "   \n\t\n")); err == nil {
+			t.Error("expected an error for an empty secret file")
+		}
+	})
+
+	t.Run("missing file is an error", func(t *testing.T) {
+		if _, err := readSecretFile(filepath.Join(dir, "nope")); err == nil {
+			t.Error("expected an error for a missing secret file")
+		}
+	})
+}
