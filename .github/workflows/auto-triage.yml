@@ -39,9 +39,24 @@ jobs:
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
 
-            const { data: open } = await github.rest.issues.listForRepo({
-              owner, repo, state: 'open', per_page: 100,
-            });
+            // GitHub's API occasionally returns a transient 5xx (the
+            // "Unicorn!" HTML page). Retry those; fail fast on 4xx.
+            async function listOpenWithRetry(attempts = 3) {
+              for (let i = 1; i <= attempts; i++) {
+                try {
+                  const { data } = await github.rest.issues.listForRepo({
+                    owner, repo, state: 'open', per_page: 100,
+                  });
+                  return data;
+                } catch (err) {
+                  if (i === attempts || (err.status && err.status < 500)) throw err;
+                  core.warning(`listForRepo attempt ${i} failed (${err.status}); retrying`);
+                  await new Promise(r => setTimeout(r, 2000 * i));
+                }
+              }
+            }
+
+            const open = await listOpenWithRetry();
 
             const rules = [
               { label: 'parser',  re: /\b(rss|atom|json[- ]?feed|opml|parser)\b/i },
