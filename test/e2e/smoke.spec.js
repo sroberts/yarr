@@ -843,3 +843,121 @@ test('link-less item: every link-dependent reader control reads as disabled', as
   expect(offered).not.toContain('Read here (readability)')
   expect(offered).not.toContain('Save to Instapaper')
 })
+
+// ── reader toolbar overflow menu (phones) ──────────────────────────────
+
+const seedReaderItem = (page, id, extra) => page.evaluate(([id, extra]) => {
+  var item = Object.assign({
+    id: id, feed_id: 1, title: 'Overflow ' + id, status: 'read',
+    media_links: [], content: '<p>body</p>',
+  }, extra)
+  api.items.get = function () { return Promise.resolve(item) }
+  api.items.update = function () { return Promise.resolve() }
+  vm.itemSelected = id
+}, [id, extra || {}])
+
+test('reader toolbar: phones keep six full-size targets, the rest behind one menu', async ({ page }) => {
+  // Nine 44px controls need 412px, so they used to be packed down to 32px on
+  // every phone — the fit was bought by shrinking targets people press all the
+  // time. The four secondary actions now collapse into an overflow menu, and
+  // what stays must be full-size and on-screen down to 320px.
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 })
+    await page.goto('/')
+    await seedReaderItem(page, 810200, { link: 'https://example.com/o' })
+    await expect(page.getByRole('heading', { name: 'Overflow 810200' })).toBeVisible()
+
+    const shown = await page.evaluate(() => {
+      const tb = Array.from(document.querySelectorAll('#col-item .toolbar')).slice(-1)[0]
+      return Array.from(tb.querySelectorAll('.toolbar-item'))
+        .filter(el => el.getClientRects().length > 0)     // rendered, not display:none anywhere up the tree
+        .map(el => {
+          const r = el.getBoundingClientRect()
+          return { name: el.getAttribute('aria-label') || el.title, w: Math.round(r.width), h: Math.round(r.height), right: Math.round(r.right) }
+        })
+    })
+    expect(shown.map(c => c.name), `visible controls at ${width}px`).toEqual([
+      'Back to article list', 'Star article', 'Mark read', 'Appearance',
+      'Save to Instapaper', 'More actions',
+    ])
+    for (const c of shown) {
+      expect(c.w, `${c.name} width at ${width}px`).toBeGreaterThanOrEqual(44)
+      expect(c.h, `${c.name} height at ${width}px`).toBeGreaterThanOrEqual(44)
+      expect(c.right, `${c.name} right edge at ${width}px`).toBeLessThanOrEqual(width)
+    }
+  }
+
+  // ...and above the breakpoint the inline controls come back while the menu
+  // goes away, so no action is ever offered in two places at once.
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await page.goto('/')
+  await seedReaderItem(page, 810201, { link: 'https://example.com/o' })
+  await expect(page.getByRole('heading', { name: 'Overflow 810201' })).toBeVisible()
+  await expect(page.getByTestId('reader-copy-link')).toBeVisible()
+  await expect(page.locator('[data-testid="reader-more"] > button')).toBeHidden()
+})
+
+test('reader overflow menu: opens by keyboard, acts, and closes', async ({ page }) => {
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await seedReaderItem(page, 810202, { link: 'https://example.com/from-menu' })
+  await expect(page.getByRole('heading', { name: 'Overflow 810202' })).toBeVisible()
+
+  const toggle = page.locator('[data-testid="reader-more"] > button')
+  await toggle.focus()
+  await page.keyboard.press('Enter')
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+
+  // every action that left the toolbar is reachable here
+  const menu = page.locator('[data-testid="reader-more"] .dropdown-menu')
+  await expect(menu.locator('.dropdown-item')).toHaveText([
+    'Read here', 'Listen', 'Copy link', 'Open link',
+  ])
+
+  // Escape closes it and hands focus back to the toggle (not the page)
+  await page.keyboard.press('Escape')
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+  expect(await page.evaluate(() => document.activeElement.getAttribute('aria-label'))).toBe('More actions')
+
+  // acting from the menu does the thing and dismisses the menu
+  await toggle.click()
+  await menu.getByText('Copy link').click()
+  await expect(page.locator('.app-toast')).toHaveText('Link copied')
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('https://example.com/from-menu')
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+})
+
+test('reader overflow menu: a link-less item disables the same actions the toolbar does', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await seedReaderItem(page, 810203)     // no link
+  await expect(page.getByRole('heading', { name: 'Overflow 810203' })).toBeVisible()
+  await page.locator('[data-testid="reader-more"] > button').click()
+
+  const menu = page.locator('[data-testid="reader-more"] .dropdown-menu')
+  await expect(menu.locator('button', { hasText: 'Read here' })).toBeDisabled()
+  await expect(menu.locator('button', { hasText: 'Copy link' })).toBeDisabled()
+
+  const open = menu.locator('a.dropdown-item')
+  await expect(open).toHaveAttribute('aria-disabled', 'true')
+  expect(await open.getAttribute('href')).toBeNull()
+  // Listen needs no link — it reads the content we already have
+  await expect(menu.locator('button', { hasText: 'Listen' })).toBeEnabled()
+
+  // dimmed, but still legible against the menu's raised surface (3:1 non-text floor)
+  const ratio = await open.evaluate((el) => {
+    const parse = (s) => s.match(/[\d.]+/g).map(Number)
+    const lum = ([r, g, b]) => {
+      const f = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4) }
+      return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+    }
+    const bg = parse(getComputedStyle(el.closest('.dropdown-menu')).backgroundColor).slice(0, 3)
+    const c = parse(getComputedStyle(el).color)
+    const a = Number(getComputedStyle(el).opacity)
+    const fg = [0, 1, 2].map(i => c[i] * a + bg[i] * (1 - a))
+    const l1 = lum(fg), l2 = lum(bg)
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)
+  })
+  expect(ratio).toBeGreaterThanOrEqual(3)
+})
