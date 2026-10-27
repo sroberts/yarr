@@ -17,6 +17,19 @@ type Middleware struct {
 	DB            *storage.Storage
 	SecretKeyBase string
 	SecureCookie  bool
+	// SecureCookieAuto decides Secure per request instead, from whether the
+	// browser reached us over https. See SecureRequest.
+	SecureCookieAuto bool
+	// Gateway, when set, lets a request signed by Outpost's login gateway in
+	// without yarr's own login.
+	Gateway *Gateway
+}
+
+// SecureRequest reports whether the browser's side of the request was https.
+// X-Forwarded-Proto is taken on trust: a client that forges it can only choose
+// to mark its own cookie Secure, or not.
+func SecureRequest(req *http.Request) bool {
+	return req.TLS != nil || strings.EqualFold(req.Header.Get("X-Forwarded-Proto"), "https")
 }
 
 func unsafeMethod(method string) bool {
@@ -29,6 +42,10 @@ func (m *Middleware) Handler(c *router.Context) {
 			c.Next()
 			return
 		}
+	}
+	if _, ok := m.Gateway.Verify(c.Req); ok {
+		c.Next()
+		return
 	}
 	if IsAuthenticated(c.Req, m.Username, m.Password, m.SecretKeyBase) {
 		c.Next()
@@ -46,7 +63,11 @@ func (m *Middleware) Handler(c *router.Context) {
 		username := c.Req.FormValue("username")
 		password := c.Req.FormValue("password")
 		if StringsEqual(username, m.Username) && StringsEqual(password, m.Password) {
-			Authenticate(c.Out, m.Username, m.Password, m.BasePath, m.SecretKeyBase, m.SecureCookie)
+			secure := m.SecureCookie
+			if m.SecureCookieAuto {
+				secure = SecureRequest(c.Req)
+			}
+			Authenticate(c.Out, m.Username, m.Password, m.BasePath, m.SecretKeyBase, secure)
 			c.Redirect(rootUrl)
 			return
 		} else {

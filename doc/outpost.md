@@ -4,7 +4,8 @@ yarr conforms to the Outpost service spec: it listens on one loopback
 TCP port in plain HTTP, serves a cheap unauthenticated healthcheck at `GET /up`,
 takes all of its configuration from flags and environment variables, keeps every
 byte of persistent state in one directory, runs in the foreground, and exits on
-SIGTERM within a second.
+SIGTERM within a second. Behind Outpost's login gateway it accepts the gateway's
+signed identity, so users sign in once (see [logging in](#logging-in)).
 
 A ready-to-edit manifest lives in [`etc/outpost/yarr.toml`](../etc/outpost/yarr.toml).
 
@@ -76,6 +77,77 @@ restarts yarr with backoff instead of leaving it down.
 yarr logs to stdout unbuffered, with no ANSI escapes, so `outpost logs yarr`
 shows everything. Do not pass `--log-file` under Outpost: it redirects logs into
 a file Outpost neither captures nor rotates. yarr warns if you do.
+
+## logging in
+
+Outpost can reach yarr two ways, and yarr handles both:
+
+- **Through the login gateway** (`https://yarr.<domain>`). The gateway signs the
+  user in and forwards each request with an Ed25519-signed identity token in
+  `X-Outpost-Identity`.
+- **Through yarr's own tailnet node** (`http://yarr`), which the gateway is not
+  in front of.
+
+### behind the gateway
+
+When Outpost's gateway is on, it starts yarr with `OUTPOST_AUTH=gateway`,
+`OUTPOST_ISSUER` and `OUTPOST_JWKS_URL`. yarr then checks the token on every
+request. If it is signed by a key from the JWKS, issued by `OUTPOST_ISSUER`,
+addressed to yarr and unexpired, the request goes straight in without yarr's
+own login page. Nothing in the manifest needs to change. yarr fetches the keys
+over loopback, caches them for five minutes, and refetches when it sees a key
+it doesn't know, so `outpost auth rotate-key` works without restarting yarr. If
+the gateway is briefly down, yarr keeps the keys it already has.
+
+Only the signed token counts. The plain `X-Outpost-User`, `-Name`, `-Email` and
+`-Groups` headers are ignored: yarr listens on loopback, and any process on the
+machine could connect and send them. When `OUTPOST_AUTH` is unset, yarr doesn't
+look at any of these headers. When it is set but `OUTPOST_ISSUER` or
+`OUTPOST_JWKS_URL` is missing, yarr refuses to start, because that environment
+is broken.
+
+yarr has a single feed database, so every Outpost user who can open yarr
+shares the same feeds. Limit who can open it with the manifest's `allow` list.
+
+Logging out from yarr's menu after signing in through the gateway ends the
+gateway session as well (`POST /.outpost/logout`). Clearing only yarr's own
+cookie would sign the user straight back in.
+
+#### pinning the audience
+
+Every token is addressed to one app's host. By default yarr accepts a token
+addressed to the host the request names. That is enough to stop a token from
+being used against a different app through the gateway. It does not stop a
+process on the machine that holds a token for some other app from connecting
+to yarr directly and sending a matching `Host`. To close that gap, give yarr
+its address:
+
+```toml
+args = ["--port", "8090", "--auth-file", "...", "--outpost-audience", "yarr.outpost.example"]
+```
+
+(`$YARR_OUTPOST_AUDIENCE` also works.) yarr logs a warning when the gateway and
+yarr's own login are both on and this is unset.
+
+### with or without yarr's own login
+
+- **With `--auth-file`:** gateway users skip yarr's login. Requests that come
+  in through the tailnet node, or straight to loopback, still get yarr's login
+  page. This is the setting to use when the tailnet node is reachable by
+  anyone other than you.
+- **Without credentials:** the gateway still guards what it forwards, but
+  requests that bypass it are let in, exactly as before. yarr logs this at
+  startup.
+
+### session cookies
+
+Outside Outpost, yarr marks its session cookie `Secure` unless `DISABLE_SSL` is
+set. Under Outpost, a `Secure` cookie would break logging in through the
+tailnet node, because that node serves plain http and browsers drop `Secure`
+cookies there. So when yarr is supervised and `DISABLE_SSL` is unset, it marks
+the cookie `Secure` only when the request came over https (`X-Forwarded-Proto:
+https`, which the gateway sends when its `public_url` is https). Setting
+`DISABLE_SSL` turns this off, as it always has.
 
 ## secrets
 
