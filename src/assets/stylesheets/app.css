@@ -783,6 +783,13 @@ select.form-control:not([multiple]):not([size]) {
 .dropdown-item.text-muted {
   color: var(--text-secondary);
 }
+/* nothing to do (e.g. "Mark all read" with no unread): visible but inert */
+.dropdown-item:disabled {
+  color: var(--text-secondary);
+  opacity: .5;
+  cursor: default;
+  pointer-events: none;
+}
 
 /* A menu item can be unavailable for the same reason a toolbar button is (an
    item that ships content but no link), so it gets the same treatment — same
