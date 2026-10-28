@@ -1063,7 +1063,15 @@ function rootComponent() { return {
     // feed. `event` is a mouse or keyboard event; keyboard activation has no
     // cursor, so we fall back to the trigger element's box.
     openFeedContextMenu: function(feed, event) {
-      this.feedSelected = 'feed:' + feed.id
+      this.openContextMenu({feed: feed}, 'feed:' + feed.id, event)
+    },
+    // Folder rows share the same menu; `feedContextMenu.folder` is set instead
+    // of `.feed`, and the template switches on which one is present.
+    openFolderContextMenu: function(folder, event) {
+      this.openContextMenu({folder: folder}, 'folder:' + folder.id, event)
+    },
+    openContextMenu: function(target, selection, event) {
+      this.feedSelected = selection
       // remember the trigger so focus can return to it when the menu closes
       this._ctxTrigger = (event && event.currentTarget) || null
       var x = event && event.clientX, y = event && event.clientY
@@ -1071,7 +1079,7 @@ function rootComponent() { return {
         var tr = this._ctxTrigger.getBoundingClientRect()
         x = tr.right; y = tr.bottom
       }
-      this.feedContextMenu = {feed: feed, x: x || 0, y: y || 0}
+      this.feedContextMenu = {feed: target.feed, folder: target.folder, x: x || 0, y: y || 0}
       this.$nextTick(function() {
         var menu = this.$refs.feedContextMenu
         if (!menu) return
@@ -1084,7 +1092,7 @@ function rootComponent() { return {
         menu.style.visibility = ''
         // Focus the first item so keyboard users land inside the menu, matching
         // the role="menu" contract that feedContextMenuKey then fulfils.
-        var first = menu.querySelector('.dropdown-item')
+        var first = menu.querySelector('.dropdown-item:not(:disabled)')
         if (first) first.focus(); else menu.focus()
       }.bind(this))
       document.addEventListener('click', this.closeFeedContextMenu)
@@ -1116,7 +1124,7 @@ function rootComponent() { return {
       if (e.key === 'Escape') { e.preventDefault(); this.closeFeedContextMenu(); return }
       var menu = this.$refs.feedContextMenu
       if (!menu) return
-      var items = Array.prototype.slice.call(menu.querySelectorAll('.dropdown-item'))
+      var items = Array.prototype.slice.call(menu.querySelectorAll('.dropdown-item:not(:disabled)'))
       if (!items.length) return
       var i = items.indexOf(document.activeElement)
       var next = null
@@ -1127,13 +1135,14 @@ function rootComponent() { return {
       else if (e.key === 'Tab') next = items[(i + (e.shiftKey ? -1 : 1) + items.length) % items.length]
       if (next) { e.preventDefault(); next.focus() }
     },
-    // Grab the menu's feed, close, then run the action — so an action that opens
-    // a prompt/confirm replacement isn't racing the menu teardown, and the feed
-    // ref survives the close that nulls feedContextMenu.
+    // Grab the menu's feed (or folder), close, then run the action — so an
+    // action that opens a prompt/confirm replacement isn't racing the menu
+    // teardown, and the ref survives the close that nulls feedContextMenu.
     runFeedCtx: function(fn) {
-      var feed = this.feedContextMenu && this.feedContextMenu.feed
+      var m = this.feedContextMenu
+      var target = m && (m.feed || m.folder)
       this.closeFeedContextMenu()
-      if (feed) fn.call(this, feed)
+      if (target) fn.call(this, target)
     },
     togglePalette: function() {
       this.paletteOpen ? this.closePalette() : this.openPalette()
@@ -1307,6 +1316,54 @@ function rootComponent() { return {
         vm.itemSelected = null
         vm.itemsHasMore = false
         vm.refreshStats()
+      })
+    },
+    // Unread count across a set of feeds, ignoring the active filter, so the
+    // context menu can tell whether "Mark all read" has anything to do.
+    unreadCountForFeeds: function(feeds) {
+      var stats = this.feedStats
+      return feeds.reduce(function(acc, feed) {
+        return acc + ((stats[feed.id] && stats[feed.id].unread) || 0)
+      }, 0)
+    },
+    folderFeeds: function(folder) {
+      return this.feeds.filter(function(f) { return f.folder_id == folder.id })
+    },
+    markFeedRead: function(feed) {
+      this.markFeedsRead([feed], {feed_id: feed.id}, feed.title)
+    },
+    markFolderRead: function(folder) {
+      this.markFeedsRead(this.folderFeeds(folder), {folder_id: folder.id}, folder.title)
+    },
+    // Optimistically mark everything in `feeds` read locally, with the server
+    // write deferred until the undo toast closes (same shape as deleteFeed).
+    // Starred items are left alone, matching the server's MarkItemsRead.
+    markFeedsRead: function(feeds, query, title) {
+      var ids = {}
+      var prevStats = {}
+      var stats = this.feedStats
+      feeds.forEach(function(feed) {
+        ids[feed.id] = true
+        if (stats[feed.id]) {
+          prevStats[feed.id] = stats[feed.id].unread
+          stats[feed.id].unread = 0
+        }
+      })
+      var touched = this.items.filter(function(item) {
+        return ids[item.feed_id] && item.status == 'unread'
+      })
+      touched.forEach(function(item) { item.status = 'read' })
+      this.showFeedUndo('Marked “' + title + '” read', function() {
+        touched.forEach(function(item) { item.status = 'unread' })
+        Object.keys(prevStats).forEach(function(id) {
+          if (vm.feedStats[id]) vm.feedStats[id].unread = prevStats[id]
+        })
+        // prevStats may be stale if a stats poll landed mid-window; resync.
+        vm.refreshStats()
+      }, function() {
+        api.items.mark_read(query).then(function() {
+          vm.refreshStats()
+        })
       })
     },
     toggleFolderExpanded: function(folder) {
