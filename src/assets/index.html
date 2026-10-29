@@ -54,31 +54,41 @@
                 <div class="flex-grow-1"></div>
                 <button class="toolbar-item ml-1"
                         :class="{active: filterSelected == 'unread'}"
-                        :aria-pressed="filterSelected == 'unread'"
-                        title="Unread"
+                        :aria-pressed="(filterSelected == 'unread') ? 'true' : 'false'"
+                        title="Unread (1)"
+                        aria-label="Show unread"
+                        aria-keyshortcuts="1"
                         @click="filterSelected = 'unread'">
                     <span class="icon">{% inline "circle-full.svg" %}</span>
                 </button>
                 <button class="toolbar-item mx-1"
                         :class="{active: filterSelected == 'starred'}"
-                        :aria-pressed="filterSelected == 'starred'"
-                        title="Starred"
+                        :aria-pressed="(filterSelected == 'starred') ? 'true' : 'false'"
+                        title="Starred (2)"
+                        aria-label="Show starred"
+                        aria-keyshortcuts="2"
                         @click="filterSelected = 'starred'">
                     <span class="icon">{% inline "star-full.svg" %}</span>
                 </button>
                 <button class="toolbar-item mr-1"
                         :class="{active: filterSelected == ''}"
-                        :aria-pressed="filterSelected == ''"
-                        title="All"
+                        :aria-pressed="(filterSelected == '') ? 'true' : 'false'"
+                        title="All (3)"
+                        aria-label="Show all"
+                        aria-keyshortcuts="3"
                         @click="filterSelected = ''">
                     <span class="icon">{% inline "assorted.svg" %}</span>
                 </button>
-                <button class="toolbar-item ml-1 d-none d-card-triage"
+                <!-- Triage is the fourth view, at every width (#124): one card at
+                     a time, swipe or arrow keys. Key 4, after the 1/2/3 views. -->
+                <button class="toolbar-item ml-1"
                         :class="{active: filterSelected == 'triage'}"
-                        :aria-pressed="filterSelected == 'triage'"
-                        title="Triage"
+                        :aria-pressed="(filterSelected == 'triage') ? 'true' : 'false'"
+                        title="Triage (4)"
+                        aria-label="Triage unread"
+                        aria-keyshortcuts="4"
                         @click="filterSelected = 'triage'">
-                    <span class="icon">{% inline "copy.svg" %}</span>
+                    <span class="icon">{% inline "cards.svg" %}</span>
                 </button>
                 <div class="flex-grow-1"></div>
                 <dropdown class="settings-dropdown" toggle-class="btn btn-link toolbar-item px-2" ref="menuDropdown" drop="right" title="Menu">
@@ -138,16 +148,24 @@
                 </div>
                 <!-- card -->
                 <div v-if="currentCard && !cardDone" class="card-view-area flex-grow-1 d-flex flex-column align-items-center justify-content-center" id="card-swipe-area">
-                    <div class="triage-card" id="triage-card" :key="currentCard.id" @click="cardTap()">
+                    <!-- Tap / Enter opens the article here in the card: the content is
+                         already loaded, so reading it costs no round-trip and the
+                         swipe decision stays one gesture away. o opens the original. -->
+                    <div class="triage-card" id="triage-card" :key="currentCard.id"
+                         @click="cardTap($event)">
                         <div class="triage-card-feed">
                             <span>{{ (feedsById[currentCard.feed_id] || {}).title }}</span>
                             <span class="triage-card-date"><relative-time :val="currentCard.date"/></span>
                         </div>
                         <div class="triage-card-domain" v-if="cardDomain">{{ cardDomain }}</div>
                         <div class="triage-card-title">{{ currentCard.title || 'untitled' }}</div>
-                        <div class="triage-card-excerpt">{{ cardExcerpt }}</div>
+                        <div class="triage-card-excerpt" v-if="!cardExpanded">{{ cardExcerpt }}</div>
+                        <div class="triage-card-body" v-else v-html="currentCard.content || ''"></div>
                         <div class="triage-card-footer">
-                            <span class="triage-card-hint">tap to read full article</span>
+                            <span class="triage-card-hint" v-if="!cardExpanded"><span class="hint-touch">tap to read here</span><span class="hint-pointer">Enter to read here</span></span>
+                            <span class="triage-card-hint" v-else>
+                                <a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop>Open original</a><span class="hint-pointer"> · Esc to go back</span>
+                            </span>
                             <span class="triage-card-counter">{{ cardIndex + 1 }} / {{ cardItems.length }}</span>
                         </div>
                     </div>
@@ -155,17 +173,30 @@
                 <!-- action indicator -->
                 <div class="card-view-action" id="card-action-indicator"></div>
                 <!-- swipe hints -->
-                <div v-if="currentCard && !cardDone" class="card-view-hints px-4 pb-3 d-flex align-items-center justify-content-between text-muted small">
+                <div v-if="currentCard && !cardDone" class="card-view-hints card-view-legend px-4 pb-3 d-flex align-items-center justify-content-between small">
                     <span v-if="instapaperUsername">← instapaper</span>
                     <span v-else>← keep unread</span>
-                    <button v-if="ttsSupported" type="button" class="toolbar-item card-listen-btn"
-                            :class="{active: ttsPlaying}"
-                            @click="toggleListen()"
-                            :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'">
-                        <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
-                        <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
-                        <span class="icon" v-else>{% inline "pause.svg" %}</span>
-                    </button>
+                    <div class="d-flex align-items-center">
+                        <!-- star is the verb swipes can't carry: left and right
+                             are taken, and vertical drags scroll the excerpt -->
+                        <button type="button" class="card-star-btn mr-2"
+                                @click="cardStar()"
+                                title="Star and go to the next card (s)"
+                                aria-keyshortcuts="s">
+                            <span class="icon">{% inline "star.svg" %}</span>
+                            Star
+                        </button>
+                        <button v-if="ttsSupported" type="button" class="toolbar-item card-listen-btn"
+                                :class="{active: ttsPlaying}"
+                                @click="toggleListen()"
+                                :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'"
+                                :aria-label="ttsPlaying ? (ttsPaused ? 'Resume reading aloud' : 'Pause reading aloud') : 'Listen to article'"
+                                :aria-pressed="ttsPlaying ? 'true' : 'false'">
+                            <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
+                            <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
+                            <span class="icon" v-else>{% inline "pause.svg" %}</span>
+                        </button>
+                    </div>
                     <span>mark read →</span>
                 </div>
                 <!-- stats screen -->
@@ -184,6 +215,10 @@
                             <div class="card-stat-number card-stat-instapaper">{{ cardStats.kept }}</div>
                             <div class="text-muted small">kept unread</div>
                         </div>
+                        <div class="text-center" v-if="cardStats.starred">
+                            <div class="card-stat-number">{{ cardStats.starred }}</div>
+                            <div class="text-muted small">starred</div>
+                        </div>
                     </div>
                     <button class="btn btn-primary" @click="exitCardMode()">Done</button>
                 </div>
@@ -194,7 +229,7 @@
                 </div>
                 <!-- undo last swipe -->
                 <transition name="undo">
-                    <div class="card-undo-toast" v-if="cardUndo">
+                    <div class="card-undo-toast" v-if="cardUndo" role="status" aria-live="polite">
                         <span class="card-undo-label">{{ cardUndoLabel }}</span>
                         <button type="button" class="card-undo-btn" @click="undoCardAction()">Undo</button>
                     </div>
@@ -347,7 +382,7 @@
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected">
                     <div class="selectgroup-label d-flex flex-column">
-                        <div style="line-height: 100%; opacity: .7; margin-bottom: .1rem;" class="d-flex align-items-center">
+                        <div class="item-meta d-flex align-items-center">
                             <transition name="indicator">
                                 <span class="icon icon-small mr-1" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
                                 <span class="icon icon-small mr-1" v-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
@@ -358,7 +393,7 @@
                             <small class="flex-shrink-0 mr-1" v-if="readingTime(item)">{{ readingTime(item) }} min ·</small>
                             <small class="flex-shrink-0"><relative-time v-bind:title="formatDate(item.date)" :val="item.date"/></small>
                         </div>
-                        <div>{{ item.title || 'untitled' }}</div>
+                        <div class="item-title" :class="{'item-title-unread': item.status == 'unread'}">{{ item.title || 'untitled' }}</div>
                     </div>
                 </label>
                 <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length"></button>
@@ -413,7 +448,7 @@
                     <span class="icon" v-if="itemSelectedDetails.status=='unread'">{% inline "circle-full.svg" %}</span>
                     <span class="icon" v-if="itemSelectedDetails.status!='unread'">{% inline "circle.svg" %}</span>
                 </button>
-                <dropdown class="settings-dropdown" toggle-class="toolbar-item px-2" drop="center" title="Appearance">
+                <dropdown class="settings-dropdown toolbar-group-start" toggle-class="toolbar-item px-2" drop="center" title="Appearance">
                     <template v-slot:button>
                         <span class="icon">{% inline "sliders.svg" %}</span>
                     </template>
@@ -453,7 +488,7 @@
                     <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
                     <span class="icon" v-else>{% inline "pause.svg" %}</span>
                 </button>
-                <button class="toolbar-item"
+                <button class="toolbar-item toolbar-group-start"
                         :class="{active: itemSelectedDetails.instapaper_saved}"
                         :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper || !itemSelectedDetails.link"
                         @click="saveToInstapaper(itemSelectedDetails)"
@@ -541,8 +576,9 @@
                 </dropdown>
                 <div class="flex-grow-1"></div>
                 <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
-                     and swipe navigation cover them, and keeping them here
-                     overflowed the toolbar past the viewport edge (unreachable). -->
+                     and the reader-nav bar under the article cover them, and
+                     keeping them here overflowed the toolbar past the viewport
+                     edge (unreachable). -->
                 <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" aria-label="Previous article" :disabled="!items.length || itemSelected == items[0].id">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
@@ -588,9 +624,27 @@
                     <div v-html="itemSelectedContent"></div>
                 </div>
             </div>
+            <!-- Phone reader: previous/next in the thumb zone. Phones have no
+                 j/k and the toolbar above keeps only its six full-size targets,
+                 so moving on used to mean Back, scroll, tap. Deliberately not a
+                 .toolbar: toolbar layout and tests key off that class. -->
+            <nav class="reader-nav d-flex d-md-none" v-if="itemSelectedDetails" aria-label="Article navigation">
+                <button type="button" class="reader-nav-btn"
+                        @click="navigateToItem(-1)"
+                        :disabled="!items.length || itemSelected == items[0].id">
+                    <span class="icon">{% inline "chevron-left.svg" %}</span>
+                    Previous
+                </button>
+                <button type="button" class="reader-nav-btn"
+                        @click="navigateToItem(+1)"
+                        :disabled="!items.length || itemSelected == items[items.length - 1].id">
+                    Next
+                    <span class="icon">{% inline "chevron-right.svg" %}</span>
+                </button>
+            </nav>
         </div>
         <modal :open="!!settings" @hide="settings = ''">
-            <button class="btn btn-link outline-none float-right p-2 mr-n2 mt-n2" style="line-height: 1" @click="settings = ''">
+            <button class="btn btn-link outline-none float-right p-2 mr-n2 mt-n2" style="line-height: 1" aria-label="Close" @click="settings = ''">
                 <span class="icon">{% inline "x.svg" %}</span>
             </button>
             <div v-if="settings=='settings'" class="settings-panel">
@@ -601,13 +655,13 @@
                     <div class="settings-section">
                         <label class="settings-label">Theme</label>
                         <div class="segmented">
-                            <button :aria-label="t" :aria-pressed="theme.name == t" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
+                            <button :aria-label="t" :aria-pressed="(theme.name == t) ? 'true' : 'false'" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
                         </div>
                     </div>
                     <div class="settings-section">
                         <label class="settings-label">Accent</label>
                         <div class="accent-swatches">
-                            <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="theme.accent == a" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
+                            <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="(theme.accent == a) ? 'true' : 'false'" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
                                 <span class="accent-check" v-if="theme.accent == a">{% inline "check.svg" %}</span>
                             </button>
                         </div>
@@ -615,15 +669,15 @@
                     <div class="settings-section">
                         <label class="settings-label">Density</label>
                         <div class="segmented">
-                            <button :aria-pressed="theme.density == 'comfortable'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
-                            <button :aria-pressed="theme.density == 'compact'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
+                            <button :aria-pressed="(theme.density == 'comfortable') ? 'true' : 'false'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
+                            <button :aria-pressed="(theme.density == 'compact') ? 'true' : 'false'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
                         </div>
                     </div>
                     <div class="settings-section">
                         <label class="settings-label">Motion</label>
                         <div class="segmented">
-                            <button :aria-pressed="theme.motion == 'system'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
-                            <button :aria-pressed="theme.motion == 'reduce'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
+                            <button :aria-pressed="(theme.motion == 'system') ? 'true' : 'false'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
+                            <button :aria-pressed="(theme.motion == 'reduce') ? 'true' : 'false'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
                         </div>
                     </div>
                 </div>
@@ -645,8 +699,8 @@
                     <div class="settings-section">
                         <label class="settings-label">Show first</label>
                         <div class="segmented">
-                            <button :aria-pressed="itemSortNewestFirst" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
-                            <button :aria-pressed="!itemSortNewestFirst" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
+                            <button :aria-pressed="(itemSortNewestFirst) ? 'true' : 'false'" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
+                            <button :aria-pressed="(!itemSortNewestFirst) ? 'true' : 'false'" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
                         </div>
                     </div>
                 </div>
@@ -739,6 +793,7 @@
                 <table class="table table-borderless table-sm table-compact m-0">
                     <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td>
                                                             <td>show unread / starred / all feeds</td></tr>
+                    <tr><td><kbd>4</kbd></td>               <td>triage unread, one card at a time</td></tr>
                     <tr><td><kbd>/</kbd></td>               <td>focus the search bar</td></tr>
                     <tr><td><kbd>⌘</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
                     <tr><td><kbd>?</kbd></td>               <td>show keyboard shortcuts</td></tr>
@@ -764,9 +819,11 @@
                     <tr><td colspan=2 class="text-muted">Triage (card mode)</td></tr>
                     <tr><td><kbd>←</kbd></td>               <td>save to Instapaper / keep unread</td></tr>
                     <tr><td><kbd>→</kbd></td>               <td>mark read</td></tr>
-                    <tr><td><kbd>Enter</kbd></td>           <td>open full article</td></tr>
+                    <tr><td><kbd>s</kbd></td>               <td>star</td></tr>
+                    <tr><td><kbd>Enter</kbd></td>           <td>read the article here / back to the card</td></tr>
+                    <tr><td><kbd>o</kbd></td>               <td>open original link</td></tr>
                     <tr><td><kbd>u</kbd></td>               <td>undo last swipe</td></tr>
-                    <tr><td><kbd>Esc</kbd></td>             <td>exit triage</td></tr>
+                    <tr><td><kbd>Esc</kbd></td>             <td>back to the card, then exit triage</td></tr>
                 </table>
             </div>
         </modal>

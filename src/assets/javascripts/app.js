@@ -585,9 +585,10 @@ function rootComponent() { return {
       'instapaperPassword': s.instapaper_password || '',
       'cardItems': [],
       'cardIndex': 0,
-      'cardStats': { read: 0, instapaper: 0, kept: 0 },
+      'cardStats': { read: 0, instapaper: 0, kept: 0, starred: 0 },
       'cardLoading': false,
       'cardUndo': null,
+      'cardExpanded': false,
       'toast': null,
       'linkCopied': false,
       'itemOffline': false,
@@ -730,7 +731,9 @@ function rootComponent() { return {
       tmp.textContent = ''
       tmp.insertAdjacentHTML('afterbegin', this.currentCard.content)
       var text = tmp.textContent || tmp.innerText || ''
-      return text.length > 600 ? text.substring(0, 600) + '…' : text
+      // the wide desk card has room to decide on more than a phone's worth
+      var max = window.matchMedia('(min-width: 768px)').matches ? 1200 : 600
+      return text.length > max ? text.substring(0, max) + '…' : text
     },
     cardDomain: function() {
       if (!this.currentCard || !this.currentCard.link) return ''
@@ -745,6 +748,7 @@ function rootComponent() { return {
       if (!this.cardUndo) return ''
       if (this.cardUndo.action === 'instapaper') return 'Saved to Instapaper'
       if (this.cardUndo.action === 'read') return 'Marked read'
+      if (this.cardUndo.action === 'starred') return 'Starred'
       return 'Kept unread'
     },
   },
@@ -821,6 +825,10 @@ function rootComponent() { return {
           })
         })
       }.bind(this))
+    },
+    // a new card always starts collapsed (swipe, undo, folder change, re-entry)
+    'currentCard': function(card, prev) {
+      if (!card || !prev || card.id !== prev.id) this.cardExpanded = false
     },
     'filterSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
@@ -1029,6 +1037,7 @@ function rootComponent() { return {
         {group: 'Actions', label: 'Show unread',            hint: '1', run: S.showUnread},
         {group: 'Actions', label: 'Show starred',           hint: '2', run: S.showStarred},
         {group: 'Actions', label: 'Show all',               hint: '3', run: S.showAll},
+        {group: 'Actions', label: 'Triage unread',          hint: '4', enabled: !this.cardMode, run: S.startTriage},
         {group: 'Actions', label: 'Star / unstar article',  hint: 's', enabled: hasItem, run: S.toggleItemStarred},
         {group: 'Actions', label: 'Mark read / unread',     hint: 'r', enabled: hasItem, run: S.toggleItemRead},
         {group: 'Actions', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !!det.link && !det.instapaper_saved, run: S.saveToInstapaper},
@@ -1301,22 +1310,22 @@ function rootComponent() { return {
       if (this.itemListCloseToBottom()) return this.refreshItems(true)
       if (this.itemSelected && this.itemSelected === this.items[this.items.length - 1].id) return this.refreshItems(true)
     },
-    showToast: function(text) {
+    // ms: failures name an article and a recovery, so they stay up longer
+    // than the routine 2.5s confirmations.
+    showToast: function(text, ms) {
       var self = this
       this.toast = {text: text}
       clearTimeout(this._toastTimer)
-      this._toastTimer = setTimeout(function() { self.toast = null }, 2500)
+      this._toastTimer = setTimeout(function() { self.toast = null }, ms || 2500)
     },
+    // R and the toolbar ✓: the same undoable path as the feed and folder menus,
+    // scoped to the current selection. The server scopes bulk mark-read by feed
+    // or folder only, so that is all the query carries.
     markItemsRead: function() {
-      if (!confirm('Mark all articles in this view as read?')) return
-      var query = this.getItemsQuery()
-      api.items.mark_read(query).then(function() {
-        vm.items = []
-        vm.itemsPage = {'cur': 1, 'num': 1}
-        vm.itemSelected = null
-        vm.itemsHasMore = false
-        vm.refreshStats()
-      })
+      var cur = this.current
+      if (cur.type == 'feed' && cur.feed.id) return this.markFeedRead(cur.feed)
+      if (cur.type == 'folder' && cur.folder.id) return this.markFolderRead(cur.folder)
+      this.markFeedsRead(this.feeds, {}, 'all feeds')
     },
     // Unread count across a set of feeds, ignoring the active filter, so the
     // context menu can tell whether "Mark all read" has anything to do.
@@ -1330,15 +1339,15 @@ function rootComponent() { return {
       return this.feeds.filter(function(f) { return f.folder_id == folder.id })
     },
     markFeedRead: function(feed) {
-      this.markFeedsRead([feed], {feed_id: feed.id}, feed.title)
+      this.markFeedsRead([feed], {feed_id: feed.id}, '“' + feed.title + '”')
     },
     markFolderRead: function(folder) {
-      this.markFeedsRead(this.folderFeeds(folder), {folder_id: folder.id}, folder.title)
+      this.markFeedsRead(this.folderFeeds(folder), {folder_id: folder.id}, '“' + folder.title + '”')
     },
     // Optimistically mark everything in `feeds` read locally, with the server
     // write deferred until the undo toast closes (same shape as deleteFeed).
     // Starred items are left alone, matching the server's MarkItemsRead.
-    markFeedsRead: function(feeds, query, title) {
+    markFeedsRead: function(feeds, query, name) {
       var ids = {}
       var prevStats = {}
       var stats = this.feedStats
@@ -1353,7 +1362,7 @@ function rootComponent() { return {
         return ids[item.feed_id] && item.status == 'unread'
       })
       touched.forEach(function(item) { item.status = 'read' })
-      this.showFeedUndo('Marked “' + title + '” read', function() {
+      this.showFeedUndo('Marked ' + name + ' read', function() {
         touched.forEach(function(item) { item.status = 'unread' })
         Object.keys(prevStats).forEach(function(id) {
           if (vm.feedStats[id]) vm.feedStats[id].unread = prevStats[id]
@@ -1361,8 +1370,17 @@ function rootComponent() { return {
         // prevStats may be stale if a stats poll landed mid-window; resync.
         vm.refreshStats()
       }, function() {
-        api.items.mark_read(query).then(function() {
+        api.items.mark_read(query).then(function(res) {
+          if (!res.ok) throw new Error('mark read: ' + res.status)
           vm.refreshStats()
+          // The unread view would otherwise keep the rows it just cleared.
+          // Left alone while an article is open so j/k keep their place.
+          if (vm.filterSelected == 'unread' && vm.itemSelected == null) vm.refreshItems(false)
+        }).catch(function() {
+          // Nothing was written: put the server's state back and say so.
+          touched.forEach(function(item) { item.status = 'unread' })
+          vm.refreshStats()
+          vm.showToast('Couldn’t mark ' + name + ' read', 5000)
         })
       })
     },
@@ -1468,24 +1486,34 @@ function rootComponent() { return {
       })
     },
     renameFolder: function(folder) {
-      var newTitle = prompt('Enter new title', folder.title)
-      if (newTitle) {
+      this.askPrompt({title: 'Rename folder', value: folder.title, confirmLabel: 'Rename', onConfirm: function(newTitle) {
         api.folders.update(folder.id, {title: newTitle}).then(function() {
           folder.title = newTitle
-          this.folders.sort(function(a, b) {
+          vm.folders.sort(function(a, b) {
             return a.title.localeCompare(b.title)
           })
-        }.bind(this))
-      }
+        })
+      }})
     },
+    // Same shape as deleteFeed: hide it now, delete when the undo toast closes.
+    // The server moves a deleted folder's feeds to Uncategorized (on delete set
+    // null), so mirror that locally and put them back on undo.
     deleteFolder: function(folder) {
-      if (confirm('Are you sure you want to delete ' + folder.title + '?')) {
+      var moved = this.folderFeeds(folder)
+      this.folders = this.folders.filter(function(f) { return f.id !== folder.id })
+      moved.forEach(function(feed) { feed.folder_id = null })
+      if (this.feedSelected === 'folder:' + folder.id) this.feedSelected = null
+      this.showFeedUndo('Deleted folder “' + folder.title + '”', function() {
+        moved.forEach(function(feed) { feed.folder_id = folder.id })
+        vm.folders = vm.folders.concat([folder]).sort(function(a, b) {
+          return a.title.localeCompare(b.title)
+        })
+      }, function() {
         api.folders.delete(folder.id).then(function() {
-          vm.feedSelected = null
           vm.refreshStats()
           vm.refreshFeeds()
         })
-      }
+      })
     },
     updateFeedLink: function(feed) {
       this.askPrompt({title: 'Change feed link', value: feed.feed_link, confirmLabel: 'Change', onConfirm: function(newLink) {
@@ -1555,24 +1583,47 @@ function rootComponent() { return {
         }
       }.bind(this)
 
-      api.items.update(item.id, {status: newstatus}).then(function() {
-        updateStats(oldstatus, -1)
-        updateStats(newstatus, +1)
-
+      // Optimistic: s / r land the moment they're pressed, even on a slow LAN.
+      // A failed write puts the old state back and says so, rather than
+      // leaving the UI claiming a change the server never recorded.
+      var apply = function(from, to) {
+        updateStats(from, -1)
+        updateStats(to, +1)
         var itemInList = this.items.find(function(i) { return i.id == item.id })
-        if (itemInList) itemInList.status = newstatus
-        item.status = newstatus
+        if (itemInList) itemInList.status = to
+        item.status = to
+      }.bind(this)
+      apply(oldstatus, newstatus)
+      api.items.update(item.id, {status: newstatus}).then(function(res) {
+        if (res && !res.ok) throw new Error('status: ' + res.status)
         // cache the open article for offline reading when it's starred
         if (newstatus == 'starred' && window.offlineStore &&
             this.itemSelectedDetails && this.itemSelectedDetails.id == item.id) {
           window.offlineStore.put(this.itemSelectedDetails)
         }
+      }.bind(this)).catch(function() {
+        if (item.status !== newstatus) return  // changed again since; leave it
+        apply(newstatus, oldstatus)
+        this.showToast(this.statusFailureText(newstatus, item, oldstatus), 5000)
       }.bind(this))
+    },
+    statusFailureText: function(status, item, from) {
+      var name = '“' + (item.title || 'untitled') + '”'
+      if (status == 'starred') return 'Couldn’t star ' + name
+      if (from == 'starred') return 'Couldn’t unstar ' + name
+      if (status == 'unread') return 'Couldn’t mark ' + name + ' unread'
+      return 'Couldn’t mark ' + name + ' read'
     },
     toggleItemStarred: function(item) {
       this.toggleItemStatus(item, 'starred', 'read')
     },
+    // Star and read share one status, so r on a starred article would turn it
+    // unread and silently drop the star. Leave it starred and say how to unstar.
     toggleItemRead: function(item) {
+      if (item.status == 'starred') {
+        this.showToast('Starred. Unstar with s first.')
+        return
+      }
       this.toggleItemStatus(item, 'unread', 'read')
     },
     importOPML: function(event) {
@@ -1675,7 +1726,7 @@ function rootComponent() { return {
     enterCardMode: function() {
       this.cardItems = []
       this.cardIndex = 0
-      this.cardStats = { read: 0, instapaper: 0, kept: 0 }
+      this.cardStats = { read: 0, instapaper: 0, kept: 0, starred: 0 }
       this.cardFolder = ''
       this.cardLoading = true
       this.loadCardItems(null)
@@ -1685,7 +1736,7 @@ function rootComponent() { return {
       this.cardFolder = folderId
       this.cardItems = []
       this.cardIndex = 0
-      this.cardStats = { read: 0, instapaper: 0, kept: 0 }
+      this.cardStats = { read: 0, instapaper: 0, kept: 0, starred: 0 }
       this.cardLoading = true
       this.loadCardItems(null)
     },
@@ -1737,6 +1788,20 @@ function rootComponent() { return {
       this.scheduleCardUndo(item, 'read', index)
       this.cardIndex += 1
     },
+    // Star is the third triage verb (button or `s`). Like a swipe it applies
+    // locally now and writes when the undo window closes; starring also takes
+    // the item out of unread, matching the reader's star.
+    cardStar: function() {
+      var item = this.currentCard
+      if (!item) return
+      this.flushCardAction()
+      var index = this.cardIndex
+      this.applyCardRead(item)
+      item.status = 'starred'
+      this.cardStats.starred += 1
+      this.scheduleCardUndo(item, 'starred', index)
+      this.cardIndex += 1
+    },
     // Optimistically mark a card read locally; the server write is deferred
     // until the undo window closes (see flushCardAction).
     applyCardRead: function(item) {
@@ -1763,7 +1828,7 @@ function rootComponent() { return {
       var pending = this.cardUndo
       if (!pending) return
       clearTimeout(pending.timer)
-      if (pending.action === 'instapaper' || pending.action === 'read') {
+      if (pending.action === 'instapaper' || pending.action === 'read' || pending.action === 'starred') {
         this.revertCardRead(pending.item)
       }
       if (pending.action === 'instapaper') {
@@ -1771,6 +1836,8 @@ function rootComponent() { return {
         this.cardStats.instapaper -= 1
       } else if (pending.action === 'read') {
         this.cardStats.read -= 1
+      } else if (pending.action === 'starred') {
+        this.cardStats.starred -= 1
       } else {
         this.cardStats.kept -= 1
       }
@@ -1784,8 +1851,15 @@ function rootComponent() { return {
       clearTimeout(pending.timer)
       this.cardUndo = null
       var item = pending.item
-      if (pending.action === 'read') {
-        api.items.update(item.id, { status: 'read' })
+      if (pending.action === 'read' || pending.action === 'starred') {
+        // The card is gone by now, so a failed write has to say which article
+        // and put it back in unread: nothing silently lost, including stars.
+        api.items.update(item.id, { status: pending.action }).then(function(res) {
+          if (res && !res.ok) throw new Error('status: ' + res.status)
+        }).catch(function() {
+          vm.revertCardRead(item)
+          vm.showToast(vm.statusFailureText(pending.action, item) + '. It’s back in unread.', 5000)
+        })
       } else if (pending.action === 'instapaper') {
         // Capture the stats object so a late failure adjusts the session that
         // owned this swipe, never a fresh one started by enter/changeCardFolder.
@@ -1803,8 +1877,24 @@ function rootComponent() { return {
       item.instapaper_saved = false
       this.revertCardRead(item)
       if (stats && stats.instapaper > 0) stats.instapaper -= 1
+      this.showToast('Couldn’t save “' + (item.title || 'untitled') + '” to Instapaper. It’s back in unread.', 5000)
     },
-    cardTap: function() {
+    // Tap / Enter reads the article in the card itself (its content came with
+    // the list, so this works offline and costs no round-trip). Once open,
+    // links inside it go to a new tab and the card stays put.
+    cardTap: function(event) {
+      if (!this.currentCard) return
+      if (!this.cardExpanded) {
+        this.cardExpanded = true
+        return
+      }
+      var link = event && event.target && event.target.closest && event.target.closest('a[href]')
+      if (link) {
+        event.preventDefault()
+        window.open(link.href, '_blank', 'noopener,noreferrer')
+      }
+    },
+    cardOpenOriginal: function() {
       if (this.currentCard && this.currentCard.link) {
         window.open(this.currentCard.link, '_blank', 'noopener,noreferrer')
       }
@@ -1950,6 +2040,14 @@ function rootComponent() { return {
 
 // directives + components are registered above; mount now that they exist.
 var vm = vueApp.mount('#app')
+
+// Undoable actions write when their toast closes. Leaving the page (close,
+// reload, backgrounding a phone tab) must commit them rather than drop them;
+// the API sends writes with keepalive so they outlive the page.
+window.addEventListener('pagehide', function() {
+  vm.runFeedUndoCommit()
+  vm.flushCardAction()
+})
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function(err) {

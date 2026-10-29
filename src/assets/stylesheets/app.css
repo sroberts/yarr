@@ -556,12 +556,12 @@ select.form-control:not([multiple]):not([size]) {
   padding: 0.25rem 0;
 }
 
+/* A quiet caption, not a tracked-uppercase eyebrow: the rows carry the
+   weight, the label only marks where one group ends. */
 .command-palette-group {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 0.75rem;
   color: var(--text-tertiary);
-  padding: 0.5rem 1rem 0.2rem;
+  padding: 0.6rem 1rem 0.2rem;
 }
 
 .command-palette-row {
@@ -823,6 +823,42 @@ a,
 
 /* On a selected row the counter must ride the accent, not the muted token. */
 .selectgroup input:checked + .selectgroup-label .counter {
+  color: var(--on-accent);
+}
+
+/* One solid selection at a time. With an article open, j/k drive the article
+   list, so the feed list's selection steps down to a quiet marker: the hover
+   surface plus weight, never a second accent block competing for the eye.
+   Desktop only; narrower layouts don't show both panes at once. */
+@media (min-width: 992px) {
+  #app.item-selected #col-feed-list .selectgroup input:checked + .selectgroup-label {
+    background-color: var(--surface-hover) !important;
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  #app.item-selected #col-feed-list .selectgroup input:checked + .selectgroup-label .counter {
+    color: var(--text-secondary);
+  }
+}
+
+/* Article rows. Weight is the unread signal (it survives grayscale and the
+   accent fill); read titles step back a text tier. Meta uses the tertiary
+   token instead of opacity, which had no headroom on the accent fill
+   (3.3:1 light, 3.7:1 dark). Selected rows ride --on-accent throughout. */
+.item-meta {
+  line-height: 100%;
+  margin-bottom: .1rem;
+  color: var(--text-tertiary);
+}
+.item-title {
+  color: var(--text-secondary);
+}
+.item-title-unread {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.selectgroup input:checked + .selectgroup-label .item-meta,
+.selectgroup input:checked + .selectgroup-label .item-title {
   color: var(--on-accent);
 }
 
@@ -1150,6 +1186,33 @@ a,
   margin-bottom: 0.75rem;
 }
 
+/* The article, read inside the card (tap / Enter). Same growable, scrolling
+   slot as the excerpt, with just enough prose styling to read comfortably;
+   the card's width already holds the measure near 70ch. */
+.triage-card-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+  cursor: auto;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.triage-card-body img,
+.triage-card-body video {
+  max-width: 100%;
+  height: auto;
+}
+.triage-card-body pre {
+  overflow-x: auto;
+  font-size: .85rem;
+}
+.triage-card-body > :first-child { margin-top: 0; }
+.triage-card-hint a { color: var(--accent); }
+
 .triage-card-excerpt {
   font-size: 0.9rem;
   line-height: 1.6;
@@ -1169,7 +1232,7 @@ a,
   margin-top: 0.75rem;
   padding-top: 0.5rem;
   border-top: 1px solid rgba(128,128,128,0.1);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   /* Muted but legible — 0.35 opacity was well below AA (detector-flagged). */
   color: var(--text-tertiary);
 }
@@ -1208,7 +1271,10 @@ a,
 
 .card-view-hints {
   flex-shrink: 0;
-  opacity: 0.4;
+  /* The legend and the Star button are the only on-screen statement of what
+     each direction does, so they read at --text-secondary (AAA), not at an
+     opacity that took them to 1.7:1. */
+  color: var(--text-secondary);
   padding-left: 2rem !important;
   padding-right: 2rem !important;
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
@@ -1254,14 +1320,128 @@ a,
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-/* Triage button: only show on mobile/tablet */
-.d-card-triage {
+/* Triage owns the window at every width (#124). The card lives in the feed
+   column, which the phone and tablet layouts hide once a feed or article is
+   selected, so card mode overrides them: 4 or the palette always land on the
+   card. The item list and reader would only show stale state behind it. */
+#app.card-mode #col-feed-list {
+  display: flex !important;
+  width: 100% !important;
+  flex: 1 1 auto;
+  border-right-width: 0;
+}
+#app.card-mode #col-item-list,
+#app.card-mode #col-item,
+#app.card-mode .drag {
   display: none !important;
 }
+@media (min-width: 768px) {
+  /* card, action line and legend sit together in the middle of the window,
+     so the keys are read right under the card they act on */
+  #app.card-mode .card-view-area {
+    flex: 0 1 auto;
+    min-height: 0;
+    margin-top: auto;
+    padding-top: 1.25rem;
+  }
+  #app.card-mode .card-view-legend {
+    margin-bottom: auto;
+  }
+  /* a reading-width card: enough of the article to decide at a desk */
+  #app.card-mode .triage-card {
+    max-width: 640px;
+    /* the area is content-sized here, so cap against the window instead:
+       toolbar, folder picker, action line and legend take about 12rem */
+    max-height: calc(100vh - 12rem);
+  }
+  #app.card-mode .card-view-hints {
+    width: 100%;
+    max-width: calc(640px + 2.5rem);
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
 
-@media (max-width: 991.98px) {
-  .d-card-triage {
-    display: inline-block !important;
+/* Star: the one triage verb with no gesture, so it gets a labelled button
+   rather than a bare glyph in the legend. */
+.card-star-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  min-height: 2rem;
+  padding: .25rem .85rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 1.5rem;
+  background: var(--surface-base);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+.card-star-btn .icon { width: 1rem; height: 1rem; }
+@media (hover: hover) {
+  .card-star-btn:hover { background-color: var(--surface-hover); }
+}
+.card-star-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .card-star-btn { min-height: 44px; }
+}
+
+/* Card hint copy follows the input: tap on touch, Enter with a keyboard. */
+.hint-pointer { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .hint-pointer { display: inline; }
+  .hint-touch { display: none; }
+}
+
+/* Reader toolbar groups, separated by space rather than dividers: state
+   (star, read) · reading (appearance, read here, listen) · send (Instapaper,
+   copy, open). Margin only, so every control keeps one width. Phones fold the
+   secondary actions into the overflow menu, so the grouping is desktop-only. */
+@media (min-width: 768px) {
+  #col-item .toolbar .toolbar-group-start {
+    margin-left: .75rem;
+  }
+}
+
+/* Phone reader previous/next (thumb zone). Labelled, 44px, and clear of the
+   home indicator; the toast lifts above it while an article is open. */
+.reader-nav {
+  flex-shrink: 0;
+  justify-content: space-between;
+  padding: .25rem .5rem calc(.25rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-base);
+}
+.reader-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  min-height: 44px;
+  padding: 0 .75rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+}
+.reader-nav-btn:disabled {
+  opacity: .45;
+  cursor: default;
+}
+.reader-nav-btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+@media (hover: hover) {
+  .reader-nav-btn:hover:not(:disabled) { background-color: var(--surface-hover); }
+}
+@media (max-width: 767.98px) {
+  #app.item-selected .app-toast {
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
 

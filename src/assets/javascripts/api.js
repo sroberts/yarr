@@ -6,6 +6,10 @@
     if (['post', 'put', 'delete'].indexOf(init.method) !== -1) {
       init['headers'] = init['headers'] || {}
       init['headers']['x-requested-by'] = 'yarr'
+      // Let a write fired on pagehide (a pending undo committing) finish after
+      // the page goes away. keepalive caps the body at 64KB; uploads skip it.
+      var body = init.body
+      if (body === undefined || (typeof body === 'string' && body.length < 60000)) init.keepalive = true
     }
     return fetch(resource, init).then(function(res) {
       // Session expired or cookie cleared: the server now 401s every API call.
