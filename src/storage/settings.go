@@ -13,7 +13,7 @@ func settingsDefaults() map[string]interface{} {
 		"item_list_width":     300,
 		"sort_newest_first":   true,
 		"theme_name":          "auto",
-		"theme_font":          "",
+		"theme_font":          "serif",
 		"theme_size":          1.2,
 		"theme_accent":        "blue",
 		"theme_density":       "comfortable",

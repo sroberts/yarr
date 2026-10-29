@@ -7,26 +7,64 @@ html {
 }
 
 /* ============================================================
-   Design tokens — one semantic layer, two co-equal themes.
-   Components reference ROLES only (--surface-*, --text-*, --accent…),
-   never raw colors. Accent is a separate, theme-independent axis
-   selected via [data-accent] on <body>. (UI Design Spec v1.0 §3.)
+   Design tokens — Slip Box. Every article is a slip with an address;
+   starred slips are filed with a small tab; the open slip lies enlarged
+   on the box. One semantic layer, two co-equal themes. Components
+   reference ROLES only (--surface-*, --text-*, --ink-*, --accent), never
+   raw colors. --accent is the filing colour: filed state, links and
+   focus only. Selection is a 2px ink outline, never a fill. The filing
+   colour is user-selectable via [data-accent] on <body>.
    ============================================================ */
 
-/* Self-hosted variable fonts (SIL OFL — see fonts/LICENSE-*). */
+/* Self-hosted variable fonts (SIL OFL — see fonts/LICENSE-*), split into
+   latin and latin-ext so a page only fetches the ranges it renders. */
 @font-face {
-  font-family: 'InterVar';
+  font-family: 'Hanken Grotesk Var';
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('../fonts/inter.woff2') format('woff2');
+  src: url('../fonts/hanken-grotesk-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Source Serif 4 Var';
+  font-family: 'Hanken Grotesk Var';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/hanken-grotesk-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Literata Var';
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
-  src: url('../fonts/source-serif-4.woff2') format('woff2');
+  src: url('../fonts/literata-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Literata Var';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../fonts/literata-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Literata Var';
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../fonts/literata-latin-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Literata Var';
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../fonts/literata-latin-ext-italic.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
   font-family: 'JetBrains Mono Var';
@@ -37,11 +75,13 @@ html {
 }
 
 :root {
-  --font-sans: 'InterVar', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-serif: 'Source Serif 4 Var', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Hanken Grotesk Var', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: 'Literata Var', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono Var', SFMono-Regular, Menlo, Consolas, monospace;
 
-  --radius: 6px;
+  /* slips are cut card: a small, consistent corner */
+  --radius: 4px;
+  --stack-w: 400px;
 
   /* reading view (article pane) */
   --article-h1-leading: 1.2;
@@ -50,70 +90,83 @@ html {
   /* the single fixed brand action color (Instapaper), both themes */
   --instapaper: #FF6600;
 
-  /* blue fallback if [data-accent] is somehow absent */
-  --accent: #2563EB;
+  /* filing-blue fallback if [data-accent] is somehow absent */
+  --accent: #2B4C9A;
   --on-accent: #FFFFFF;
 }
 
 .theme-light {
   color-scheme: light;
+  /* the box: a cool pale ground; slips are white cards on it */
+  --surface-box: #F6F7F5;
   --surface-base: #FFFFFF;
-  --surface-raised: #F7F8FA;
-  --surface-hover: #EEF1F5;
-  --border-subtle: #E2E6EC;
-  --border-strong: #C7CDD6;
-  --text-primary: #16191D;   /* ~15.8:1 on base — AAA */
-  --text-secondary: #4A515B; /* ~8.3:1 — AAA */
-  --text-tertiary: #666D79;  /* 5.2:1 base, 4.6:1 on hover surface — AA */
+  --surface-raised: #F0F1EF;
+  --surface-hover: #E9EBE8;
+  --border-subtle: #E2E4E1;
+  --border-strong: #C6C9C5;
+  --text-primary: #1B1C1E;   /* 15.9:1 on the box — AAA */
+  --text-secondary: #4B4F55; /* 7.7:1 box — AAA */
+  --text-tertiary: #62666C;  /* 5.8:1 base, 5.1:1 raised, 4.8:1 hover — AA */
+  /* selection is an ink outline */
+  --ink-select: #1B1C1E;
+  --on-ink-select: #FFFFFF;
+  --slip-shadow: 0 1px 2px rgba(27, 28, 30, .06);
   --status-success: #15803D;
   --status-attention: #B45309;
-  --status-error: #DC2626;
-  --scrollbar-thumb: #C7CDD6;
-  --scrollbar-thumb-hover: #A9B1BC;
+  --status-error: #B42318;
+  --scrollbar-thumb: #C6C9C5;
+  --scrollbar-thumb-hover: #A6AAA5;
 }
 
 .theme-dark {
   color-scheme: dark;
-  --surface-base: #0E1116;
-  --surface-raised: #161B22;
-  --surface-hover: #1F2630;
-  --border-subtle: #262D38;
-  --border-strong: #38414F;
-  --text-primary: #E6EAF0;   /* ~13.5:1 on base — AAA */
-  --text-secondary: #A4ADBA; /* ~7.4:1 — AAA */
-  --text-tertiary: #868FA0;  /* 5.8:1 base, 5.3:1 raised, 4.7:1 hover — AA */
+  /* a graphite box; slips sit one step lighter */
+  --surface-box: #141618;
+  --surface-base: #1C1F22;
+  --surface-raised: #22262A;
+  --surface-hover: #2A2E33;
+  --border-subtle: #2C3035;
+  --border-strong: #3F444A;
+  --text-primary: #E9EAEC;   /* 15.1:1 on the box — AAA */
+  --text-secondary: #AFB3B9; /* 8.6:1 box — AAA */
+  --text-tertiary: #959AA2;  /* 5.9:1 base, 5.4:1 raised, 4.8:1 hover — AA */
+  --ink-select: #E9EAEC;
+  --on-ink-select: #141618;
+  --slip-shadow: 0 1px 2px rgba(0, 0, 0, .3);
   --status-success: #4ADE80;
   --status-attention: #FBBF24;
-  --status-error: #F87171;
-  --scrollbar-thumb: #38414F;
-  --scrollbar-thumb-hover: #4F5A6B;
-  /* accent fallback for dark when no [data-accent] is present */
-  --accent: #5B8DEF;
-  --on-accent: #0E1116;
+  --status-error: #FF7A6B;
+  --scrollbar-thumb: #3F444A;
+  --scrollbar-thumb-hover: #565C63;
+  /* filing-colour fallback for dark when no [data-accent] is present */
+  --accent: #8FAAF0;
+  --on-accent: #141618;
 }
 
-/* Selectable accent (Spec §3.5). Each option: a light value + a dark
-   override; --on-accent flips (deep light accents take white, bright dark
-   accents take near-black). Every pair clears contrast in both themes. */
-[data-accent="blue"]               { --accent: #2563EB; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="blue"]    { --accent: #5B8DEF; --on-accent: #0E1116; }
+/* Selectable filing colour (the tab on filed slips, links, focus). Each
+   option: a light value + a dark override; --on-accent flips (deep light
+   values take white, bright dark values take near-black). Every pair clears
+   AA as text on the box, slip and raised surfaces of its theme. "blue" is
+   the filing blue and the default. */
+[data-accent="blue"]               { --accent: #2B4C9A; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="blue"]    { --accent: #8FAAF0; --on-accent: #141618; }
 [data-accent="teal"]               { --accent: #0F766E; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="teal"]    { --accent: #2DD4BF; --on-accent: #0E1116; }
-[data-accent="green"]              { --accent: #15803D; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="green"]   { --accent: #4ADE80; --on-accent: #0E1116; }
+.theme-dark[data-accent="teal"]    { --accent: #2DD4BF; --on-accent: #141618; }
+[data-accent="green"]              { --accent: #137337; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="green"]   { --accent: #4ADE80; --on-accent: #141618; }
 [data-accent="violet"]             { --accent: #7C3AED; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="violet"]  { --accent: #A78BFA; --on-accent: #0E1116; }
-[data-accent="rose"]               { --accent: #BE123C; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="rose"]    { --accent: #FB7185; --on-accent: #0E1116; }
-[data-accent="amber"]              { --accent: #B45309; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="amber"]   { --accent: #FBBF24; --on-accent: #0E1116; }
+.theme-dark[data-accent="violet"]  { --accent: #A78BFA; --on-accent: #141618; }
+[data-accent="rose"]               { --accent: #C4201A; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="rose"]    { --accent: #FF6B5E; --on-accent: #141618; }
+[data-accent="amber"]              { --accent: #A64B07; --on-accent: #FFFFFF; }
+.theme-dark[data-accent="amber"]   { --accent: #FBBF24; --on-accent: #141618; }
 [data-accent="slate"]              { --accent: #475569; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="slate"]   { --accent: #94A3B8; --on-accent: #0E1116; }
+.theme-dark[data-accent="slate"]   { --accent: #94A3B8; --on-accent: #141618; }
 
 /* Accent derivations — identical formula in both themes, but they MUST be
    declared here rather than on :root. A custom property substitutes at the
    element that declares it, so --focus-ring: var(--accent) written on :root
-   locks in :root's blue fallback and inherits that fixed blue downward; the
+   locks in :root's marker fallback and inherits that fixed value downward; the
    [data-accent] overrides land on <body> and never reach it. Declared on body,
    they resolve against the accent that's actually selected. */
 body {
@@ -121,7 +174,7 @@ body {
   --focus-ring: var(--accent);
 
   overscroll-behavior: none;
-  background-color: var(--surface-base);
+  background-color: var(--surface-box);
   color: var(--text-primary);
   font-family: var(--font-sans);
 }
@@ -278,9 +331,12 @@ select.form-control:not([multiple]):not([size]) {
 .counter {
   padding-left: .5rem;
   /* De-emphasise unread counts with a real token (AAA on every surface)
-     rather than opacity — .6 opacity on a selected row's on-accent text
-     dropped below AA in every accent. */
+     rather than opacity, which had no headroom on a selected row. Counts are
+     numbers, so they're set in mono. */
   color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .light {
@@ -315,7 +371,7 @@ select.form-control:not([multiple]):not([size]) {
 
 .selectgroup-label {
   padding: .375rem .5rem;
-  border-radius: 4px;
+  border-radius: var(--radius);
   overflow-wrap: break-word;
 }
 
@@ -575,8 +631,8 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .command-palette-row.selected {
-  background-color: var(--accent);
-  color: var(--on-accent);
+  background-color: var(--ink-select);
+  color: var(--on-ink-select);
 }
 
 .command-palette-row .cmd-label {
@@ -596,8 +652,8 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .command-palette-row.selected .cmd-hint {
-  color: var(--on-accent);
-  border-color: var(--on-accent);
+  color: var(--on-ink-select);
+  border-color: var(--on-ink-select);
 }
 
 .command-palette-empty {
@@ -637,8 +693,10 @@ select.form-control:not([multiple]):not([size]) {
   margin: 0 auto;
 }
 
-/* Measured at 18px: Inter and Source Serif 4 both land at ~71 characters on
-   35em; JetBrains Mono's fixed advance needs 44em to reach the same count. */
+/* Measured at 18px against the e2e prose: Literata lands at ~71 characters on
+   35em and JetBrains Mono needs 44em for ~71; Hanken Grotesk sets narrower and
+   reached 76 on 35em, so the sans reader takes 33em. */
+.content:not(.font-serif):not(.font-monospace) { --measure: 33em; }
 .content.font-monospace { --measure: 44em; }
 
 .content img, .content video {
@@ -807,7 +865,7 @@ select.form-control:not([multiple]):not([size]) {
   pointer-events: none;
 }
 
-/* links + the accent-filled selected/active states */
+/* links take the filing colour; selected/active states are an ink outline */
 a,
 .btn-link:hover {
   color: var(--accent);
@@ -817,13 +875,14 @@ a,
 .dropdown-item.active,
 .dropdown-item:active,
 .selectgroup input:checked + .selectgroup-label {
-  color: var(--on-accent);
-  background-color: var(--accent) !important;
+  color: var(--text-primary);
+  background-color: var(--surface-base) !important;
+  box-shadow: inset 0 0 0 2px var(--ink-select);
+  font-weight: 600;
 }
 
-/* On a selected row the counter must ride the accent, not the muted token. */
 .selectgroup input:checked + .selectgroup-label .counter {
-  color: var(--on-accent);
+  color: var(--text-primary);
 }
 
 /* One solid selection at a time. With an article open, j/k drive the article
@@ -833,6 +892,7 @@ a,
 @media (min-width: 992px) {
   #app.item-selected #col-feed-list .selectgroup input:checked + .selectgroup-label {
     background-color: var(--surface-hover) !important;
+    box-shadow: none;
     color: var(--text-primary);
     font-weight: 600;
   }
@@ -841,10 +901,9 @@ a,
   }
 }
 
-/* Article rows. Weight is the unread signal (it survives grayscale and the
-   accent fill); read titles step back a text tier. Meta uses the tertiary
-   token instead of opacity, which had no headroom on the accent fill
-   (3.3:1 light, 3.7:1 dark). Selected rows ride --on-accent throughout. */
+/* Article rows. Weight is the unread signal (it survives grayscale); read
+   titles step back a text tier. Meta uses the tertiary token, never opacity.
+   The selected slip is outlined in ink rather than flooded (see "The stack"). */
 .item-meta {
   line-height: 100%;
   margin-bottom: .1rem;
@@ -857,9 +916,201 @@ a,
   font-weight: 600;
   color: var(--text-primary);
 }
-.selectgroup input:checked + .selectgroup-label .item-meta,
-.selectgroup input:checked + .selectgroup-label .item-title {
-  color: var(--on-accent);
+#item-list-scroll .selectgroup input:checked + .selectgroup-label {
+  border-color: var(--ink-select);
+  font-weight: inherit;
+}
+#item-list-scroll .selectgroup input:checked + .selectgroup-label .item-title {
+  color: var(--text-primary);
+}
+#item-list-scroll .selectgroup input:checked + .selectgroup-label .item-meta {
+  color: var(--text-secondary);
+}
+
+/* ── The stack ──────────────────────────────────────
+   Articles are slips: white cards with a 1px edge on the box ground, 6px
+   apart. Each carries its address (feed code · position in this view) in
+   mono at its head; a filed (starred) slip shows a small tab in the filing
+   colour on its top edge. The selected slip is outlined in ink. */
+#col-item-list,
+#item-list-scroll {
+  background-color: var(--surface-box);
+}
+#item-list-scroll .selectgroup + .selectgroup {
+  margin-top: 6px;
+}
+#item-list-scroll .selectgroup-label {
+  background-color: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--slip-shadow);
+  padding: .55rem .75rem .6rem;
+}
+@media (hover: hover) {
+  #item-list-scroll .selectgroup-label:hover {
+    background-color: var(--surface-base);
+    border-color: var(--border-strong);
+  }
+}
+.slip-addr {
+  flex-shrink: 0;
+  margin-right: .5rem;
+  font: 500 .72rem/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+}
+.slip-addr.is-unread { color: var(--text-primary); font-weight: 700; }
+.slip-tab {
+  position: absolute;
+  top: -5px;
+  right: .85rem;
+  width: 18px;
+  height: 5px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+/* keeper (filed) state is always the filing colour, wherever it shows */
+.marker { color: var(--accent); }
+
+/* the open slip's address and place in the stack, beside prev/next */
+.reader-slip-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .4rem;
+  padding-right: .75rem;
+  font-size: .8rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.reader-slip-label .slip-addr { margin-right: .45rem; color: var(--text-secondary); font-weight: 700; }
+.reader-nav .reader-slip-label { padding-right: 0; }
+
+/* ── The open slip ─────────────────────────────────────
+   The reader sits on the box; the article is one large white slip,
+   centred, with the text column held at the measure inside it. */
+#col-item,
+#col-item .content {
+  background-color: var(--surface-box);
+}
+#col-item .content-wrapper {
+  box-sizing: content-box;
+  margin: .75rem auto 2.5rem;
+  padding: 2.25rem 2.75rem 2.75rem;
+  background-color: var(--surface-base);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--slip-shadow);
+}
+@media (max-width: 767.98px) {
+  #col-item .content-wrapper { padding: 1.25rem 1.1rem 1.75rem; margin-top: .5rem; }
+}
+.content-title { font-family: var(--font-sans); }
+
+/* The byline sits under the enlargement like a caption: one quiet sans line,
+   never competing with the title or the body. */
+.content-byline {
+  margin-top: .35em;
+  font: 400 .8em/1.4 var(--font-sans);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.content-byline .byline-feed {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ── The top bar ───────────────────────────────────────
+   From tablet width up there is no sidebar: the feed column becomes one
+   bar across the top (still the "Feeds" landmark). Folders are chips; the
+   current folder's feeds follow it inline; everything scrolls sideways.
+   The stack and the open slip share the row below. Phones keep the
+   single-column list of feeds. */
+#col-feed-list {
+  background-color: var(--surface-box);
+}
+@media (min-width: 768px) {
+  #app {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100vh;
+  }
+  #app #col-feed-list {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    width: auto !important;
+    height: auto !important;
+    min-height: 3.25rem;
+    flex-direction: row !important;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  #app #col-item-list { grid-column: 1; grid-row: 2; height: auto !important; }
+  #app #col-item { grid-column: 2; grid-row: 2; height: auto !important; }
+  #col-feed-list > .drag { display: none; }
+  #col-feed-list > .toolbar { flex: 0 0 auto; max-height: none !important; }
+  #feed-list-scroll {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: .375rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: .5rem .75rem .5rem .25rem !important;
+    border-top: 0 !important;
+    scrollbar-width: none;
+  }
+  #feed-list-scroll::-webkit-scrollbar { display: none; }
+  #feed-list-scroll > div { display: contents; }
+  #feed-list-scroll .feed-group { display: none !important; }
+  #feed-list-scroll .feed-group.chip-current { display: contents !important; }
+  #feed-list-scroll .selectgroup,
+  #feed-list-scroll .selectgroup + .selectgroup { flex: 0 0 auto; margin: 0 !important; }
+  #feed-list-scroll .selectgroup-label {
+    width: auto !important;
+    min-height: 0;
+    padding: .3rem .6rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius);
+    background-color: var(--surface-base);
+    white-space: nowrap;
+  }
+  #feed-list-scroll .selectgroup-label .text-truncate { max-width: 14rem; }
+  #feed-list-scroll .selectgroup-label .icon.mr-2 { margin-right: .4rem !important; }
+  #feed-list-scroll .folder-expander { display: none !important; }
+  /* the open folder's own chip reads as the head of its feed run */
+  #feed-list-scroll .chip-open > .selectgroup-label { font-weight: 600; border-color: var(--border-strong); }
+  #feed-list-scroll .empty-hint { display: none; }
+  #col-item-list .empty-hint { display: block !important; }
+  #app.card-mode #col-feed-list {
+    grid-row: 1 / -1;
+    flex-direction: column !important;
+    align-items: stretch;
+    border-bottom: 0;
+  }
+  .wordmark {
+    margin-right: .5rem;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  /* a chip's ⋯ stays out of the way until the chip is pointed at or focused;
+     right-click opens the same menu */
+  #feed-list-scroll .feed-row-menu { opacity: 0; }
+  #feed-list-scroll .selectgroup-label:hover .feed-row-menu,
+  #feed-list-scroll .feed-row-menu:focus-visible { opacity: .7; }
+}
+/* Tablet: one working column under the bar. The stack fills it, and the open
+   slip replaces the stack (the older two-column tablet rules set fixed
+   widths with equal specificity, so these are scoped up by one element). */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  html #app #col-feed-list { width: auto !important; }
+  html #app #col-item-list { grid-column: 1 / -1; width: 100% !important; }
+  html #app.item-selected #col-item { grid-column: 1 / -1; }
 }
 
 .btn-default:focus,
@@ -1120,8 +1371,9 @@ a,
 /* ── Card triage mode ────────────────────────── */
 
 
+/* one slip, enlarged, on the box */
 #card-view {
-  background: var(--surface-base);
+  background: var(--surface-box);
   overflow: hidden;
   min-height: 0;
 }
@@ -1130,8 +1382,6 @@ a,
   padding: 1.25rem;
   position: relative;
   overflow: hidden;
-  justify-content: start !important;
-  padding-top: 15%;
 }
 
 .triage-card {
@@ -1142,12 +1392,12 @@ a,
   max-height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--surface-raised);
+  background: var(--surface-base);
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  position: relative;
   padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
   user-select: none;
   -webkit-user-select: none;
   touch-action: pan-y;
@@ -1180,10 +1430,12 @@ a,
 }
 
 .triage-card-title {
-  font-size: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: 1.4rem;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.25;
   margin-bottom: 0.75rem;
+  text-wrap: balance;
 }
 
 /* The article, read inside the card (tap / Enter). Same growable, scrolling
@@ -1214,7 +1466,8 @@ a,
 .triage-card-hint a { color: var(--accent); }
 
 .triage-card-excerpt {
-  font-size: 0.9rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
   line-height: 1.6;
   color: var(--text-secondary);
   /* the one growable region: takes the slack and scrolls when content is
@@ -1248,7 +1501,7 @@ a,
 .card-action-pill {
   display: inline-block;
   padding: 0.375rem 1rem;
-  border-radius: 1.25rem;
+  border-radius: var(--radius);
   font-size: 0.875rem;
   font-weight: 600;
   color: #fff;
@@ -1265,8 +1518,8 @@ a,
 }
 
 .card-action-pill.action-read {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink-select);
+  color: var(--on-ink-select);
 }
 
 .card-view-hints {
@@ -1279,6 +1532,24 @@ a,
   padding-right: 2rem !important;
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
 }
+
+/* the folder picker's caret is drawn, not a typed glyph */
+.card-folder-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.card-folder-pick::after {
+  content: "";
+  width: .75rem;
+  height: .75rem;
+  margin-left: -.9rem;
+  pointer-events: none;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.card-view-legend .icon { width: .9rem; height: .9rem; }
 
 .card-folder-select {
   background: transparent;
@@ -1301,7 +1572,7 @@ a,
 }
 
 .card-stat-read {
-  color: var(--accent);
+  color: var(--text-primary);
 }
 
 .card-stat-instapaper {
@@ -1370,11 +1641,13 @@ a,
   gap: .35rem;
   min-height: 2rem;
   padding: .25rem .85rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 1.5rem;
+  /* star is the keeper verb, so it is drawn in the marker */
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
   background: var(--surface-base);
-  color: var(--text-primary);
+  color: var(--accent);
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }
 .card-star-btn .icon { width: 1rem; height: 1rem; }
@@ -1457,8 +1730,8 @@ a,
   gap: 0.5rem;
   max-width: calc(100% - 2rem);
   padding: 0 0.25rem 0 1rem;
-  border-radius: 1.5rem;
-  background: rgba(20, 20, 20, 0.92);
+  border-radius: var(--radius);
+  background: #111214;
   color: #fff;
   font-size: 0.875rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
@@ -1474,7 +1747,7 @@ a,
   min-width: 44px;
   padding: 0 1rem;
   border: none;
-  border-radius: 1.25rem;
+  border-radius: var(--radius);
   background: transparent;
   /* the toast is always dark; lighten the chosen accent for legibility on it */
   color: color-mix(in oklab, var(--accent), white 35%);
@@ -1597,19 +1870,19 @@ body[data-motion="reduce"] *::after {
 
 /* Swatch preview colors mirror the [data-accent] --accent values above so the
    dot matches the color selecting it paints. Each has a dark override, since
-   the applied accent shifts in dark mode (e.g. amber #B45309 → #FBBF24). */
-.swatch-blue   { --swatch: #2563EB; }
+   the applied marker shifts in dark mode (e.g. amber #A64B07 → #FBBF24). */
+.swatch-blue   { --swatch: #2B4C9A; }
 .swatch-teal   { --swatch: #0F766E; }
-.swatch-green  { --swatch: #15803D; }
+.swatch-green  { --swatch: #137337; }
 .swatch-violet { --swatch: #7C3AED; }
-.swatch-rose   { --swatch: #BE123C; }
-.swatch-amber  { --swatch: #B45309; }
+.swatch-rose   { --swatch: #C4201A; }
+.swatch-amber  { --swatch: #A64B07; }
 .swatch-slate  { --swatch: #475569; }
-.theme-dark .swatch-blue   { --swatch: #5B8DEF; }
+.theme-dark .swatch-blue   { --swatch: #8FAAF0; }
 .theme-dark .swatch-teal   { --swatch: #2DD4BF; }
 .theme-dark .swatch-green  { --swatch: #4ADE80; }
 .theme-dark .swatch-violet { --swatch: #A78BFA; }
-.theme-dark .swatch-rose   { --swatch: #FB7185; }
+.theme-dark .swatch-rose   { --swatch: #FF6B5E; }
 .theme-dark .swatch-amber  { --swatch: #FBBF24; }
 .theme-dark .swatch-slate  { --swatch: #94A3B8; }
 
@@ -1638,8 +1911,8 @@ body[data-motion="reduce"] *::after {
   z-index: 1100;
   max-width: calc(100% - 2rem);
   padding: 0.5rem 1rem;
-  border-radius: 1.5rem;
-  background: rgba(20, 20, 20, 0.92);
+  border-radius: var(--radius);
+  background: #111214;
   color: #fff;
   font-size: 0.875rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
@@ -1795,6 +2068,7 @@ body[data-motion="reduce"] *::after {
   border-collapse: collapse;
 }
 /* long unbroken title words wrap instead of overflowing */
+.content-title b { font-weight: 600; }
 .content-title {
   overflow-wrap: break-word;
   word-break: break-word;
@@ -1826,7 +2100,8 @@ body[data-motion="reduce"] *::after {
 /* ── Segmented control (settings toggles) ──────────────
    A bordered track of equal segments so inactive options read as
    selectable, not as floating text. Fixes the dense/ambiguous mobile
-   Settings toggles (#86). Active = accent fill; dividers between segments. */
+   Settings toggles (#86). Active = ink fill (selection is ink, never the
+   marker); dividers between segments. */
 .segmented {
   display: flex;
   border: 1px solid var(--border-strong);
@@ -1851,7 +2126,7 @@ body[data-motion="reduce"] *::after {
   cursor: pointer;
 }
 @media (hover: hover) { .segmented > button:hover { background: var(--surface-hover); } }
-.segmented > button.active { background: var(--accent); color: var(--on-accent); }
+.segmented > button.active { background: var(--ink-select); color: var(--on-ink-select); }
 .segmented > button:disabled { opacity: .4; cursor: not-allowed; }
 .segmented > button:disabled:hover { background: transparent; }
 .segmented > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
