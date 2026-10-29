@@ -1,172 +1,913 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-06-16T15:00:00Z",
+  "generatedAt": "2026-10-29T06:04:17+00:00",
   "title": "Design System: yarr",
   "extensions": {
     "colorMeta": {
-      "signal-blue": {
+      "filing-blue": {
         "role": "primary",
-        "displayName": "Signal Blue",
-        "canonical": "#0080d4",
-        "tonalRamp": ["#012438", "#01405f", "#015888", "#0067ab", "#0080d4", "#33a0e0", "#7cc4ee", "#cce8f8"]
+        "displayName": "Filing Blue",
+        "canonical": "#2B4C9A",
+        "oklch": "oklch(43.7% 0.133 264)",
+        "tonalRamp": [
+          "#020042",
+          "#031964",
+          "#1C3B88",
+          "#3A5DAC",
+          "#597FD2",
+          "#7BA3F9",
+          "#9DC7FF",
+          "#C1EDFF"
+        ]
+      },
+      "filing-blue-dark": {
+        "role": "primary",
+        "displayName": "Filing Blue (dark)",
+        "canonical": "#8FAAF0",
+        "oklch": "oklch(74.5% 0.106 268)",
+        "tonalRamp": [
+          "#020037",
+          "#0F1E57",
+          "#293D7A",
+          "#475E9D",
+          "#667FC2",
+          "#88A3E8",
+          "#ABC7FF",
+          "#CFEDFF"
+        ]
+      },
+      "filing-teal": {
+        "role": "primary",
+        "displayName": "Filing Teal",
+        "canonical": "#0F766E",
+        "oklch": "oklch(51.1% 0.086 186)",
+        "tonalRamp": [
+          "#001411",
+          "#00312C",
+          "#005049",
+          "#017169",
+          "#39938A",
+          "#5FB7AD",
+          "#84DCD2",
+          "#AAFFF7"
+        ]
+      },
+      "filing-teal-dark": {
+        "role": "primary",
+        "displayName": "Filing Teal (dark)",
+        "canonical": "#2DD4BF",
+        "oklch": "oklch(78.5% 0.133 182)",
+        "tonalRamp": [
+          "#00170F",
+          "#00362A",
+          "#005647",
+          "#007867",
+          "#009B88",
+          "#00BFAB",
+          "#47E5CF",
+          "#76FFF5"
+        ]
+      },
+      "filing-green": {
+        "role": "primary",
+        "displayName": "Filing Green",
+        "canonical": "#137337",
+        "oklch": "oklch(48.9% 0.126 150)",
+        "tonalRamp": [
+          "#001600",
+          "#003300",
+          "#005318",
+          "#157438",
+          "#409759",
+          "#65BB7A",
+          "#8AE09E",
+          "#AFFFC2"
+        ]
+      },
+      "filing-green-dark": {
+        "role": "primary",
+        "displayName": "Filing Green (dark)",
+        "canonical": "#4ADE80",
+        "oklch": "oklch(80.0% 0.182 152)",
+        "tonalRamp": [
+          "#001900",
+          "#003800",
+          "#005900",
+          "#007B21",
+          "#009F45",
+          "#23C468",
+          "#58EA8B",
+          "#83FFAF"
+        ]
+      },
+      "filing-violet": {
+        "role": "primary",
+        "displayName": "Filing Violet",
+        "canonical": "#7C3AED",
+        "oklch": "oklch(54.1% 0.247 293)",
+        "tonalRamp": [
+          "#240068",
+          "#39008E",
+          "#5200B4",
+          "#6F25DC",
+          "#8E53FF",
+          "#B07AFF",
+          "#D3A1FF",
+          "#F8C8FF"
+        ]
+      },
+      "filing-violet-dark": {
+        "role": "primary",
+        "displayName": "Filing Violet (dark)",
+        "canonical": "#A78BFA",
+        "oklch": "oklch(70.9% 0.159 294)",
+        "tonalRamp": [
+          "#180046",
+          "#2E0068",
+          "#4A258C",
+          "#6849B1",
+          "#896BD7",
+          "#AB8FFE",
+          "#CFB3FF",
+          "#F4D9FF"
+        ]
+      },
+      "filing-rose": {
+        "role": "primary",
+        "displayName": "Filing Rose",
+        "canonical": "#C4201A",
+        "oklch": "oklch(52.8% 0.198 29)",
+        "tonalRamp": [
+          "#3F0000",
+          "#670000",
+          "#8F0000",
+          "#B7080A",
+          "#E04135",
+          "#FF6858",
+          "#FF8F7C",
+          "#FFB5A0"
+        ]
+      },
+      "filing-rose-dark": {
+        "role": "primary",
+        "displayName": "Filing Rose (dark)",
+        "canonical": "#FF6B5E",
+        "oklch": "oklch(70.9% 0.183 28)",
+        "tonalRamp": [
+          "#3C0000",
+          "#630000",
+          "#8A0000",
+          "#B21E1C",
+          "#DA493F",
+          "#FF6F62",
+          "#FF9485",
+          "#FFBAA9"
+        ]
+      },
+      "filing-amber": {
+        "role": "primary",
+        "displayName": "Filing Amber",
+        "canonical": "#A64B07",
+        "oklch": "oklch(52.1% 0.138 48)",
+        "tonalRamp": [
+          "#300000",
+          "#530000",
+          "#771F00",
+          "#9D4200",
+          "#C3652D",
+          "#EA8852",
+          "#FFAC76",
+          "#FFD29A"
+        ]
+      },
+      "filing-amber-dark": {
+        "role": "primary",
+        "displayName": "Filing Amber (dark)",
+        "canonical": "#FBBF24",
+        "oklch": "oklch(83.7% 0.164 84)",
+        "tonalRamp": [
+          "#270000",
+          "#471100",
+          "#693300",
+          "#8B5400",
+          "#AF7600",
+          "#D49A00",
+          "#FBBF23",
+          "#FFE459"
+        ]
+      },
+      "filing-slate": {
+        "role": "primary",
+        "displayName": "Filing Slate",
+        "canonical": "#475569",
+        "oklch": "oklch(44.6% 0.037 257)",
+        "tonalRamp": [
+          "#030B1B",
+          "#192637",
+          "#354356",
+          "#546277",
+          "#748499",
+          "#97A6BD",
+          "#BACBE2",
+          "#DFF0FF"
+        ]
+      },
+      "filing-slate-dark": {
+        "role": "primary",
+        "displayName": "Filing Slate (dark)",
+        "canonical": "#94A3B8",
+        "oklch": "oklch(71.1% 0.035 257)",
+        "tonalRamp": [
+          "#030B1A",
+          "#1A2636",
+          "#364355",
+          "#556275",
+          "#758498",
+          "#97A6BB",
+          "#BBCBE0",
+          "#E0F0FF"
+        ]
       },
       "instapaper-orange": {
         "role": "secondary",
         "displayName": "Instapaper Orange",
-        "canonical": "#ff6600",
-        "tonalRamp": ["#3d1900", "#5c2600", "#8a3900", "#c25100", "#ff6600", "#ff8c40", "#ffb380", "#ffe0cc"]
+        "canonical": "#FF6600",
+        "oklch": "oklch(69.6% 0.204 43)",
+        "tonalRamp": [
+          "#3F0000",
+          "#670000",
+          "#8E0000",
+          "#B61800",
+          "#DF4700",
+          "#FF6F18",
+          "#FF954B",
+          "#FFBB74"
+        ]
       },
-      "alert-red": {
-        "role": "tertiary",
-        "displayName": "Alert Red",
-        "canonical": "#e74c3c",
-        "tonalRamp": ["#3a0f0a", "#5c1810", "#8a2519", "#c0392b", "#e74c3c", "#ee7a6f", "#f4a89f", "#fbd9d4"]
-      },
-      "light-ink": {
+      "box-ground": {
         "role": "neutral",
-        "displayName": "Light Ink",
-        "canonical": "#212529",
-        "tonalRamp": ["#212529", "#3a3f44", "#565c63", "#6c757d", "#adb5bd", "#dee2e6", "#f0f0f0", "#ffffff"]
+        "displayName": "Box Ground",
+        "canonical": "#F6F7F5",
+        "oklch": "oklch(97.5% 0.003 128)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#252524",
+          "#414241",
+          "#616160",
+          "#828381",
+          "#A4A5A3",
+          "#C8C9C7",
+          "#EEEFED"
+        ]
       },
-      "sepia-ink": {
+      "slip-white": {
         "role": "neutral",
-        "displayName": "Sepia Ink",
-        "canonical": "#433422",
-        "tonalRamp": ["#2b2014", "#433422", "#5c4a33", "#8a7a66", "#b3a589", "#e0d6ba", "#ede8d8", "#f4f0e5"]
+        "displayName": "Slip White",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
       },
-      "night-ink": {
+      "raised-grey": {
         "role": "neutral",
-        "displayName": "Night Ink",
-        "canonical": "#d1d1d1",
-        "tonalRamp": ["#0e0e0e", "#1a1a1a", "#2b2b2b", "#444444", "#888888", "#aaaaaa", "#d1d1d1", "#f0f0f0"]
+        "displayName": "Raised Grey",
+        "canonical": "#F0F1EF",
+        "oklch": "oklch(95.7% 0.003 128)",
+        "tonalRamp": [
+          "#0B0B0A",
+          "#252524",
+          "#414241",
+          "#616160",
+          "#828381",
+          "#A4A5A3",
+          "#C8C9C7",
+          "#EEEFED"
+        ]
+      },
+      "hover-grey": {
+        "role": "neutral",
+        "displayName": "Hover Grey",
+        "canonical": "#E9EBE8",
+        "oklch": "oklch(93.8% 0.005 135)",
+        "tonalRamp": [
+          "#0A0C0A",
+          "#242623",
+          "#414240",
+          "#60625F",
+          "#818380",
+          "#A4A6A3",
+          "#C8CAC7",
+          "#EDEFEC"
+        ]
+      },
+      "edge-subtle": {
+        "role": "neutral",
+        "displayName": "Subtle Edge",
+        "canonical": "#E2E4E1",
+        "oklch": "oklch(91.6% 0.005 135)",
+        "tonalRamp": [
+          "#0A0C0A",
+          "#242623",
+          "#414240",
+          "#60625F",
+          "#818380",
+          "#A4A6A3",
+          "#C8CAC7",
+          "#EDEFEC"
+        ]
+      },
+      "edge-strong": {
+        "role": "neutral",
+        "displayName": "Strong Edge",
+        "canonical": "#C6C9C5",
+        "oklch": "oklch(83.2% 0.006 138)",
+        "tonalRamp": [
+          "#0A0C09",
+          "#242623",
+          "#40433F",
+          "#5F625F",
+          "#80837F",
+          "#A3A6A2",
+          "#C7CAC6",
+          "#ECEFEB"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1B1C1E",
+        "oklch": "oklch(22.6% 0.004 264)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A4A5A8",
+          "#C8C9CC",
+          "#EDEEF1"
+        ]
+      },
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "canonical": "#4B4F55",
+        "oklch": "oklch(42.6% 0.011 258)",
+        "tonalRamp": [
+          "#080B10",
+          "#22252B",
+          "#3E4248",
+          "#5D6168",
+          "#7E8389",
+          "#A1A5AC",
+          "#C5C9D1",
+          "#EAEFF6"
+        ]
+      },
+      "pencil": {
+        "role": "neutral",
+        "displayName": "Pencil",
+        "canonical": "#62666C",
+        "oklch": "oklch(50.9% 0.011 258)",
+        "tonalRamp": [
+          "#080B10",
+          "#22252A",
+          "#3F4248",
+          "#5E6167",
+          "#7E8389",
+          "#A1A5AC",
+          "#C5C9D0",
+          "#EAEFF6"
+        ]
+      },
+      "status-success": {
+        "role": "status",
+        "displayName": "Success",
+        "canonical": "#15803D",
+        "oklch": "oklch(52.7% 0.137 150)",
+        "tonalRamp": [
+          "#001600",
+          "#003400",
+          "#005411",
+          "#007633",
+          "#379954",
+          "#5EBD76",
+          "#83E299",
+          "#A8FFBD"
+        ]
+      },
+      "status-attention": {
+        "role": "status",
+        "displayName": "Attention",
+        "canonical": "#B45309",
+        "oklch": "oklch(55.5% 0.146 49)",
+        "tonalRamp": [
+          "#310000",
+          "#550000",
+          "#7A1B00",
+          "#9F4000",
+          "#C56323",
+          "#ED864B",
+          "#FFAB70",
+          "#FFD094"
+        ]
+      },
+      "status-error": {
+        "role": "status",
+        "displayName": "Error",
+        "canonical": "#B42318",
+        "oklch": "oklch(50.0% 0.182 30)",
+        "tonalRamp": [
+          "#3B0000",
+          "#620000",
+          "#8A0000",
+          "#B12015",
+          "#DA4A3B",
+          "#FF705E",
+          "#FF9681",
+          "#FFBBA5"
+        ]
+      },
+      "box-ground-dark": {
+        "role": "neutral",
+        "displayName": "Graphite Box",
+        "canonical": "#141618",
+        "oklch": "oklch(19.9% 0.005 248)",
+        "tonalRamp": [
+          "#090B0D",
+          "#232527",
+          "#404245",
+          "#5F6164",
+          "#808385",
+          "#A3A5A8",
+          "#C7C9CC",
+          "#ECEFF2"
+        ]
+      },
+      "slip-dark": {
+        "role": "neutral",
+        "displayName": "Dark Slip",
+        "canonical": "#1C1F22",
+        "oklch": "oklch(23.7% 0.007 248)",
+        "tonalRamp": [
+          "#090B0E",
+          "#222528",
+          "#3F4246",
+          "#5E6265",
+          "#7F8387",
+          "#A2A5A9",
+          "#C5CACE",
+          "#EBEFF3"
+        ]
+      },
+      "raised-dark": {
+        "role": "neutral",
+        "displayName": "Raised (dark)",
+        "canonical": "#22262A",
+        "oklch": "oklch(26.6% 0.009 248)",
+        "tonalRamp": [
+          "#080C0F",
+          "#22262A",
+          "#3E4347",
+          "#5D6266",
+          "#7E8388",
+          "#A1A6AB",
+          "#C4CACF",
+          "#EAEFF5"
+        ]
+      },
+      "hover-dark": {
+        "role": "neutral",
+        "displayName": "Hover (dark)",
+        "canonical": "#2A2E33",
+        "oklch": "oklch(29.9% 0.011 254)",
+        "tonalRamp": [
+          "#080B10",
+          "#22252A",
+          "#3E4248",
+          "#5D6267",
+          "#7E8389",
+          "#A1A5AC",
+          "#C4CAD0",
+          "#EAEFF6"
+        ]
+      },
+      "edge-subtle-dark": {
+        "role": "neutral",
+        "displayName": "Subtle Edge (dark)",
+        "canonical": "#2C3035",
+        "oklch": "oklch(30.7% 0.011 254)",
+        "tonalRamp": [
+          "#080B10",
+          "#22252A",
+          "#3E4248",
+          "#5D6267",
+          "#7E8389",
+          "#A1A5AC",
+          "#C4CAD0",
+          "#EAEFF6"
+        ]
+      },
+      "edge-strong-dark": {
+        "role": "neutral",
+        "displayName": "Strong Edge (dark)",
+        "canonical": "#3F444A",
+        "oklch": "oklch(38.4% 0.012 253)",
+        "tonalRamp": [
+          "#080C10",
+          "#21262B",
+          "#3E4248",
+          "#5C6268",
+          "#7D838A",
+          "#A0A6AD",
+          "#C4CAD1",
+          "#E9EFF7"
+        ]
+      },
+      "ink-dark": {
+        "role": "neutral",
+        "displayName": "Ink (dark)",
+        "canonical": "#E9EAEC",
+        "oklch": "oklch(93.7% 0.003 265)",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#242526",
+          "#414244",
+          "#606163",
+          "#818284",
+          "#A4A5A7",
+          "#C8C9CB",
+          "#EDEEF0"
+        ]
+      },
+      "graphite-dark": {
+        "role": "neutral",
+        "displayName": "Graphite (dark)",
+        "canonical": "#AFB3B9",
+        "oklch": "oklch(76.5% 0.010 258)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252A",
+          "#3F4247",
+          "#5E6167",
+          "#7F8388",
+          "#A1A5AB",
+          "#C5C9D0",
+          "#EBEFF5"
+        ]
+      },
+      "pencil-dark": {
+        "role": "neutral",
+        "displayName": "Pencil (dark)",
+        "canonical": "#959AA2",
+        "oklch": "oklch(68.5% 0.013 260)",
+        "tonalRamp": [
+          "#080B11",
+          "#21252C",
+          "#3E4249",
+          "#5D6169",
+          "#7E838A",
+          "#A0A5AD",
+          "#C4C9D2",
+          "#E9EFF8"
+        ]
+      },
+      "status-success-dark": {
+        "role": "status",
+        "displayName": "Success (dark)",
+        "canonical": "#4ADE80",
+        "oklch": "oklch(80.0% 0.182 152)",
+        "tonalRamp": [
+          "#001900",
+          "#003800",
+          "#005900",
+          "#007B21",
+          "#009F45",
+          "#23C468",
+          "#58EA8B",
+          "#83FFAF"
+        ]
+      },
+      "status-attention-dark": {
+        "role": "status",
+        "displayName": "Attention (dark)",
+        "canonical": "#FBBF24",
+        "oklch": "oklch(83.7% 0.164 84)",
+        "tonalRamp": [
+          "#270000",
+          "#471100",
+          "#693300",
+          "#8B5400",
+          "#AF7600",
+          "#D49A00",
+          "#FBBF23",
+          "#FFE459"
+        ]
+      },
+      "status-error-dark": {
+        "role": "status",
+        "displayName": "Error (dark)",
+        "canonical": "#FF7A6B",
+        "oklch": "oklch(73.2% 0.165 28)",
+        "tonalRamp": [
+          "#380000",
+          "#5E0000",
+          "#840000",
+          "#AB2C24",
+          "#D35246",
+          "#FB7768",
+          "#FF9B8B",
+          "#FFC1AF"
+        ]
       }
     },
     "typographyMeta": {
-      "headline": { "displayName": "Headline", "purpose": "Article title in the reader pane; the single largest type in the app." },
-      "title": { "displayName": "Title", "purpose": "Triage-card article title and section emphasis." },
-      "body": { "displayName": "Body", "purpose": "Item titles, article body, most UI text; reader prose capped at 60rem." },
-      "label": { "displayName": "Label", "purpose": "Feed names, timestamps, counters, swipe hints — secondary metadata, often muted." },
-      "reading-serif": { "displayName": "Reading Serif", "purpose": "Reader-pane preference only (Georgia). Never in chrome." },
-      "reading-mono": { "displayName": "Reading Mono", "purpose": "Reader-pane preference only (SFMono/Menlo/Consolas). Never in chrome." }
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The open slip's article title; 1.6em of the user's reading size, balanced wrap."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "The triage card headline."
+      },
+      "body": {
+        "displayName": "Reading",
+        "purpose": "Article text in the open slip (Literata default; sans 33em and mono 44em measures as alternates). Literata at 1rem in graphite for the triage excerpt."
+      },
+      "ui": {
+        "displayName": "Interface",
+        "purpose": "Slip titles, chips, menus, settings. Root size is 15px."
+      },
+      "slip-title-unread": {
+        "displayName": "Unread Title",
+        "purpose": "Unread slip titles: weight and ink carry the unread state."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Slip meta, bylines, 'n of m', settings labels, triage header. Filter labels use 0.875rem at 992px and up."
+      },
+      "address": {
+        "displayName": "Slip Address",
+        "purpose": "Mono XX·NN address on every slip; 700 and ink while unread."
+      },
+      "counter": {
+        "displayName": "Counter",
+        "purpose": "Unread counts on chips, mono and graphite, never opacity-dimmed."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "'yarr' beside the anchor mark in the top bar."
+      }
     },
     "shadows": [
-      { "name": "hairline", "value": "0 1px 2px rgba(0,0,0,0.1)", "purpose": "Default buttons and selects — barely-there pressable edge." },
-      { "name": "inset-field", "value": "inset 0 1px 1px rgba(0,0,0,0.07)", "purpose": "Form inputs — recessed well." },
-      { "name": "menu", "value": "0 1px 5px rgba(0,0,0,0.07)", "purpose": "Settings dropdown — separates it from the list beneath." },
-      { "name": "floating-card", "value": "0 4px 24px rgba(0,0,0,0.12)", "purpose": "The triage card — the one genuinely lifted reading surface." },
-      { "name": "toast", "value": "0 4px 16px rgba(0,0,0,0.25)", "purpose": "The undo toast — floats above everything in the thumb zone." }
+      {
+        "name": "slip",
+        "value": "0 1px 2px rgba(27, 28, 30, .06)",
+        "valueDark": "0 1px 2px rgba(0, 0, 0, .3)",
+        "token": "--slip-shadow",
+        "purpose": "Every slip in the stack and the open slip. The only resting shadow."
+      },
+      {
+        "name": "toast",
+        "value": "0 4px 16px rgba(0, 0, 0, 0.25)",
+        "purpose": "The always-dark toast and swipe-undo pill."
+      },
+      {
+        "name": "palette",
+        "value": "0 16px 48px rgba(0, 0, 0, 0.4)",
+        "purpose": "The command palette over its dark backdrop."
+      }
+    ],
+    "focus": [
+      {
+        "name": "focus-ring",
+        "value": "outline: 2px solid var(--focus-ring); outline-offset: 2px",
+        "purpose": "Keyboard focus everywhere; inset (-2px) inside scrolling containers, list rows and menu items. --focus-ring is var(--accent), declared on body (pinned by e2e)."
+      },
+      {
+        "name": "ink-select",
+        "value": "box-shadow: inset 0 0 0 2px var(--ink-select)",
+        "purpose": "Selected slip, chip, filter or menu item: ink outline over slip white, weight 600."
+      },
+      {
+        "name": "selection-tint",
+        "value": "::selection { background: color-mix(in oklab, var(--accent) 22%, transparent) }",
+        "purpose": "Text selection uses a filing-colour tint."
+      }
     ],
     "motion": [
-      { "name": "state", "value": "0.15s ease", "purpose": "Action-pill fade, quick state feedback." },
-      { "name": "transition", "value": "0.2s ease", "purpose": "Pull-to-refresh height/opacity, offline banner, toast fade." },
-      { "name": "card-move", "value": "0.3s ease", "purpose": "Triage card snap-back and fly-away; indicator enter/leave." },
-      { "name": "reduced", "value": "0.001ms", "purpose": "All motion collapses to instant under prefers-reduced-motion." }
+      {
+        "name": "state",
+        "value": "background-color .12s ease, color .12s ease, border-color .12s ease",
+        "purpose": "Hover and selection changes on rows, chips, buttons, swatches."
+      },
+      {
+        "name": "article-in",
+        "value": "opacity 0 to 1, translateY(4px) to none, .18s ease",
+        "purpose": "The open slip fades in when an article opens."
+      },
+      {
+        "name": "toast",
+        "value": "opacity .2s ease, transform .2s ease",
+        "purpose": "Toast enter and leave."
+      },
+      {
+        "name": "triage-snap",
+        "value": "transform 0.3s ease",
+        "purpose": "Triage card snapping back or flying off after a swipe."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.001ms",
+        "purpose": "All motion collapses under prefers-reduced-motion or body[data-motion=reduce]."
+      }
     ],
     "breakpoints": [
-      { "name": "mobile", "value": "767.98px", "purpose": "Single-pane: one column at a time (feeds → items → article)." },
-      { "name": "tablet", "value": "991.98px", "purpose": "Two-pane (feeds + items); triage card mode is shown at/below this width." },
-      { "name": "desktop", "value": "992px", "purpose": "Full three-pane terminal." }
+      {
+        "name": "phone",
+        "value": "max-width: 767.98px",
+        "purpose": "No top bar; feeds, stack and open slip take turns; bottom prev/next bar."
+      },
+      {
+        "name": "tablet",
+        "value": "768px to 991.98px",
+        "purpose": "Top bar with icon-only filters; the open slip replaces the stack."
+      },
+      {
+        "name": "desktop",
+        "value": "min-width: 992px",
+        "purpose": "Top bar with labelled filters; stack and open slip side by side."
+      },
+      {
+        "name": "touch",
+        "value": "max-width: 991.98px",
+        "purpose": "44px minimum on toolbar controls, rows and menu items."
+      }
     ],
-    "zIndex": [
-      { "name": "drag-handle", "value": 900 },
-      { "name": "offline-banner", "value": 1000 },
-      { "name": "undo-toast", "value": 1100 }
-    ]
+    "accentOptions": {
+      "keys": [
+        "blue",
+        "teal",
+        "green",
+        "violet",
+        "rose",
+        "amber",
+        "slate"
+      ],
+      "default": "blue",
+      "label": "Filing colour",
+      "mechanism": "[data-accent] on body sets --accent and --on-accent per theme; .swatch-* previews mirror each theme's value (pinned by e2e)."
+    }
   },
   "components": [
     {
-      "name": "Toolbar Item (active)",
-      "kind": "button",
-      "refersTo": "toolbar-item-active",
-      "description": "Icon button in the 2rem toolbar band; the active/selected state fills with the accent.",
-      "html": "<button class=\"ds-toolbar-item ds-active\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\"><circle cx=\"12\" cy=\"12\" r=\"8\"/></svg></button>",
-      "css": ".ds-toolbar-item { display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#212529; border:1px solid transparent; padding:0.25rem 0.5rem; border-radius:3px; line-height:1; cursor:pointer; } .ds-toolbar-item:hover { background:#f0f0f0; } .ds-toolbar-item.ds-active { background:#0067ab; color:#fff; } .ds-toolbar-item:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+      "name": "Slip",
+      "kind": "card",
+      "refersTo": "slip",
+      "description": "An article in the stack: white slip, mono address, meta line, title; unread is weight, filed carries a tab.",
+      "html": "<div class=\"ds-stack\"><div class=\"ds-slip\"><div class=\"ds-slip-meta\"><span class=\"ds-dot\"></span><span class=\"ds-addr ds-unread\">FB·05</span><span>Feed B</span><span class=\"ds-age\">1 min · 10h</span></div><div class=\"ds-slip-title ds-unread-title\">Post 2</div></div><div class=\"ds-slip ds-selected\"><div class=\"ds-slip-meta\"><span class=\"ds-addr\">FB·06</span><span>Feed B</span><span class=\"ds-age\">10h</span></div><div class=\"ds-slip-title\">Post 1</div></div><div class=\"ds-slip ds-filed\" tabindex=\"0\"><span class=\"ds-tab\"></span><div class=\"ds-slip-meta\"><svg class=\"ds-star\" viewBox=\"0 0 24 24\" width=\"10\" height=\"10\"><path fill=\"currentColor\" d=\"M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z\"/></svg><span class=\"ds-addr\">FB·07</span><span>Feed B</span><span class=\"ds-age\">10h</span></div><div class=\"ds-slip-title\">Post 0</div></div></div>",
+      "css": ".ds-stack { background: var(--surface-box, #F6F7F5); padding: 8px; width: 380px; font-family: 'Hanken Grotesk Var', system-ui, sans-serif; font-size: 15px; } .ds-slip { position: relative; background: var(--surface-base, #FFFFFF); border: 1px solid var(--border-subtle, #E2E4E1); border-radius: 4px; box-shadow: 0 1px 2px rgba(27,28,30,.06); padding: .55rem .75rem .6rem; cursor: pointer; transition: border-color .12s ease; } .ds-slip + .ds-slip { margin-top: 6px; } .ds-slip.ds-filed { margin-top: 10px; } .ds-slip:hover { border-color: var(--border-strong, #C6C9C5); } .ds-slip.ds-selected { border-color: var(--ink-select, #1B1C1E); box-shadow: inset 0 0 0 2px var(--ink-select, #1B1C1E); } .ds-slip:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: -2px; } .ds-slip-meta { display: flex; align-items: center; gap: .35rem; font-size: .8rem; line-height: 1; margin-bottom: .2rem; color: var(--text-tertiary, #62666C); } .ds-age { margin-left: auto; } .ds-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-tertiary, #62666C); } .ds-star { color: var(--accent, #2B4C9A); } .ds-addr { font: 500 .72rem/1 'JetBrains Mono Var', Menlo, monospace; font-variant-numeric: tabular-nums; color: var(--text-tertiary, #62666C); } .ds-addr.ds-unread { color: var(--text-primary, #1B1C1E); font-weight: 700; } .ds-slip-title { color: var(--text-secondary, #4B4F55); } .ds-unread-title { color: var(--text-primary, #1B1C1E); font-weight: 600; } .ds-tab { position: absolute; top: -4px; right: .85rem; width: 18px; height: 5px; border-radius: 2px 2px 0 0; background: var(--accent, #2B4C9A); }"
     },
     {
-      "name": "List Row (selected)",
+      "name": "Open Slip",
+      "kind": "card",
+      "refersTo": "open-slip",
+      "description": "The open article: one large white slip centred on the box, sans headline, caption byline, Literata body at the measure.",
+      "html": "<div class=\"ds-reader\"><div class=\"ds-slipbar\"><span class=\"ds-raddr\">FB·03</span>3 of 20+</div><article class=\"ds-open\"><h1 class=\"ds-h1\">Post 4</h1><div class=\"ds-byline\"><b>Feed B</b> · Oct 28, 03:55 PM · 1 min</div><p class=\"ds-p\">The open slip lies enlarged on the box as the one thing that asks for attention. <a href=\"#\">Links are ink</a>, underlined.</p></article></div>",
+      "css": ".ds-reader { background: var(--surface-box, #F6F7F5); padding: .75rem 1rem 1.5rem; } .ds-slipbar { text-align: right; font: .8rem 'Hanken Grotesk Var', system-ui, sans-serif; color: var(--text-tertiary, #62666C); font-variant-numeric: tabular-nums; margin-bottom: .5rem; } .ds-raddr { font: 700 .72rem/1 'JetBrains Mono Var', Menlo, monospace; color: var(--text-secondary, #4B4F55); margin-right: .45rem; } .ds-open { max-width: 35em; margin: 0 auto; padding: 2.25rem 2.75rem 2.75rem; background: var(--surface-base, #FFFFFF); border: 1px solid var(--border-subtle, #E2E4E1); border-radius: 4px; box-shadow: 0 1px 2px rgba(27,28,30,.06); font-size: 18px; color: var(--text-primary, #1B1C1E); } .ds-h1 { font: 600 1.6em/1.2 'Hanken Grotesk Var', system-ui, sans-serif; margin: 0; text-wrap: balance; } .ds-byline { margin-top: .35em; font: 400 .8em/1.4 'Hanken Grotesk Var', system-ui, sans-serif; color: var(--text-tertiary, #62666C); } .ds-byline b { color: var(--text-secondary, #4B4F55); font-weight: 600; } .ds-p { font-family: 'Literata Var', Georgia, serif; line-height: 1.6; margin: 1rem 0 0; } .ds-p a { color: inherit; text-decoration: underline; } .ds-p a:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: 2px; border-radius: 3px; }"
+    },
+    {
+      "name": "Top Bar",
       "kind": "nav",
-      "refersTo": "selectgroup-item-selected",
-      "description": "Feed/item list row (radio rendered as a full-width row); selected state uses the accent fill.",
-      "html": "<div class=\"ds-row ds-selected\"><span class=\"ds-row-title\">All Unread</span><span class=\"ds-row-count\">128</span></div>",
-      "css": ".ds-row { display:flex; align-items:center; width:100%; padding:0.375rem 0.5rem; border-radius:4px; color:#212529; cursor:pointer; } .ds-row:hover { background:#f0f0f0; } .ds-row-title { flex:1 1 auto; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ds-row-count { padding-left:0.5rem; opacity:0.6; } .ds-row.ds-selected { background:#0067ab; color:#fff; } .ds-row.ds-selected .ds-row-count { opacity:0.85; }"
+      "refersTo": "chip",
+      "description": "The Feeds landmark from tablet up: wordmark, view filters (labelled at 992px+), folder chips with the open folder's feeds inline.",
+      "html": "<nav class=\"ds-bar\" aria-label=\"Feeds\"><span class=\"ds-word\">yarr</span><button class=\"ds-filter\">Unread</button><button class=\"ds-filter\">Starred</button><button class=\"ds-filter ds-on\">All</button><button class=\"ds-filter\">Triage</button><span class=\"ds-chips\"><button class=\"ds-chip ds-on\">All Feeds <span class=\"ds-count\">5</span></button><button class=\"ds-chip ds-open\">News <span class=\"ds-count\">3</span></button><button class=\"ds-chip\">Feed C <span class=\"ds-count\">1</span></button><button class=\"ds-chip\">Engineering</button></span></nav>",
+      "css": ".ds-bar { display: flex; align-items: center; gap: .375rem; min-height: 3.25rem; padding: 0 .75rem; background: var(--surface-box, #F6F7F5); border-bottom: 1px solid var(--border-subtle, #E2E4E1); font: 15px 'Hanken Grotesk Var', system-ui, sans-serif; color: var(--text-primary, #1B1C1E); overflow-x: auto; } .ds-word { font-weight: 700; letter-spacing: -.01em; margin-right: .5rem; } .ds-chips { display: flex; gap: .375rem; margin-left: 1rem; } .ds-filter, .ds-chip { font: inherit; color: inherit; cursor: pointer; white-space: nowrap; border-radius: 3px; transition: background-color .12s ease, border-color .12s ease; } .ds-filter { background: transparent; border: 1px solid transparent; padding: .25rem .5rem; font-size: .875rem; } .ds-chip { background: var(--surface-base, #FFFFFF); border: 1px solid var(--border-subtle, #E2E4E1); border-radius: 4px; padding: .3rem .6rem; } .ds-chip.ds-open { font-weight: 600; border-color: var(--border-strong, #C6C9C5); } .ds-filter:hover, .ds-chip:hover { background: var(--surface-hover, #E9EBE8); } .ds-on { background: var(--surface-base, #FFFFFF); box-shadow: inset 0 0 0 2px var(--ink-select, #1B1C1E); font-weight: 600; } .ds-count { font: .78rem 'JetBrains Mono Var', Menlo, monospace; color: var(--text-secondary, #4B4F55); padding-left: .35rem; } .ds-filter:focus-visible, .ds-chip:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: 2px; }"
+    },
+    {
+      "name": "Triage Card",
+      "kind": "custom",
+      "refersTo": "triage-card",
+      "description": "One slip, enlarged, for swipe/keyboard triage: address header, title, Literata excerpt, footer with hint and position.",
+      "html": "<div class=\"ds-tri-ground\"><div class=\"ds-tri\"><div class=\"ds-tri-head\"><span><span class=\"ds-tri-addr\">FA·01</span>Feed A</span><span>8h</span></div><div class=\"ds-tri-title\">Post 3</div><div class=\"ds-tri-ex\">Body excerpt in Literata, graphite, scrolling inside the card when long.</div><div class=\"ds-tri-foot\"><span>Enter to read here</span><span>1 of 1</span></div></div></div>",
+      "css": ".ds-tri-ground { background: var(--surface-box, #F6F7F5); padding: 1.25rem; font: 15px 'Hanken Grotesk Var', system-ui, sans-serif; } .ds-tri { max-width: 640px; margin: 0 auto; background: var(--surface-base, #FFFFFF); color: var(--text-primary, #1B1C1E); border: 1px solid var(--border-strong, #C6C9C5); border-radius: 4px; padding: 1.5rem; cursor: pointer; } .ds-tri-head, .ds-tri-foot { display: flex; justify-content: space-between; font-size: .8rem; color: var(--text-tertiary, #62666C); } .ds-tri-head { margin-bottom: .75rem; } .ds-tri-addr { font: 700 .72rem/1 'JetBrains Mono Var', Menlo, monospace; color: var(--text-primary, #1B1C1E); margin-right: .5rem; } .ds-tri-title { font-size: 1.4rem; font-weight: 600; line-height: 1.25; margin-bottom: .75rem; text-wrap: balance; } .ds-tri-ex { font-family: 'Literata Var', Georgia, serif; line-height: 1.6; color: var(--text-secondary, #4B4F55); } .ds-tri-foot { margin-top: .75rem; padding-top: .5rem; border-top: 1px solid var(--border-subtle, #E2E4E1); }"
+    },
+    {
+      "name": "Star Button",
+      "kind": "button",
+      "refersTo": "button-star",
+      "description": "The labelled triage Star: the keeper verb, drawn in the filing colour.",
+      "html": "<button class=\"ds-star-btn\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"><path d=\"M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z\"/></svg>Star</button>",
+      "css": ".ds-star-btn { display: inline-flex; align-items: center; gap: .35rem; min-height: 2rem; padding: .25rem .85rem; border: 1px solid var(--accent, #2B4C9A); border-radius: 4px; background: var(--surface-base, #FFFFFF); color: var(--accent, #2B4C9A); font: 600 15px 'Hanken Grotesk Var', system-ui, sans-serif; cursor: pointer; transition: background-color .12s ease; } .ds-star-btn:hover { background: var(--surface-hover, #E9EBE8); } .ds-star-btn:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: 2px; }"
     },
     {
       "name": "Default Button",
       "kind": "button",
       "refersTo": "button-default",
-      "description": "Standard pressable button with a hairline shadow.",
-      "html": "<button class=\"ds-btn-default\">Add</button>",
-      "css": ".ds-btn-default { background:#fff; color:#212529; border:1px solid #ced4da; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.1); padding:0.375rem 0.75rem; cursor:pointer; } .ds-btn-default:active { background:#f5f7f9; box-shadow:none; } .ds-btn-default:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+      "description": "Plain action button (empty states, forms): slip white with a strong edge.",
+      "html": "<button class=\"ds-btn\">Add your first feed</button>",
+      "css": ".ds-btn { background: var(--surface-base, #FFFFFF); color: var(--text-primary, #1B1C1E); border: 1px solid var(--border-strong, #C6C9C5); border-radius: 4px; padding: .375rem .75rem; font: 15px 'Hanken Grotesk Var', system-ui, sans-serif; cursor: pointer; transition: background-color .12s ease; } .ds-btn:active { background: var(--surface-hover, #E9EBE8); } .ds-btn:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: 2px; border-color: var(--accent, #2B4C9A); }"
     },
     {
-      "name": "Search Input",
+      "name": "Search Field",
       "kind": "input",
-      "refersTo": "input",
-      "description": "Toolbar search / text field with a recessed well and accent focus.",
-      "html": "<input class=\"ds-input\" type=\"search\" placeholder=\"Search\">",
-      "css": ".ds-input { background:#fff; color:#212529; border:1px solid #ced4da; border-radius:4px; box-shadow:inset 0 1px 1px rgba(0,0,0,0.07); padding:0.375rem 0.75rem; width:100%; } .ds-input:focus { border-color:#0080d4; outline:none; } .ds-input:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+      "refersTo": "search-field",
+      "description": "Search at the head of the stack: borderless on slip white, leading icon, pencil placeholder.",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"10\" cy=\"10\" r=\"7\"/><path d=\"M21 21l-6 -6\"/></svg><input type=\"search\" placeholder=\"Search articles\" aria-label=\"Search articles\"></label>",
+      "css": ".ds-search { display: flex; align-items: center; gap: .5rem; padding: .25rem .5rem; background: var(--surface-base, #FFFFFF); border-radius: 3px; color: var(--text-primary, #1B1C1E); width: 360px; } .ds-search input { flex: 1; border: 0; background: transparent; font: 15px 'Hanken Grotesk Var', system-ui, sans-serif; color: inherit; outline: none; } .ds-search input::placeholder { color: var(--text-tertiary, #62666C); opacity: 1; } .ds-search:hover, .ds-search:focus-within { background: var(--surface-hover, #E9EBE8); } .ds-search:has(input:focus-visible) { outline: 2px solid var(--accent, #2B4C9A); outline-offset: 2px; }"
     },
     {
-      "name": "Triage Card",
-      "kind": "card",
-      "refersTo": "triage-card",
-      "description": "The mobile core-loop card. Swipe right = read, left = Instapaper/keep, tap = open.",
-      "html": "<div class=\"ds-card\"><div class=\"ds-card-feed\"><span>Hacker News</span><span>2h</span></div><div class=\"ds-card-domain\">example.com</div><div class=\"ds-card-title\">A clean, just-the-facts headline</div><div class=\"ds-card-excerpt\">The excerpt uses a dedicated token so it clears 4.5:1 in light, sepia, and night themes alike.</div><div class=\"ds-card-footer\"><span>tap to read full article</span><span>3 / 47</span></div></div>",
-      "css": ".ds-card { width:100%; max-width:400px; background:#fff; color:#222; border-radius:16px; padding:1.5rem; box-shadow:0 4px 24px rgba(0,0,0,0.12); } .ds-card-feed { display:flex; justify-content:space-between; font-size:0.8rem; color:#888; margin-bottom:0.75rem; } .ds-card-domain { font-size:0.75rem; color:#888; margin-bottom:0.75rem; } .ds-card-title { font-size:1.25rem; font-weight:600; line-height:1.3; margin-bottom:0.75rem; } .ds-card-excerpt { font-size:0.9rem; line-height:1.6; color:#595959; } .ds-card-footer { display:flex; justify-content:space-between; margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid rgba(128,128,128,0.1); font-size:0.75rem; opacity:0.5; }"
-    },
-    {
-      "name": "Undo Toast",
-      "kind": "custom",
-      "refersTo": "undo-toast",
-      "description": "Thumb-zone toast after a triage swipe; the server write is deferred until it dismisses.",
-      "html": "<div class=\"ds-toast\"><span class=\"ds-toast-label\">Marked read</span><button class=\"ds-toast-btn\">Undo</button></div>",
-      "css": ".ds-toast { display:inline-flex; align-items:center; gap:0.5rem; padding:0 0.25rem 0 1rem; border-radius:1.5rem; background:rgba(20,20,20,0.92); color:#fff; font-size:0.875rem; box-shadow:0 4px 16px rgba(0,0,0,0.25); } .ds-toast-label { white-space:nowrap; } .ds-toast-btn { min-height:44px; min-width:44px; padding:0 1rem; border:none; border-radius:1.25rem; background:transparent; color:#4db4ff; font-weight:600; font-size:0.875rem; cursor:pointer; } .ds-toast-btn:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
-    },
-    {
-      "name": "Offline Banner",
-      "kind": "custom",
-      "refersTo": "offline-banner",
-      "description": "Full-width top bar shown when the network drops.",
-      "html": "<div class=\"ds-offline\">Offline — showing cached items</div>",
-      "css": ".ds-offline { width:100%; background:#e74c3c; color:#fff; text-align:center; padding:0.375rem; font-size:0.8rem; font-weight:600; }"
+      "name": "Segmented Toggle",
+      "kind": "chip",
+      "refersTo": "segmented-active",
+      "description": "Settings mode switch: strong-edge track, equal 44px segments, active segment inverts to ink.",
+      "html": "<div class=\"ds-seg\" role=\"group\" aria-label=\"Theme\"><button aria-pressed=\"true\" class=\"ds-seg-on\">auto</button><button aria-pressed=\"false\">light</button><button aria-pressed=\"false\">dark</button></div>",
+      "css": ".ds-seg { display: flex; width: 280px; border: 1px solid var(--border-strong, #C6C9C5); border-radius: 4px; overflow: hidden; } .ds-seg button { flex: 1; min-height: 44px; padding: .4rem .5rem; border: 0; border-left: 1px solid var(--border-subtle, #E2E4E1); background: transparent; color: var(--text-primary, #1B1C1E); font: 15px 'Hanken Grotesk Var', system-ui, sans-serif; cursor: pointer; transition: background-color .12s ease; } .ds-seg button:first-child { border-left: 0; } .ds-seg button:hover { background: var(--surface-hover, #E9EBE8); } .ds-seg .ds-seg-on, .ds-seg .ds-seg-on:hover { background: var(--ink-select, #1B1C1E); color: var(--on-ink-select, #FFFFFF); } .ds-seg button:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: -2px; }"
     }
   ],
   "narrative": {
-    "northStar": "The News Terminal",
-    "overview": "yarr is a clean, just-the-facts instrument — a Bloomberg terminal for the feeds you chose. It is not a magazine, not a discovery engine, not a place to linger over chrome. The whole surface exists to move a backlog of unread items past your eyes quickly, let you keep the few that matter, and get out of the way. Density and speed are the aesthetic; the interface should feel like a well-worn CLI that happens to have a screen — instant, predictable, unsurprising. Three columns carry the desktop experience (feeds → items → article), collapsing to one at a time on a phone with no duplicate markup. There is exactly one accent color, and it never decorates — it only signals state.",
+    "northStar": "The Slip Box",
+    "overview": "yarr is a scholar's slip box for feeds. Every article is a slip with an address; slips lie in a stack on a cool box ground, the ones you keep get filed with a small coloured tab, the rest go back in the box, and the one you open lies enlarged on the same ground as the single thing asking for attention. The interface is quiet, fast and utilitarian: chrome recedes to hairlines and pencil-grey text so the stack and the open slip carry the screen.\n\nThere is no permanent sidebar. From tablet width up a single top bar holds the wordmark, the four view filters, and the folders as chips with the current folder's feeds strung inline after it. Below it the stack (about 400px) and the open slip share one row on the desk; on tablet and phone they take turns. Density comes from many small, legible slips, not from packing, and the colour budget is spent almost entirely on one filing colour that marks filed state and focus. It explicitly refuses the boxed three-pane reader with a grey sidebar, and the heavy, loud fields of the rejected Contact Sheet world.\n\nLight and dark are co-equal: every role has a value in both, contrast is checked in both, and neither is a derived afterthought.",
     "keyCharacteristics": [
-      "Information-dense, three-pane terminal that collapses to single-pane on mobile.",
-      "One accent (Signal Blue), used only for state — selection, active, focus.",
-      "Three first-class themes; every surface must read in all three.",
-      "Keyboard is a primary path, not a power-user extra; visible focus is required.",
-      "Flat by default; lift is reserved for the triage card and the undo toast."
+      "White slips with a 1px edge, a 4px corner and a barely-there shadow, 6px apart on a cool off-white (or graphite) box ground.",
+      "A mono address on every slip (feed code and position in the view, e.g. `FB·03`) that is bold ink while unread.",
+      "One filing colour (user-selectable, seven options, blue by default) reserved for filed state, the star, focus and text selection.",
+      "Selection is drawn in ink as an outline on the object, never an accent fill.",
+      "Hanken Grotesk for interface and titles, JetBrains Mono for addresses and numbers, Literata for reading. All self-hosted."
     ],
     "rules": [
-      { "name": "The One Signal Rule", "body": "Signal Blue is the only accent and it only ever means state — selected, active, focused, or a link. Orange means one thing (Instapaper); red means one thing (error/offline). Three functional colors, zero decorative ones.", "section": "colors" },
-      { "name": "The Filled-State Rule", "body": "When white text sits on the accent (selected row, active filter), use Signal Blue Deep (#0067ab), not Signal Blue — #fff on #0080d4 is only ~3.9:1 and fails AA.", "section": "colors" },
-      { "name": "The Three-Equal-Themes Rule", "body": "Light, sepia, and night are equal citizens. Any new surface must be designed and contrast-checked in all three before it ships.", "section": "colors" },
-      { "name": "The No-Display-Face Rule", "body": "UI labels, buttons, and data never use a display or decorative font. Hierarchy comes from weight and size on one sans.", "section": "typography" },
-      { "name": "The Reader-Only Serif Rule", "body": "Georgia and the mono stack appear only in the article reading pane as a user preference; never in chrome.", "section": "typography" },
-      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadow is reserved for the two objects that float over content (triage card, undo toast) and hairline pressable affordances.", "section": "elevation" },
-      { "name": "The One Selection Vocabulary Rule", "body": "Selected/active looks the same everywhere — accent fill, white text — so the eye learns it once.", "section": "components" }
+      {
+        "name": "The Filing Colour Rule",
+        "body": "The filing colour means \"filed\" or \"focused\". It marks the starred tab and star, keyboard focus, focused fields and the text-selection tint, and nothing else: not links, not selection, not headers, not scrollbars.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink Link Rule",
+        "body": "Links are ink. In the reader they are ink with an underline; in the chrome they are ink and identified by context. A link is never filing-coloured.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pencil Floor Rule",
+        "body": "Pencil (tertiary) text must stay at or above 4.5:1 on both the slip and raised surfaces in both themes. The e2e suite measures it; a new grey that fails it is wrong, not the test.",
+        "section": "colors"
+      },
+      {
+        "name": "The Weight Is Unread Rule",
+        "body": "Unread is carried by weight (600 title, 700 address) and ink, which survive grayscale. Read slips step back a text tier, never an opacity.",
+        "section": "typography"
+      },
+      {
+        "name": "The Measure Rule",
+        "body": "The open slip holds 62 to 76 characters per line in every reading font (pinned by the e2e suite). Measure is set in `em` per font, not `ch`.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Eyebrow Rule",
+        "body": "Captions are quiet sentence-case labels. There is no tracked uppercase anywhere in the system; group labels mark where a group ends and never shout.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Sidebar Rule",
+        "body": "From tablet up, navigation is the top bar. There is no permanent vertical feed column at any width above phone.",
+        "section": "layout"
+      },
+      {
+        "name": "The One Ground Rule",
+        "body": "Stack, reader and triage all sit on the box ground; panes are not separate tinted boxes. The only column divider is the stack's hairline right edge.",
+        "section": "layout"
+      },
+      {
+        "name": "The Paper Not Plastic Rule",
+        "body": "A resting surface never gets more than the slip shadow. Hover changes the edge (subtle to strong), not the elevation.",
+        "section": "elevation"
+      }
     ],
     "dos": [
-      "Do keep Signal Blue (#0080d4) for state only, and reach for Signal Blue Deep (#0067ab) whenever white text sits on the accent.",
-      "Do design and contrast-check every new surface in light, sepia, AND night before shipping; AA (4.5:1 body) is the floor.",
-      "Do keep chrome to the 2rem toolbar band (3rem mobile) and a single 1px divider.",
-      "Do give every interactive element a full keyboard path and a visible :focus-visible ring.",
-      "Do provide a prefers-reduced-motion alternative for every animation.",
-      "Do keep one type family in chrome; build hierarchy from weight and size.",
-      "Do keep touch targets >=44px on mobile."
+      "**Do** put every article on a slip: slip white, 1px subtle edge, 4px corner, slip shadow, 6px apart on the box ground.",
+      "**Do** give every slip its mono address (feed initials, a middle dot, two-digit position in the current view), bold ink while unread.",
+      "**Do** mark selection with an ink outline on the object (2px inset), leaving its surface white.",
+      "**Do** keep `--focus-ring` equal to `--accent` and declare accent derivations on `body`, where the `[data-accent]` value actually lands.",
+      "**Do** keep the accent keys `blue`, `teal`, `green`, `violet`, `rose`, `amber`, `slate`, each with a light and dark value and a matching swatch.",
+      "**Do** reference roles (`--surface-*`, `--text-*`, `--ink-select`, `--accent`), never raw colours, in components.",
+      "**Do** design and check every change in light and dark.",
+      "**Do** self-host any face under an open licence and keep the reading measure at 62 to 76 characters per line."
     ],
     "donts": [
-      "Don't add promoted content, discover rails, engagement nudges, or celebratory confetti/emoji. yarr is not Feedly.",
-      "Don't drift the themes toward the AI-cream aesthetic — no warm-neutral paper backgrounds, no tracked-uppercase eyebrows, no identical icon-heading-text card grids.",
-      "Don't introduce a second accent or use the accent decoratively.",
-      "Don't use a display or decorative font anywhere in the UI; serif/mono live only inside the reader pane.",
-      "Don't add drop shadows for looks. Flat by default; only the triage card and undo toast float.",
-      "Don't use border-left/border-right greater than 1px as a colored accent stripe.",
-      "Don't ship a surface that's legible in light but muddy in sepia or night."
+      "**Don't** reintroduce a permanent sidebar or a grey three-pane frame above phone width.",
+      "**Don't** use the filing colour for links, selection fills, headings, scrollbars or decoration.",
+      "**Don't** flood a selected slip, chip or filter with colour; ink outline only.",
+      "**Don't** add elevation beyond the slip shadow to resting surfaces.",
+      "**Don't** use opacity to de-emphasise text; use graphite or pencil.",
+      "**Don't** add tracked uppercase eyebrows or kickers above titles or groups.",
+      "**Don't** request fonts, icons or scripts from a third-party host, or add a JS framework or bundler."
     ]
   }
 }

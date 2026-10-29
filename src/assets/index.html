@@ -60,7 +60,7 @@
                         aria-label="Show unread"
                         aria-keyshortcuts="1"
                         @click="filterSelected = 'unread'">
-                    <span class="icon">{% inline "circle-full.svg" %}</span>
+                    <span class="icon">{% inline "circle-full.svg" %}</span><span class="filter-label">Unread</span>
                 </button>
                 <button class="toolbar-item mx-1"
                         :class="{active: filterSelected == 'starred'}"
@@ -69,7 +69,7 @@
                         aria-label="Show starred"
                         aria-keyshortcuts="2"
                         @click="filterSelected = 'starred'">
-                    <span class="icon">{% inline "star-full.svg" %}</span>
+                    <span class="icon">{% inline "star-full.svg" %}</span><span class="filter-label">Starred</span>
                 </button>
                 <button class="toolbar-item mr-1"
                         :class="{active: filterSelected == ''}"
@@ -78,7 +78,7 @@
                         aria-label="Show all"
                         aria-keyshortcuts="3"
                         @click="filterSelected = ''">
-                    <span class="icon">{% inline "assorted.svg" %}</span>
+                    <span class="icon">{% inline "assorted.svg" %}</span><span class="filter-label">All</span>
                 </button>
                 <!-- Triage is the fourth view, at every width (#124): one card at
                      a time, swipe or arrow keys. Key 4, after the 1/2/3 views. -->
@@ -89,7 +89,7 @@
                         aria-label="Triage unread"
                         aria-keyshortcuts="4"
                         @click="filterSelected = 'triage'">
-                    <span class="icon">{% inline "cards.svg" %}</span>
+                    <span class="icon">{% inline "cards.svg" %}</span><span class="filter-label">Triage</span>
                 </button>
                 <div class="flex-grow-1"></div>
                 <dropdown class="settings-dropdown" toggle-class="btn btn-link toolbar-item px-2" ref="menuDropdown" drop="right" title="Menu">

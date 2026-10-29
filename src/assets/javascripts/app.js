@@ -550,7 +550,7 @@ function rootComponent() { return {
       'ttsPlaying': false,
       'ttsPaused': false,
       'itemSortNewestFirst': s.sort_newest_first,
-      'itemListWidth': s.item_list_width || 300,
+      'itemListWidth': s.item_list_width || 400,
 
       'filteredFeedStats': {},
       'filteredFolderStats': {},
