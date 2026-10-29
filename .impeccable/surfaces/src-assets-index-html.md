@@ -13,17 +13,17 @@ Audience and job: the author triaging a backlog of chosen feeds, keyboard-first 
 
 Constraints: keep every keyboard binding, behaviour, and the undo model. Keep landmarks ("Feeds" navigation, "Article" main), reader-toolbar structure and accessible names, accent keys, token names and the reading measure (pinned by test/e2e/smoke.spec.js; tests may not change without approval). Self-hosted OFL fonts only. Two co-equal themes. Seven-option accent picker stays (filing colour; blue default).
 
-Decisions: slip address = feed code (initials) + position in the current view, e.g. SN·12 (front-end only; renumbers with the view). Unresolved: chip-row overflow beyond horizontal scroll.
+Decisions: slip address = feed code (initials) + position in the current view, e.g. SN·12 (front-end only; renumbers with the view).
 
 ## Direction contract
 
-THESIS: Every article is a slip with an address; starred slips get filed with a small tab, the rest go back in the box, and the open slip lies enlarged as the one thing that asks for attention. Refuses the boxed three-pane reader with a grey sidebar, and the heavy fields of the rejected Contact Sheet.
+THESIS: Every article is a slip with an address; starred slips get filed with a small tab, the rest go back in the box, and the open slip lies enlarged as the one thing that asks for attention. Refuses a grey boxed frame and the heavy fields of the rejected Contact Sheet; the columns themselves stay conventional.
 
 OWN-WORLD: Cool box ground #F6F7F5, slip-white cards with 1px edges, ink #1B1C1E, pencil graphite secondary, one filing blue (user-selectable accent) only for filed state and focus; selection is a 2px ink outline, never a fill. Hanken Grotesk for UI and titles, JetBrains Mono for addresses and numbers, Literata for the open slip.
 
-STORY: You glance along the top bar to pick a folder or feed, run down the stack by weight and address, file keepers with s, pass the rest with j, and read the enlarged slip without leaving the box.
+STORY: You pick a folder or feed in the sidebar, run down the stack by weight and address, file keepers with s, pass the rest with j, and read the enlarged slip without leaving the box.
 
-FIRST VIEWPORT: No sidebar. A single top bar (the Feeds landmark): wordmark, Unread / Starred / All / Triage, folder chips with the current folder's feed chips inline, menu. Left, a ~400px stack of addressed slips (SN·01…) with search at its head; right, the open slip as a large white card centred on the box ground, address beside prev/next, Literata body at ~64ch.
+FIRST VIEWPORT: Three columns (revised 2026-10-29: the top-bar chip strip clipped and was hard to read). Left, the Feeds sidebar on the box ground: wordmark, Unread / Starred / All / Triage, the folder/feed tree. Middle, a ~400px stack of addressed slips (SN·01…) with search at its head. Right, the open slip as a large white card on the box ground, address beside prev/next, Literata body at ~64ch.
 
 FORM: Slip Box, my rank 1 of 7 on round 3's list (scholar's slip box); chosen as the pick card. Seed key c260fb12.
 

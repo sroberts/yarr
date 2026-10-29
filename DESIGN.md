@@ -72,7 +72,7 @@ typography:
     fontWeight: 400
   address:
     fontFamily: "JetBrains Mono Var, SFMono-Regular, Menlo, Consolas, monospace"
-    fontSize: "0.72rem"
+    fontSize: "0.75rem"
     fontWeight: 500
     lineHeight: 1
     fontFeature: "tnum"
@@ -89,14 +89,12 @@ typography:
 rounded:
   slip: "4px"
   control: "3px"
-  tab: "2px 2px 0 0"
+  tab: "0 0 2px 2px"
   swatch: "50%"
 spacing:
   stack-gap: "6px"
   stack-gap-tabbed: "10px"
-  chip-gap: "0.375rem"
   slip-pad: "0.55rem 0.75rem 0.6rem"
-  chip-pad: "0.3rem 0.6rem"
   open-slip-pad: "2.25rem 2.75rem 2.75rem"
   open-slip-pad-phone: "1.25rem 1.1rem 1.75rem"
   card-pad: "1.5rem"
@@ -115,13 +113,12 @@ components:
   slip-tab:
     backgroundColor: "{colors.filing-blue}"
     rounded: "{rounded.tab}"
-    width: "18px"
-    height: "5px"
-  chip:
-    backgroundColor: "{colors.slip-white}"
+    width: "14px"
+    height: "7px"
+  feed-row:
+    backgroundColor: "{colors.box}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.slip}"
-    padding: "{spacing.chip-pad}"
+    rounded: "{rounded.control}"
   open-slip:
     backgroundColor: "{colors.slip-white}"
     textColor: "{colors.ink}"
@@ -167,7 +164,7 @@ components:
 
 yarr is a scholar's slip box for feeds. Every article is a slip with an address; slips lie in a stack on a cool box ground, the ones you keep get filed with a small coloured tab, the rest go back in the box, and the one you open lies enlarged on the same ground as the single thing asking for attention. The interface is quiet, fast and utilitarian: chrome recedes to hairlines and pencil-grey text so the stack and the open slip carry the screen.
 
-There is no permanent sidebar. From tablet width up a single top bar holds the wordmark, the four view filters, and the folders as chips with the current folder's feeds strung inline after it. Below it the stack (about 400px) and the open slip share one row on the desk; on tablet and phone they take turns. Density comes from many small, legible slips, not from packing, and the colour budget is spent almost entirely on one filing colour that marks filed state and focus. It explicitly refuses the boxed three-pane reader with a grey sidebar, and the heavy, loud fields of the rejected Contact Sheet world.
+Three columns, the reader convention: from tablet width up a feed sidebar on the box ground holds the wordmark, the four view filters and the folder/feed tree; beside it the stack (about 400px) of slips; on the desk the open slip takes the third column. On tablet the open slip replaces the sidebar and stack; on phone the three take turns. Density comes from many small, legible slips, not from packing, and the colour budget is spent almost entirely on one filing colour that marks filed state and focus. The columns are conventional on purpose (an earlier top-bar layout clipped and was hard to read); the world lives in the slips, addresses and filing tab, not in a novel frame. It refuses a grey boxed sidebar and the heavy, loud fields of the rejected Contact Sheet world.
 
 Light and dark are co-equal: every role has a value in both, contrast is checked in both, and neither is a derived afterthought.
 
@@ -190,11 +187,11 @@ A near-monochrome ink-on-paper palette with one deliberately scarce filing colou
 
 ### Neutral
 - **Box Ground** (`box-ground` / `box-ground-dark`): the page, the stack column, the reader column and the triage view. Everything else lies on it.
-- **Slip White** (`slip-white` / `slip-dark`): slips, chips, the open slip, the triage card, inputs and default buttons.
+- **Slip White** (`slip-white` / `slip-dark`): slips, the open slip, the triage card, inputs and default buttons.
 - **Raised Grey** (`raised-grey` / `raised-dark`): menus, modals, the command palette and code blocks in the reader.
 - **Hover Grey** (`hover-grey` / `hover-dark`): pointer hover on controls (only under `hover: hover`).
-- **Subtle Edge** (`edge-subtle` / `edge-subtle-dark`): the 1px edge of every slip and chip, hairline dividers, the top bar's bottom rule.
-- **Strong Edge** (`edge-strong` / `edge-strong-dark`): hovered slips, the open folder chip, the triage card, default and outline buttons, segmented tracks.
+- **Subtle Edge** (`edge-subtle` / `edge-subtle-dark`): the 1px edge of every slip, hairline dividers and column rules.
+- **Strong Edge** (`edge-strong` / `edge-strong-dark`): hovered slips, the triage card, default and outline buttons, segmented tracks.
 - **Ink** (`ink` / `ink-dark`): primary text, links, and the selection outline. 15.9:1 (light) and 15.1:1 (dark) on the box.
 - **Graphite** (`graphite` / `graphite-dark`): read slip titles, counters, bylines' feed name, secondary actions.
 - **Pencil** (`pencil` / `pencil-dark`): tertiary text: slip meta, addresses on read slips, placeholders, captions, the "n of m" stack position.
@@ -221,10 +218,10 @@ The root size is 15px; the reading size is user-controlled (default 1.2rem) and 
 - **Headline** (Hanken Grotesk 600, 1.6em of the reading size, 1.2): the open slip's article title, balanced wrapping.
 - **Title** (Hanken Grotesk 600, 1.4rem, 1.25): the triage card headline.
 - **Body** (Literata 400, 1.2rem default, 1.6): article text in the open slip. Users may switch to sans or mono; each reading font has its own measure (Literata 35em, Hanken 33em, JetBrains Mono 44em) so all three land at roughly 70 characters per line. The triage excerpt is Literata at 1rem in graphite.
-- **UI** (Hanken Grotesk 400, 1rem): slip titles, chips, menus, settings. Unread slip titles step up to 600 in ink; read titles drop to graphite at 400.
-- **Label** (Hanken Grotesk 400, 0.8rem): slip meta, bylines (sans, pencil, tabular), "n of m", settings labels, the triage card header. Filter labels in the top bar are 0.875rem and appear only at 992px and up.
-- **Address** (JetBrains Mono 500, 0.72rem, tabular): the slip address `XX·NN`; 700 and ink while unread. Counters use the same face at 0.78rem in graphite.
-- **Wordmark** (Hanken Grotesk 700, -0.01em): "yarr" beside the anchor mark, top bar only.
+- **UI** (Hanken Grotesk 400, 1rem): slip titles, feed rows, menus, settings. Unread slip titles step up to 600 in ink; read titles drop to graphite at 400.
+- **Label** (Hanken Grotesk 400, 0.8rem): slip meta, bylines (sans, pencil, tabular), "n of m", settings labels, the triage card header.
+- **Address** (JetBrains Mono 500, 0.75rem, never under 11px, tabular): the slip address `XX·NN`; 700 and ink while unread. Counters use the same face at 0.78rem in graphite.
+- **Wordmark** (Hanken Grotesk 700, -0.01em): "yarr" beside the anchor mark at the head of the feed sidebar, tablet and up.
 
 ### Named Rules
 **The Weight Is Unread Rule.** Unread is carried by weight (600 title, 700 address) and ink, which survive grayscale. Read slips step back a text tier, never an opacity.
@@ -237,18 +234,16 @@ The root size is 15px; the reading size is user-controlled (default 1.2rem) and 
 
 The page is the box. Three widths:
 
-- **Desktop (992px and up):** a top bar (min 3.25rem, bottom hairline) spans the window; below it a CSS grid places the stack (default 400px, user-resizable via the stored list width) and the reader side by side. View filters show icon plus label.
-- **Tablet (768px to 991.98px):** the same top bar, filters as icons only. One working column below: the stack fills it, and opening an article replaces the stack with the open slip.
-- **Phone (below 768px):** no top bar. Feeds, stack and open slip take turns full-width; the reader gets a bottom thumb-zone bar with labelled previous/next and the address. Secondary reader actions fold into an overflow menu so six 44px controls fit 320px.
+- **Desktop (992px and up):** three columns: the feed sidebar (default 300px, resizable), the stack (default 400px, resizable) and the open slip.
+- **Tablet (768px to 991.98px):** sidebar (35%) and stack (65%); opening an article replaces both with the open slip.
+- **Phone (below 768px):** feeds, stack and open slip take turns full-width; the reader gets a bottom thumb-zone bar with labelled previous/next and the address. Secondary reader actions fold into an overflow menu so six 44px controls fit 320px.
 
-The top bar is one horizontal scroller with hidden scrollbar: folder chips, and after the current folder's chip, that folder's feed chips inline (other folders' feeds are hidden). Chips sit `0.375rem` apart.
-
-Spacing rhythm is small and fixed: slips 6px apart (10px above a tabbed slip, so the tab clears the slip above), slip padding `0.55rem 0.75rem 0.6rem`, 8px above the first slip. The open slip is a centred card with `2.25rem 2.75rem 2.75rem` padding (`1.25rem 1.1rem 1.75rem` on phones) and the measure inside it. The triage card is 640px wide on desk, 400px on phone, centred with its action line and legend directly beneath.
+Spacing rhythm is small and fixed: slips 6px apart, slip padding `0.55rem 0.75rem 0.6rem`, 8px above the first slip. The open slip is a centred card with `2.25rem 2.75rem 2.75rem` padding (`1.25rem 1.1rem 1.75rem` on phones) and the measure inside it. The triage card is 640px wide on desk, 400px on phone, centred with its action line and legend directly beneath.
 
 Touch: below 992px every toolbar control, list row and menu item is at least 44px; a compact density option tightens rows on fine pointers only.
 
 ### Named Rules
-**The No Sidebar Rule.** From tablet up, navigation is the top bar. There is no permanent vertical feed column at any width above phone.
+**The Three Column Rule.** Feeds, stack, reader, left to right. Navigation stays a vertical, readable tree; don't move it into a horizontal strip.
 
 **The One Ground Rule.** Stack, reader and triage all sit on the box ground; panes are not separate tinted boxes. The only column divider is the stack's hairline right edge.
 
@@ -266,7 +261,7 @@ Nearly flat. Depth is a white card on a tinted ground plus a 1px edge; the shado
 
 ## Shapes
 
-Cut card. One small corner (4px) for every slip, chip, card, button, segmented track and toast; 3px on toolbar icon buttons, the search field and focus outlines; the filing tab is a 18 by 5px strip with only its top corners rounded (2px), sitting 4px above a slip's top edge at the right. Accent swatches are the only circles. Edges are 1px hairlines; the only 2px strokes are the selection outline and the focus ring. Blockquotes take a 3px strong-edge rule on the left.
+Cut card. One small corner (4px) for every slip, card, button, segmented track and toast; 3px on toolbar icon buttons, the search field and focus outlines; the filing tab is a 14 by 7px strip hanging from a slip's top edge at the right, inside the slip, with only its bottom corners rounded (2px), like a ribbon clipped to the card. Accent swatches are the only circles. Edges are 1px hairlines; the only 2px strokes are the selection outline and the focus ring. Blockquotes take a 3px strong-edge rule on the left.
 
 ## Components
 
@@ -275,20 +270,23 @@ The signature object.
 - **Shape:** slip white, 1px subtle edge, 4px corner, slip shadow.
 - **Content:** a meta line (unread dot or filing-coloured star, mono address, feed name, reading time, relative age, all in pencil) over the title.
 - **States:** unread = 600 ink title and 700 ink address; read = graphite title. Hover (pointer only) = strong edge. Selected = ink edge and a 2px inset ink outline, background unchanged. Keyboard focus = 2px filing-colour ring inset.
-- **Filed:** a starred slip carries the filing tab on its top edge; the tab is decorative, the star icon carries the state.
+- **Filed:** a starred slip carries the filing tab hanging from its top edge; the tab is decorative, the star icon carries the state.
 
 ### Open Slip (reader)
 - One large white slip centred on the box ground, holding the article at the measure: sans headline, a one-line sans byline caption (feed name in graphite 600, then short date "Oct 27, 09:42" and reading time in pencil), then Literata body.
-- The reader toolbar groups actions by space, not dividers: state (star, read), reading (appearance, read here, listen), send (Instapaper, copy, open). At the right, the slip's address and "n of m" in pencil beside prev/next and close.
+- The reader toolbar groups actions with space and a short hairline between groups: state (star, read), reading (appearance, read here, listen), send (Instapaper, copy, open). The read toggle shows the list's unread dot while unread and a check once read. At the right, the slip's address and "n of m" in pencil beside prev/next and close.
 - Code blocks sit on raised grey with a hairline, scroll sideways with a right-edge fade while more remains.
 - Opening fades the slip in (0.18s, 4px rise).
 
-### Chips (top bar)
-- **Style:** slip white, 1px subtle edge, 4px corner, `0.3rem 0.6rem`, icon plus name plus mono counter; names truncate at 14rem.
-- **State:** the open folder's chip is 600 with a strong edge, heading its inline feed run. The selected chip takes the 2px inset ink outline. A chip's actions menu appears on hover or focus (and on right-click).
+### Stack Heading
+The stack's own address line under the search field, at every width: the mono code (bold ink), the feed, folder or "All Unread/Starred/Feeds" name in 600 ink, and the filter's count in graphite ("FB · Feed B · 3 unread"). In the Unread view a labelled "Mark all read" text button sits at its right, so the bulk action names its scope. It is how a phone keeps its place with the sidebar off-screen.
+
+### Feed Sidebar
+- **Style:** the box ground, no slips: folders and feeds are plain rows (icon, name, mono counter, ⋯ actions), feeds indented under an expandable folder.
+- **State:** the selected row takes the 2px inset ink outline over slip white; with an article open on the desk it steps down to a 1px ink edge. Never a fill. Actions open from ⋯ or right-click.
 
 ### View Filters
-Unread, Starred, All, Triage as icon buttons in the top bar, labelled at 992px and up. The active one is outlined in ink on slip white at 600, never filled.
+Unread, Starred, All, Triage as icon buttons at the head of the feed sidebar (names in title and aria-label). The active one is outlined in ink on slip white at 600, never filled.
 
 ### Buttons
 - **Toolbar icon:** transparent, 3px corner, `0.25rem 0.5rem`; hover grey under a real pointer; disabled = graphite at 0.7 opacity.
@@ -301,7 +299,7 @@ Unread, Starred, All, Triage as icon buttons in the top bar, labelled at 992px a
 - **Form fields:** slip white; focus turns the border filing-coloured. Placeholders are pencil at full opacity.
 
 ### Triage Card
-One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain, then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s.
+One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain (hidden for IP addresses and LAN names), then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". A card with no body says "No preview in the feed" and offers the original instead of a read-here hint; tapping it opens the original. Triage starts in the folder being read, and its header keeps the view filters beside the wordmark as in the three-column layout. The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s.
 
 ### Toasts
 An always-dark pill (4px corner, toast shadow), bottom centre in the thumb zone, auto-dismissing; the undo variant carries a lightened filing-colour action.
@@ -322,9 +320,9 @@ Seven circular swatches under "Filing colour", each previewing its own theme's v
 - **Do** self-host any face under an open licence and keep the reading measure at 62 to 76 characters per line.
 
 ### Don't:
-- **Don't** reintroduce a permanent sidebar or a grey three-pane frame above phone width.
+- **Don't** move feeds and folders into a horizontal top bar; it clipped and was hard to read.
 - **Don't** use the filing colour for links, selection fills, headings, scrollbars or decoration.
-- **Don't** flood a selected slip, chip or filter with colour; ink outline only.
+- **Don't** flood a selected slip, feed row or filter with colour; ink outline only.
 - **Don't** add elevation beyond the slip shadow to resting surfaces.
 - **Don't** use opacity to de-emphasise text; use graphite or pencil.
 - **Don't** add tracked uppercase eyebrows or kickers above titles or groups.

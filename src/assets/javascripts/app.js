@@ -737,13 +737,26 @@ function rootComponent() { return {
       if (i < 0) return null
       return {n: i + 1, total: this.items.length + (this.itemsHasMore ? '+' : '')}
     },
-    // The folder whose feed chips show inline in the top bar: the selected
-    // folder, or the folder of the selected feed.
-    chipFolderId: function() {
-      var cur = this.current
-      if (cur.type == 'folder') return cur.folder.id || null
-      if (cur.type == 'feed') return cur.feed.folder_id || null
-      return null
+    // The stack's address line: feed code, name, and the filter's count.
+    stackHeading: function() {
+      if (this.feedSelected === null || !this.feeds.length) return null
+      var cur = this.current, title, n
+      if (cur.type == 'feed') {
+        title = cur.feed.title; n = this.filteredFeedStats[cur.feed.id]
+      } else if (cur.type == 'folder') {
+        title = cur.folder.title; n = this.filteredFolderStats[cur.folder.id]
+      } else {
+        title = {unread: 'All Unread', starred: 'All Starred'}[this.filterSelected] || 'All Feeds'
+        n = this.filteredTotalStats
+      }
+      if (!title) return null
+      n = n || 0
+      return {
+        code: this.feedCode({title: title}),
+        title: title,
+        n: n,
+        count: n ? n + ' ' + (this.filterSelected == 'starred' ? 'starred' : 'unread') : '',
+      }
     },
     cardExcerpt: function() {
       if (!this.currentCard || !this.currentCard.content) return ''
@@ -758,8 +771,10 @@ function rootComponent() { return {
     cardDomain: function() {
       if (!this.currentCard || !this.currentCard.link) return ''
       try {
-        var url = new URL(this.currentCard.link)
-        return url.hostname.replace(/^www\./, '')
+        var host = new URL(this.currentCard.link).hostname
+        // an address or a LAN name says nothing about where the article is from
+        if (/^[\d.]+$|:|^localhost$|\.(local|lan|home|internal)$/i.test(host)) return ''
+        return host.replace(/^www\./, '')
       } catch (e) {
         return ''
       }
@@ -1771,7 +1786,10 @@ function rootComponent() { return {
       this.cardItems = []
       this.cardIndex = 0
       this.cardStats = { read: 0, instapaper: 0, kept: 0, starred: 0 }
-      this.cardFolder = ''
+      // start in the folder being read, so triage continues where you are
+      var cur = this.current
+      var folderId = cur.type == 'folder' ? cur.folder.id : (cur.type == 'feed' ? cur.feed.folder_id : null)
+      this.cardFolder = folderId ? String(folderId) : ''
       this.cardLoading = true
       this.loadCardItems(null)
     },
@@ -1929,6 +1947,8 @@ function rootComponent() { return {
     cardTap: function(event) {
       if (!this.currentCard) return
       if (!this.cardExpanded) {
+        // nothing to read in place: say so rather than silently doing nothing
+        if (!this.currentCard.content) return this.cardOpenOriginal()
         this.cardExpanded = true
         return
       }
