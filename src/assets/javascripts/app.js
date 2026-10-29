@@ -737,14 +737,6 @@ function rootComponent() { return {
       if (i < 0) return null
       return {n: i + 1, total: this.items.length + (this.itemsHasMore ? '+' : '')}
     },
-    // The folder whose feed chips show inline in the top bar: the selected
-    // folder, or the folder of the selected feed.
-    chipFolderId: function() {
-      var cur = this.current
-      if (cur.type == 'folder') return cur.folder.id || null
-      if (cur.type == 'feed') return cur.feed.folder_id || null
-      return null
-    },
     cardExcerpt: function() {
       if (!this.currentCard || !this.currentCard.content) return ''
       var tmp = document.createElement('div')

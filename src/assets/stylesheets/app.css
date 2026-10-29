@@ -894,8 +894,8 @@ a,
 /* One solid selection at a time. With an article open, j/k drive the article
    list, so the feed list's selection steps down to a quiet marker: the hover
    surface plus weight, never a second accent block competing for the eye.
-   Desktop only; narrower layouts don't show both panes at once. In the top
-   bar that marker is a hairline ink edge, never a fill. */
+   Desktop only; narrower layouts don't show both panes at once. The
+   marker is a hairline ink edge, never a fill. */
 @media (min-width: 992px) {
   #app.item-selected #col-feed-list .selectgroup input:checked + .selectgroup-label {
     background-color: var(--surface-base) !important;
@@ -1036,115 +1036,18 @@ a,
   font-weight: 600;
 }
 
-/* ── The top bar ───────────────────────────────────────
-   From tablet width up there is no sidebar: the feed column becomes one
-   bar across the top (still the "Feeds" landmark). Folders are chips; the
-   current folder's feeds follow it inline; everything scrolls sideways.
-   The stack and the open slip share the row below. Phones keep the
-   single-column list of feeds. */
-#col-feed-list {
+/* ── The feed column ───────────────────────────────────
+   Three columns from tablet width up: feeds and folders in a sidebar, the
+   stack, and the open slip. The sidebar sits on the box ground like the
+   stack; its selection is an ink outline, never a fill. */
+#col-feed-list,
+#feed-list-scroll {
   background-color: var(--surface-box);
 }
-@media (min-width: 768px) {
-  #app {
-    display: grid !important;
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    height: 100vh;
-  }
-  #app #col-feed-list {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    width: auto !important;
-    height: auto !important;
-    min-height: 3.25rem;
-    flex-direction: row !important;
-    align-items: center;
-    border-right: 0;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-  #app #col-item-list { grid-column: 1; grid-row: 2; height: auto !important; }
-  #app #col-item { grid-column: 2; grid-row: 2; height: auto !important; }
-  #col-feed-list > .drag { display: none; }
-  #col-feed-list > .toolbar { flex: 0 0 auto; max-height: none !important; }
-  #feed-list-scroll {
-    display: flex;
-    flex: 1 1 auto;
-    align-items: center;
-    gap: .375rem;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: .5rem .75rem .5rem .25rem !important;
-    border-top: 0 !important;
-    scrollbar-width: none;
-  }
-  #feed-list-scroll::-webkit-scrollbar { display: none; }
-  #feed-list-scroll > div { display: contents; }
-  #feed-list-scroll .feed-group { display: none !important; }
-  #feed-list-scroll .feed-group.chip-current { display: contents !important; }
-  #feed-list-scroll .selectgroup,
-  #feed-list-scroll .selectgroup + .selectgroup { flex: 0 0 auto; margin: 0 !important; }
-  #feed-list-scroll .selectgroup-label {
-    width: auto !important;
-    min-height: 0;
-    padding: .3rem .6rem;
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius);
-    background-color: var(--surface-base);
-    white-space: nowrap;
-  }
-  #feed-list-scroll .selectgroup-label .text-truncate { max-width: 14rem; }
-  #feed-list-scroll .selectgroup-label .icon.mr-2 { margin-right: .4rem !important; }
-  #feed-list-scroll .folder-expander { display: none !important; }
-  /* the open folder's own chip reads as the head of its feed run */
-  #feed-list-scroll .chip-open > .selectgroup-label { font-weight: 600; border-color: var(--border-strong); }
-  #feed-list-scroll .empty-hint { display: none; }
-  #col-item-list .empty-hint { display: block !important; }
-  #app.card-mode #col-feed-list {
-    grid-row: 1 / -1;
-    flex-direction: column !important;
-    align-items: stretch;
-    border-bottom: 0;
-  }
-  .wordmark {
-    margin-right: .5rem;
-    font-weight: 700;
-    letter-spacing: -.01em;
-  }
-  /* a chip's ⋯ stays out of the way until the chip is pointed at or focused;
-     right-click opens the same menu */
-  #feed-list-scroll .selectgroup-label { position: relative; }
-  #feed-list-scroll .selectgroup-label .flex-fill { flex: 0 1 auto; }
-  #feed-list-scroll .selectgroup-label .counter:empty { display: none; }
-  #feed-list-scroll .feed-row-menu {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0;
-  }
-  #feed-list-scroll .selectgroup-label:hover .feed-row-menu,
-  #feed-list-scroll .feed-row-menu:focus-visible { opacity: .7; }
-  #feed-list-scroll .selectgroup-label:hover .feed-row-menu {
-    background: var(--surface-base);
-  }
-}
-/* view filters carry their names once there is room; the icons stay */
-.filter-label { display: none; }
-@media (min-width: 992px) {
-  .filter-label {
-    display: inline;
-    margin-left: .35rem;
-    font-size: .875rem;
-  }
-}
-/* Tablet: one working column under the bar. The stack fills it, and the open
-   slip replaces the stack (the older two-column tablet rules set fixed
-   widths with equal specificity, so these are scoped up by one element). */
-@media (min-width: 768px) and (max-width: 991.98px) {
-  html #app #col-feed-list { width: auto !important; }
-  html #app #col-item-list { grid-column: 1 / -1; width: 100% !important; }
-  html #app.item-selected #col-item { grid-column: 1 / -1; }
+.wordmark {
+  margin-right: .5rem;
+  font-weight: 700;
+  letter-spacing: -.01em;
 }
 
 .btn-default:focus,

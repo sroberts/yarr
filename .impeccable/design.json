@@ -644,7 +644,7 @@
       },
       "ui": {
         "displayName": "Interface",
-        "purpose": "Slip titles, chips, menus, settings. Root size is 15px."
+        "purpose": "Slip titles, feed rows, menus, settings. Root size is 15px."
       },
       "slip-title-unread": {
         "displayName": "Unread Title",
@@ -660,11 +660,11 @@
       },
       "counter": {
         "displayName": "Counter",
-        "purpose": "Unread counts on chips, mono and graphite, never opacity-dimmed."
+        "purpose": "Unread counts on feed rows, mono and graphite, never opacity-dimmed."
       },
       "wordmark": {
         "displayName": "Wordmark",
-        "purpose": "'yarr' beside the anchor mark in the top bar."
+        "purpose": "'yarr' beside the anchor mark at the head of the feed sidebar."
       }
     },
     "shadows": [
@@ -695,7 +695,7 @@
       {
         "name": "ink-select",
         "value": "box-shadow: inset 0 0 0 2px var(--ink-select)",
-        "purpose": "Selected slip, chip, filter or menu item: ink outline over slip white, weight 600."
+        "purpose": "Selected slip, feed row, filter or menu item: ink outline over slip white, weight 600."
       },
       {
         "name": "selection-tint",
@@ -707,7 +707,7 @@
       {
         "name": "state",
         "value": "background-color .12s ease, color .12s ease, border-color .12s ease",
-        "purpose": "Hover and selection changes on rows, chips, buttons, swatches."
+        "purpose": "Hover and selection changes on rows, buttons, swatches."
       },
       {
         "name": "article-in",
@@ -734,17 +734,17 @@
       {
         "name": "phone",
         "value": "max-width: 767.98px",
-        "purpose": "No top bar; feeds, stack and open slip take turns; bottom prev/next bar."
+        "purpose": "Feeds, stack and open slip take turns; bottom prev/next bar."
       },
       {
         "name": "tablet",
         "value": "768px to 991.98px",
-        "purpose": "Top bar with icon-only filters; the open slip replaces the stack."
+        "purpose": "Feed sidebar and stack; the open slip replaces both."
       },
       {
         "name": "desktop",
         "value": "min-width: 992px",
-        "purpose": "Top bar with labelled filters; stack and open slip side by side."
+        "purpose": "Three columns: feed sidebar, stack, open slip."
       },
       {
         "name": "touch",
@@ -785,12 +785,12 @@
       "css": ".ds-reader { background: var(--surface-box, #F6F7F5); padding: .75rem 1rem 1.5rem; } .ds-slipbar { text-align: right; font: .8rem 'Hanken Grotesk Var', system-ui, sans-serif; color: var(--text-tertiary, #62666C); font-variant-numeric: tabular-nums; margin-bottom: .5rem; } .ds-raddr { font: 700 .72rem/1 'JetBrains Mono Var', Menlo, monospace; color: var(--text-secondary, #4B4F55); margin-right: .45rem; } .ds-open { max-width: 35em; margin: 0 auto; padding: 2.25rem 2.75rem 2.75rem; background: var(--surface-base, #FFFFFF); border: 1px solid var(--border-subtle, #E2E4E1); border-radius: 4px; box-shadow: 0 1px 2px rgba(27,28,30,.06); font-size: 18px; color: var(--text-primary, #1B1C1E); } .ds-h1 { font: 600 1.6em/1.2 'Hanken Grotesk Var', system-ui, sans-serif; margin: 0; text-wrap: balance; } .ds-byline { margin-top: .35em; font: 400 .8em/1.4 'Hanken Grotesk Var', system-ui, sans-serif; color: var(--text-tertiary, #62666C); } .ds-byline b { color: var(--text-secondary, #4B4F55); font-weight: 600; } .ds-p { font-family: 'Literata Var', Georgia, serif; line-height: 1.6; margin: 1rem 0 0; } .ds-p a { color: inherit; text-decoration: underline; } .ds-p a:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: 2px; border-radius: 3px; }"
     },
     {
-      "name": "Top Bar",
+      "name": "Feed Sidebar",
       "kind": "nav",
-      "refersTo": "chip",
-      "description": "The Feeds landmark from tablet up: wordmark, view filters (labelled at 992px+), folder chips with the open folder's feeds inline.",
-      "html": "<nav class=\"ds-bar\" aria-label=\"Feeds\"><span class=\"ds-word\">yarr</span><button class=\"ds-filter\">Unread</button><button class=\"ds-filter\">Starred</button><button class=\"ds-filter ds-on\">All</button><button class=\"ds-filter\">Triage</button><span class=\"ds-chips\"><button class=\"ds-chip ds-on\">All Feeds <span class=\"ds-count\">5</span></button><button class=\"ds-chip ds-open\">News <span class=\"ds-count\">3</span></button><button class=\"ds-chip\">Feed C <span class=\"ds-count\">1</span></button><button class=\"ds-chip\">Engineering</button></span></nav>",
-      "css": ".ds-bar { display: flex; align-items: center; gap: .375rem; min-height: 3.25rem; padding: 0 .75rem; background: var(--surface-box, #F6F7F5); border-bottom: 1px solid var(--border-subtle, #E2E4E1); font: 15px 'Hanken Grotesk Var', system-ui, sans-serif; color: var(--text-primary, #1B1C1E); overflow-x: auto; } .ds-word { font-weight: 700; letter-spacing: -.01em; margin-right: .5rem; } .ds-chips { display: flex; gap: .375rem; margin-left: 1rem; } .ds-filter, .ds-chip { font: inherit; color: inherit; cursor: pointer; white-space: nowrap; border-radius: 3px; transition: background-color .12s ease, border-color .12s ease; } .ds-filter { background: transparent; border: 1px solid transparent; padding: .25rem .5rem; font-size: .875rem; } .ds-chip { background: var(--surface-base, #FFFFFF); border: 1px solid var(--border-subtle, #E2E4E1); border-radius: 4px; padding: .3rem .6rem; } .ds-chip.ds-open { font-weight: 600; border-color: var(--border-strong, #C6C9C5); } .ds-filter:hover, .ds-chip:hover { background: var(--surface-hover, #E9EBE8); } .ds-on { background: var(--surface-base, #FFFFFF); box-shadow: inset 0 0 0 2px var(--ink-select, #1B1C1E); font-weight: 600; } .ds-count { font: .78rem 'JetBrains Mono Var', Menlo, monospace; color: var(--text-secondary, #4B4F55); padding-left: .35rem; } .ds-filter:focus-visible, .ds-chip:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: 2px; }"
+      "refersTo": "feed-row",
+      "description": "The Feeds landmark, first of three columns: wordmark, icon view filters, then the folder/feed tree on the box ground; selection is an ink outline.",
+      "html": "<nav class=\"ds-side\" aria-label=\"Feeds\"><div class=\"ds-side-head\"><span class=\"ds-word\">yarr</span></div><div class=\"ds-row ds-on\">All Feeds <span class=\"ds-count\">5</span></div><div class=\"ds-row\">News <span class=\"ds-count\">3</span></div><div class=\"ds-row ds-feed\">Feed A <span class=\"ds-count\">2</span></div><div class=\"ds-row ds-feed\">Feed B <span class=\"ds-count\">1</span></div><div class=\"ds-row\">Feed C <span class=\"ds-count\">1</span></div></nav>",
+      "css": ".ds-side { width: 260px; padding: .5rem; background: var(--surface-box, #F6F7F5); border-right: 1px solid var(--border-subtle, #E2E4E1); font: 15px 'Hanken Grotesk Var', system-ui, sans-serif; color: var(--text-primary, #1B1C1E); } .ds-side-head { padding: .25rem .5rem .5rem; } .ds-word { font-weight: 700; letter-spacing: -.01em; } .ds-row { display: flex; align-items: center; padding: .4rem .5rem; border-radius: 3px; cursor: pointer; transition: background-color .12s ease; } .ds-row + .ds-row { margin-top: 2px; } .ds-feed { padding-left: 1.5rem; } .ds-row:hover { background: var(--surface-hover, #E9EBE8); } .ds-on { background: var(--surface-base, #FFFFFF); box-shadow: inset 0 0 0 2px var(--ink-select, #1B1C1E); font-weight: 600; } .ds-count { margin-left: auto; font: .78rem 'JetBrains Mono Var', Menlo, monospace; color: var(--text-secondary, #4B4F55); } .ds-row:focus-visible { outline: 2px solid var(--accent, #2B4C9A); outline-offset: -2px; }"
     },
     {
       "name": "Triage Card",
@@ -835,7 +835,7 @@
   ],
   "narrative": {
     "northStar": "The Slip Box",
-    "overview": "yarr is a scholar's slip box for feeds. Every article is a slip with an address; slips lie in a stack on a cool box ground, the ones you keep get filed with a small coloured tab, the rest go back in the box, and the one you open lies enlarged on the same ground as the single thing asking for attention. The interface is quiet, fast and utilitarian: chrome recedes to hairlines and pencil-grey text so the stack and the open slip carry the screen.\n\nThere is no permanent sidebar. From tablet width up a single top bar holds the wordmark, the four view filters, and the folders as chips with the current folder's feeds strung inline after it. Below it the stack (about 400px) and the open slip share one row on the desk; on tablet and phone they take turns. Density comes from many small, legible slips, not from packing, and the colour budget is spent almost entirely on one filing colour that marks filed state and focus. It explicitly refuses the boxed three-pane reader with a grey sidebar, and the heavy, loud fields of the rejected Contact Sheet world.\n\nLight and dark are co-equal: every role has a value in both, contrast is checked in both, and neither is a derived afterthought.",
+    "overview": "yarr is a scholar's slip box for feeds. Every article is a slip with an address; slips lie in a stack on a cool box ground, the ones you keep get filed with a small coloured tab, the rest go back in the box, and the one you open lies enlarged on the same ground as the single thing asking for attention. The interface is quiet, fast and utilitarian: chrome recedes to hairlines and pencil-grey text so the stack and the open slip carry the screen.\n\nThree columns, the reader convention: from tablet width up a feed sidebar on the box ground holds the wordmark, the four view filters and the folder/feed tree; beside it the stack (about 400px) of slips; on the desk the open slip takes the third column. On tablet the open slip replaces the sidebar and stack; on phone the three take turns. Density comes from many small, legible slips, not from packing, and the colour budget is spent almost entirely on one filing colour that marks filed state and focus. The columns are conventional on purpose (an earlier top-bar layout clipped and was hard to read); the world lives in the slips, addresses and filing tab, not in a novel frame. It refuses a grey boxed sidebar and the heavy, loud fields of the rejected Contact Sheet world.\n\nLight and dark are co-equal: every role has a value in both, contrast is checked in both, and neither is a derived afterthought.",
     "keyCharacteristics": [
       "White slips with a 1px edge, a 4px corner and a barely-there shadow, 6px apart on a cool off-white (or graphite) box ground.",
       "A mono address on every slip (feed code and position in the view, e.g. `FB·03`) that is bold ink while unread.",
@@ -875,8 +875,8 @@
         "section": "typography"
       },
       {
-        "name": "The No Sidebar Rule",
-        "body": "From tablet up, navigation is the top bar. There is no permanent vertical feed column at any width above phone.",
+        "name": "The Three Column Rule",
+        "body": "Feeds, stack, reader, left to right. Navigation stays a vertical, readable tree; don't move it into a horizontal strip.",
         "section": "layout"
       },
       {
@@ -901,9 +901,9 @@
       "**Do** self-host any face under an open licence and keep the reading measure at 62 to 76 characters per line."
     ],
     "donts": [
-      "**Don't** reintroduce a permanent sidebar or a grey three-pane frame above phone width.",
+      "**Don't** move feeds and folders into a horizontal top bar; it clipped and was hard to read.",
       "**Don't** use the filing colour for links, selection fills, headings, scrollbars or decoration.",
-      "**Don't** flood a selected slip, chip or filter with colour; ink outline only.",
+      "**Don't** flood a selected slip, feed row or filter with colour; ink outline only.",
       "**Don't** add elevation beyond the slip shadow to resting surfaces.",
       "**Don't** use opacity to de-emphasise text; use graphite or pencil.",
       "**Don't** add tracked uppercase eyebrows or kickers above titles or groups.",

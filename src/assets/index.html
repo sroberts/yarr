@@ -60,7 +60,7 @@
                         aria-label="Show unread"
                         aria-keyshortcuts="1"
                         @click="filterSelected = 'unread'">
-                    <span class="icon">{% inline "circle-full.svg" %}</span><span class="filter-label">Unread</span>
+                    <span class="icon">{% inline "circle-full.svg" %}</span>
                 </button>
                 <button class="toolbar-item mx-1"
                         :class="{active: filterSelected == 'starred'}"
@@ -69,7 +69,7 @@
                         aria-label="Show starred"
                         aria-keyshortcuts="2"
                         @click="filterSelected = 'starred'">
-                    <span class="icon">{% inline "star-full.svg" %}</span><span class="filter-label">Starred</span>
+                    <span class="icon">{% inline "star-full.svg" %}</span>
                 </button>
                 <button class="toolbar-item mr-1"
                         :class="{active: filterSelected == ''}"
@@ -78,7 +78,7 @@
                         aria-label="Show all"
                         aria-keyshortcuts="3"
                         @click="filterSelected = ''">
-                    <span class="icon">{% inline "assorted.svg" %}</span><span class="filter-label">All</span>
+                    <span class="icon">{% inline "assorted.svg" %}</span>
                 </button>
                 <!-- Triage is the fourth view, at every width (#124): one card at
                      a time, swipe or arrow keys. Key 4, after the 1/2/3 views. -->
@@ -89,7 +89,7 @@
                         aria-label="Triage unread"
                         aria-keyshortcuts="4"
                         @click="filterSelected = 'triage'">
-                    <span class="icon">{% inline "cards.svg" %}</span><span class="filter-label">Triage</span>
+                    <span class="icon">{% inline "cards.svg" %}</span>
                 </button>
                 <div class="flex-grow-1"></div>
                 <dropdown class="settings-dropdown" toggle-class="btn btn-link toolbar-item px-2" ref="menuDropdown" drop="right" title="Menu">
@@ -252,12 +252,12 @@
                 </label>
                 <div v-for="folder in foldersWithFeeds">
                     <label class="selectgroup mt-1"
-                           :class="{'d-none': mustHideFolder(folder), 'chip-open': folder.id == chipFolderId}"
+                           :class="{'d-none': mustHideFolder(folder)}"
                            v-if="folder.id">
                         <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id">
                         <div class="selectgroup-label d-flex align-items-center w-100" v-if="folder.id"
                              @contextmenu.prevent="openFolderContextMenu(folder, $event)">
-                            <span class="icon mr-2 folder-expander"
+                            <span class="icon mr-2"
                                   role="button"
                                   tabindex="0"
                                   :class="{expanded: folder.is_expanded}"
@@ -278,9 +278,7 @@
                             </button>
                         </div>
                     </label>
-                    <!-- feed-group: a nested list on phones; from tablet up only the
-                         current folder's feeds show, inline after its chip -->
-                    <div v-show="!folder.id || folder.is_expanded" class="mt-1 feed-group" :class="{'pl-3': folder.id, 'chip-current': !folder.id || folder.id == chipFolderId}">
+                    <div v-show="!folder.id || folder.is_expanded" class="mt-1" :class="{'pl-3': folder.id}">
                         <label class="selectgroup"
                               :class="{'d-none': mustHideFeed(feed)}"
                                v-for="feed in folder.feeds">
