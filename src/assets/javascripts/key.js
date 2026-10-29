@@ -85,6 +85,9 @@ var shortcutFunctions = {
   showStarred() {
     vm.filterSelected = 'starred'
   },
+  startTriage() {
+    vm.filterSelected = 'triage'
+  },
   showShortcuts: function() {
     vm.showSettings('shortcuts')
   },
@@ -111,6 +114,7 @@ var keybindings = {
   "1": shortcutFunctions.showUnread,
   "2": shortcutFunctions.showStarred,
   "3": shortcutFunctions.showAll,
+  "4": shortcutFunctions.startTriage,
   "?": shortcutFunctions.showShortcuts,
 }
 
@@ -133,6 +137,7 @@ var codebindings = {
   "Digit1": shortcutFunctions.showUnread,
   "Digit2": shortcutFunctions.showStarred,
   "Digit3": shortcutFunctions.showAll,
+  "Digit4": shortcutFunctions.startTriage,
 }
 
 // Card triage mode runs its own keyboard map: the swipe loop, by keyboard.
@@ -140,10 +145,12 @@ var codebindings = {
 var triageBindings = {
   "ArrowRight": function() { vm.cardSwipeRight() },
   "ArrowLeft":  function() { vm.cardSwipeLeft() },
-  "Enter":      function() { vm.cardTap() },
+  "Enter":      function() { vm.cardExpanded ? (vm.cardExpanded = false) : vm.cardTap() },
+  "s":          function() { vm.cardStar() },
+  "o":          function() { vm.cardOpenOriginal() },
   "p":          function() { vm.toggleListen() },
   "u":          function() { vm.undoCardAction() },
-  "Escape":     function() { vm.exitCardMode() },
+  "Escape":     function() { vm.cardExpanded ? (vm.cardExpanded = false) : vm.exitCardMode() },
 }
 
 function isTextBox(element) {
