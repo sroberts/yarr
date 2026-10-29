@@ -9,10 +9,11 @@ on:
 jobs:
   build_macos:
     name: Build for MacOS
-    # macos-14 (Apple Silicon) — macos-13 Intel runners are scarce and were
-    # chronically queueing then cancelling, blocking the release. Go builds
-    # the amd64 target by cross-compiling (clang -arch x86_64) just fine here.
-    runs-on: macos-14
+    # macos-15 (Apple Silicon). macos-13 Intel runners were chronically
+    # queueing then cancelling; macos-14 is retired on 2026-11-02 and its
+    # brownouts left jobs queued with no runner. Go builds the amd64 target
+    # by cross-compiling (clang -arch x86_64) just fine here.
+    runs-on: macos-15
     timeout-minutes: 30
     steps:
     - name: Checkout
