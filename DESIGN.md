@@ -72,7 +72,7 @@ typography:
     fontWeight: 400
   address:
     fontFamily: "JetBrains Mono Var, SFMono-Regular, Menlo, Consolas, monospace"
-    fontSize: "0.72rem"
+    fontSize: "0.75rem"
     fontWeight: 500
     lineHeight: 1
     fontFeature: "tnum"
@@ -89,7 +89,7 @@ typography:
 rounded:
   slip: "4px"
   control: "3px"
-  tab: "2px 2px 0 0"
+  tab: "0 0 2px 2px"
   swatch: "50%"
 spacing:
   stack-gap: "6px"
@@ -113,8 +113,8 @@ components:
   slip-tab:
     backgroundColor: "{colors.filing-blue}"
     rounded: "{rounded.tab}"
-    width: "18px"
-    height: "5px"
+    width: "14px"
+    height: "7px"
   feed-row:
     backgroundColor: "{colors.box}"
     textColor: "{colors.ink}"
@@ -220,7 +220,7 @@ The root size is 15px; the reading size is user-controlled (default 1.2rem) and 
 - **Body** (Literata 400, 1.2rem default, 1.6): article text in the open slip. Users may switch to sans or mono; each reading font has its own measure (Literata 35em, Hanken 33em, JetBrains Mono 44em) so all three land at roughly 70 characters per line. The triage excerpt is Literata at 1rem in graphite.
 - **UI** (Hanken Grotesk 400, 1rem): slip titles, feed rows, menus, settings. Unread slip titles step up to 600 in ink; read titles drop to graphite at 400.
 - **Label** (Hanken Grotesk 400, 0.8rem): slip meta, bylines (sans, pencil, tabular), "n of m", settings labels, the triage card header.
-- **Address** (JetBrains Mono 500, 0.72rem, tabular): the slip address `XX·NN`; 700 and ink while unread. Counters use the same face at 0.78rem in graphite.
+- **Address** (JetBrains Mono 500, 0.75rem, never under 11px, tabular): the slip address `XX·NN`; 700 and ink while unread. Counters use the same face at 0.78rem in graphite.
 - **Wordmark** (Hanken Grotesk 700, -0.01em): "yarr" beside the anchor mark at the head of the feed sidebar, tablet and up.
 
 ### Named Rules
@@ -238,7 +238,7 @@ The page is the box. Three widths:
 - **Tablet (768px to 991.98px):** sidebar (35%) and stack (65%); opening an article replaces both with the open slip.
 - **Phone (below 768px):** feeds, stack and open slip take turns full-width; the reader gets a bottom thumb-zone bar with labelled previous/next and the address. Secondary reader actions fold into an overflow menu so six 44px controls fit 320px.
 
-Spacing rhythm is small and fixed: slips 6px apart (10px above a tabbed slip, so the tab clears the slip above), slip padding `0.55rem 0.75rem 0.6rem`, 8px above the first slip. The open slip is a centred card with `2.25rem 2.75rem 2.75rem` padding (`1.25rem 1.1rem 1.75rem` on phones) and the measure inside it. The triage card is 640px wide on desk, 400px on phone, centred with its action line and legend directly beneath.
+Spacing rhythm is small and fixed: slips 6px apart, slip padding `0.55rem 0.75rem 0.6rem`, 8px above the first slip. The open slip is a centred card with `2.25rem 2.75rem 2.75rem` padding (`1.25rem 1.1rem 1.75rem` on phones) and the measure inside it. The triage card is 640px wide on desk, 400px on phone, centred with its action line and legend directly beneath.
 
 Touch: below 992px every toolbar control, list row and menu item is at least 44px; a compact density option tightens rows on fine pointers only.
 
@@ -261,7 +261,7 @@ Nearly flat. Depth is a white card on a tinted ground plus a 1px edge; the shado
 
 ## Shapes
 
-Cut card. One small corner (4px) for every slip, card, button, segmented track and toast; 3px on toolbar icon buttons, the search field and focus outlines; the filing tab is a 18 by 5px strip with only its top corners rounded (2px), sitting 4px above a slip's top edge at the right. Accent swatches are the only circles. Edges are 1px hairlines; the only 2px strokes are the selection outline and the focus ring. Blockquotes take a 3px strong-edge rule on the left.
+Cut card. One small corner (4px) for every slip, card, button, segmented track and toast; 3px on toolbar icon buttons, the search field and focus outlines; the filing tab is a 14 by 7px strip hanging from a slip's top edge at the right, inside the slip, with only its bottom corners rounded (2px), like a ribbon clipped to the card. Accent swatches are the only circles. Edges are 1px hairlines; the only 2px strokes are the selection outline and the focus ring. Blockquotes take a 3px strong-edge rule on the left.
 
 ## Components
 
@@ -270,13 +270,16 @@ The signature object.
 - **Shape:** slip white, 1px subtle edge, 4px corner, slip shadow.
 - **Content:** a meta line (unread dot or filing-coloured star, mono address, feed name, reading time, relative age, all in pencil) over the title.
 - **States:** unread = 600 ink title and 700 ink address; read = graphite title. Hover (pointer only) = strong edge. Selected = ink edge and a 2px inset ink outline, background unchanged. Keyboard focus = 2px filing-colour ring inset.
-- **Filed:** a starred slip carries the filing tab on its top edge; the tab is decorative, the star icon carries the state.
+- **Filed:** a starred slip carries the filing tab hanging from its top edge; the tab is decorative, the star icon carries the state.
 
 ### Open Slip (reader)
 - One large white slip centred on the box ground, holding the article at the measure: sans headline, a one-line sans byline caption (feed name in graphite 600, then short date "Oct 27, 09:42" and reading time in pencil), then Literata body.
-- The reader toolbar groups actions by space, not dividers: state (star, read), reading (appearance, read here, listen), send (Instapaper, copy, open). At the right, the slip's address and "n of m" in pencil beside prev/next and close.
+- The reader toolbar groups actions with space and a short hairline between groups: state (star, read), reading (appearance, read here, listen), send (Instapaper, copy, open). The read toggle shows the list's unread dot while unread and a check once read. At the right, the slip's address and "n of m" in pencil beside prev/next and close.
 - Code blocks sit on raised grey with a hairline, scroll sideways with a right-edge fade while more remains.
 - Opening fades the slip in (0.18s, 4px rise).
+
+### Stack Heading
+The stack's own address line under the search field, at every width: the mono code (bold ink), the feed, folder or "All Unread/Starred/Feeds" name in 600 ink, and the filter's count in graphite ("FB · Feed B · 3 unread"). In the Unread view a labelled "Mark all read" text button sits at its right, so the bulk action names its scope. It is how a phone keeps its place with the sidebar off-screen.
 
 ### Feed Sidebar
 - **Style:** the box ground, no slips: folders and feeds are plain rows (icon, name, mono counter, ⋯ actions), feeds indented under an expandable folder.
@@ -296,7 +299,7 @@ Unread, Starred, All, Triage as icon buttons at the head of the feed sidebar (na
 - **Form fields:** slip white; focus turns the border filing-coloured. Placeholders are pencil at full opacity.
 
 ### Triage Card
-One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain, then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s.
+One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain (hidden for IP addresses and LAN names), then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". A card with no body says "No preview in the feed" and offers the original instead of a read-here hint; tapping it opens the original. Triage starts in the folder being read, and its header keeps the view filters beside the wordmark as in the three-column layout. The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s.
 
 ### Toasts
 An always-dark pill (4px corner, toast shadow), bottom centre in the thumb zone, auto-dismissing; the undo variant carries a lightened filing-colour action.

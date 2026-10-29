@@ -52,7 +52,7 @@
             <div class="p-2 toolbar d-flex align-items-center">
                 <div class="icon mx-2">{% inline "anchor.svg" %}</div>
                 <span class="wordmark d-none d-md-inline-flex">yarr</span>
-                <div class="flex-grow-1"></div>
+                <div class="flex-grow-1 toolbar-lead"></div>
                 <button class="toolbar-item ml-1"
                         :class="{active: filterSelected == 'unread'}"
                         :aria-pressed="(filterSelected == 'unread') ? 'true' : 'false'"
@@ -163,10 +163,12 @@
                         </div>
                         <div class="triage-card-domain" v-if="cardDomain">{{ cardDomain }}</div>
                         <div class="triage-card-title">{{ currentCard.title || 'untitled' }}</div>
-                        <div class="triage-card-excerpt" v-if="!cardExpanded">{{ cardExcerpt }}</div>
-                        <div class="triage-card-body" v-else v-html="currentCard.content || ''"></div>
+                        <div class="triage-card-excerpt" v-if="!cardExpanded && cardExcerpt">{{ cardExcerpt }}</div>
+                        <div class="triage-card-excerpt triage-card-empty" v-else-if="!currentCard.content">No preview in the feed.<span v-if="currentCard.link"><span class="hint-touch"> Open the original to read it.</span><span class="hint-pointer"> Press <kbd>o</kbd> to open the original.</span></span></div>
+                        <div class="triage-card-body" v-else-if="cardExpanded" v-html="currentCard.content"></div>
                         <div class="triage-card-footer">
-                            <span class="triage-card-hint" v-if="!cardExpanded"><span class="hint-touch">tap to read here</span><span class="hint-pointer">Enter to read here</span></span>
+                            <span class="triage-card-hint" v-if="!currentCard.content"><a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop>Open original</a></span>
+                            <span class="triage-card-hint" v-else-if="!cardExpanded"><span class="hint-touch">tap to read here</span><span class="hint-pointer">Enter to read here</span></span>
                             <span class="triage-card-hint" v-else>
                                 <a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop>Open original</a><span class="hint-pointer"> · Esc to go back</span>
                             </span>
@@ -335,13 +337,6 @@
                         <span class="icon">{% inline "x.svg" %}</span>
                     </button>
                 </div>
-                <button class="toolbar-item ml-2"
-                        @click="markItemsRead()"
-                        v-if="filterSelected == 'unread'"
-                        title="Mark All Read">
-                    <span class="icon">{% inline "check.svg" %}</span>
-                </button>
-
                 <!-- Per-feed actions now live on each sidebar feed row's ⋯ menu
                      (reachable without selecting the feed first), so the toolbar
                      no longer carries a redundant Feed Settings dropdown. Folder
@@ -366,6 +361,22 @@
                         Delete
                     </button>
                 </dropdown>
+            </div>
+            <!-- The stack's address: what this list is and how much is in it, so a
+                 phone (where the sidebar is off-screen) never loses its place, and
+                 "Mark all read" names the scope it acts on. -->
+            <div class="stack-heading border-top" v-if="stackHeading">
+                <span class="slip-addr is-unread" aria-hidden="true">{{ stackHeading.code }}</span>
+                <h2 class="stack-heading-title text-truncate">{{ stackHeading.title }}</h2>
+                <span class="stack-heading-count" v-if="stackHeading.count">· {{ stackHeading.count }}</span>
+                <button type="button" class="stack-heading-action"
+                        v-if="filterSelected == 'unread' && stackHeading.n"
+                        @click="markItemsRead()"
+                        :aria-label="'Mark all read in ' + stackHeading.title"
+                        title="Mark all read (R)">
+                    <span class="icon">{% inline "check.svg" %}</span>
+                    Mark all read
+                </button>
             </div>
             <div class="px-3 py-2 border-top text-danger text-break" v-if="current.type == 'feed' && feed_errors[current.feed.id]">
                 {{ feed_errors[current.feed.id] }}
@@ -455,7 +466,7 @@
                         :aria-pressed="itemSelectedDetails.status!='unread' ? 'true' : 'false'"
                         @click="toggleItemRead(itemSelectedDetails)">
                     <span class="icon" v-if="itemSelectedDetails.status=='unread'">{% inline "circle-full.svg" %}</span>
-                    <span class="icon" v-if="itemSelectedDetails.status!='unread'">{% inline "circle.svg" %}</span>
+                    <span class="icon" v-if="itemSelectedDetails.status!='unread'">{% inline "check.svg" %}</span>
                 </button>
                 <dropdown class="settings-dropdown toolbar-group-start" toggle-class="toolbar-item px-2" drop="center" title="Appearance">
                     <template v-slot:button>
@@ -823,7 +834,7 @@
 
                     <tr><td colspan=2>&nbsp;</td></tr>
                     <tr><td colspan=2 class="text-muted">Triage (card mode)</td></tr>
-                    <tr><td><kbd>←</kbd></td>               <td>save to Instapaper / keep unread</td></tr>
+                    <tr><td><kbd>←</kbd></td>               <td>{{ instapaperUsername ? 'save to Instapaper and mark read' : 'keep unread' }}</td></tr>
                     <tr><td><kbd>→</kbd></td>               <td>mark read</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>star</td></tr>
                     <tr><td><kbd>Enter</kbd></td>           <td>read the article here / back to the card</td></tr>

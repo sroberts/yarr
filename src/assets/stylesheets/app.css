@@ -578,6 +578,27 @@ select.form-control:not([multiple]):not([size]) {
   overflow-y: auto;
   display: block !important;
 }
+/* Fit the window: the dialog keeps a margin all round and its body
+   scrolls, so the header and close stay in view on a short screen. */
+.custom-modal .modal-dialog {
+  margin-top: max(1.75rem, 6vh);
+  margin-bottom: 1.75rem;
+}
+.custom-modal .modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - max(1.75rem, 6vh) - 1.75rem);
+  overflow: hidden;
+}
+.custom-modal .modal-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 480px) {
+  .custom-modal .modal-dialog { margin-top: 1rem; margin-bottom: 1rem; }
+  .custom-modal .modal-content { max-height: calc(100dvh - 2rem); }
+}
 
 /* Command palette (Cmd/Ctrl+K) — Spotlight-style overlay reusing the modal
    backdrop; quiet chrome, accent only on the selected row. */
@@ -949,9 +970,6 @@ a,
 #item-list-scroll .selectgroup + .selectgroup {
   margin-top: 6px;
 }
-#item-list-scroll .selectgroup:has(.slip-tab) {
-  margin-top: 10px;
-}
 #item-list-scroll .selectgroup-label {
   background-color: var(--surface-base);
   border: 1px solid var(--border-subtle);
@@ -968,20 +986,67 @@ a,
 .slip-addr {
   flex-shrink: 0;
   margin-right: .5rem;
-  font: 500 .72rem/1 var(--font-mono);
+  font: 500 .75rem/1 var(--font-mono);
   font-variant-numeric: tabular-nums;
   color: var(--text-tertiary);
 }
 .slip-addr.is-unread { color: var(--text-primary); font-weight: 700; }
 .slip-tab {
   position: absolute;
-  top: -4px;
+  top: 0;
   right: .85rem;
-  width: 18px;
-  height: 5px;
-  border-radius: 2px 2px 0 0;
+  width: 14px;
+  height: 7px;
+  border-radius: 0 0 2px 2px;
   background: var(--accent);
   pointer-events: none;
+}
+
+/* The stack's address line, under the search field */
+.stack-heading {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: .3rem .5rem .3rem .75rem;
+  background-color: var(--surface-box);
+}
+.stack-heading .slip-addr { margin-right: .5rem; }
+.stack-heading-title {
+  margin: 0;
+  min-width: 0;
+  font-size: .9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+.stack-heading-count {
+  flex-shrink: 0;
+  margin-left: .35rem;
+  font-size: .85rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.stack-heading-action {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding: 0 .5rem;
+  min-height: 2rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  font-size: .8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.stack-heading-action .icon { width: 1rem; height: 1rem; }
+.stack-heading-action:hover { background-color: var(--surface-hover); color: var(--text-primary); }
+@media (pointer: coarse) {
+  .stack-heading-action { min-height: 2.75rem; }
 }
 
 /* keeper (filed) state is always the filing colour, wherever it shows */
@@ -1356,6 +1421,8 @@ a,
   margin-left: 0.5rem;
 }
 
+.triage-card-empty { color: var(--text-secondary); }
+
 .triage-card-domain {
   font-size: 0.75rem;
   color: var(--text-tertiary);
@@ -1532,6 +1599,12 @@ a,
    column, which the phone and tablet layouts hide once a feed or article is
    selected, so card mode overrides them: 4 or the palette always land on the
    card. The item list and reader would only show stale state behind it. */
+#app.card-mode #col-feed-list > .toolbar > .toolbar-lead {
+  /* the column spans the window here: keep the view switches beside the
+     wordmark, where they sit in the three-column layout, not adrift centre */
+  flex-grow: 0;
+  width: .75rem;
+}
 #app.card-mode #col-feed-list {
   display: flex !important;
   width: 100% !important;
@@ -1612,7 +1685,16 @@ a,
    secondary actions into the overflow menu, so the grouping is desktop-only. */
 @media (min-width: 768px) {
   #col-item .toolbar .toolbar-group-start {
-    margin-left: .75rem;
+    position: relative;
+    margin-left: 1.1rem;
+  }
+  #col-item .toolbar .toolbar-group-start::before {
+    content: '';
+    position: absolute;
+    left: -.6rem;
+    top: 25%;
+    height: 50%;
+    border-left: 1px solid var(--border-subtle);
   }
 }
 
