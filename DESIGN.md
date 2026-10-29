@@ -1,307 +1,331 @@
 ---
 name: yarr
-description: A single-binary, self-hostable feed reader — a calm reading instrument for the feeds you chose.
-tokens:
-  # One semantic layer, two co-equal themes. Components reference ROLES,
-  # never raw colors. Set on the theme class on <body>.
-  light:
-    surface-base: "#FFFFFF"
-    surface-raised: "#F7F8FA"
-    surface-hover: "#EEF1F5"
-    border-subtle: "#E2E6EC"
-    border-strong: "#C7CDD6"
-    text-primary: "#16191D"   # ~15.8:1 — AAA
-    text-secondary: "#4A515B" # ~8.3:1  — AAA
-    text-tertiary: "#6B7280"  # ~5.1:1  — AA
-    status-success: "#15803D"
-    status-attention: "#B45309"
-    status-error: "#DC2626"
-    scrollbar-thumb: "#C7CDD6"
-  dark:
-    surface-base: "#0E1116"
-    surface-raised: "#161B22"
-    surface-hover: "#1F2630"
-    border-subtle: "#262D38"
-    border-strong: "#38414F"
-    text-primary: "#E6EAF0"   # ~13.5:1 — AAA
-    text-secondary: "#A4ADBA" # ~7.4:1  — AAA
-    text-tertiary: "#6E7889"  # ~4.6:1  — AA
-    status-success: "#4ADE80"
-    status-attention: "#FBBF24"
-    status-error: "#F87171"
-    scrollbar-thumb: "#38414F"
-accent:
-  # Independent of theme. Each option: light value / dark override / on-accent.
-  # --accent-hover and --focus-ring derive from --accent via color-mix.
-  blue:   { light: "#2563EB", dark: "#5B8DEF" }   # default
-  teal:   { light: "#0F766E", dark: "#2DD4BF" }
-  green:  { light: "#15803D", dark: "#4ADE80" }
-  violet: { light: "#7C3AED", dark: "#A78BFA" }
-  rose:   { light: "#BE123C", dark: "#FB7185" }
-  amber:  { light: "#B45309", dark: "#FBBF24" }
-  slate:  { light: "#475569", dark: "#94A3B8" }
-  on-accent: "white on light / near-black (#0E1116) on dark"
-brand:
-  instapaper: "#FF6600"   # the single fixed action color, both themes
-  offline-banner: "#C2362C" # fixed deep red, white text clears AA in both themes
+description: A quiet, fast feed reader where every article is an addressed slip in a box.
+colors:
+  filing-blue: "#2B4C9A"
+  filing-blue-dark: "#8FAAF0"
+  filing-teal: "#0F766E"
+  filing-teal-dark: "#2DD4BF"
+  filing-green: "#137337"
+  filing-green-dark: "#4ADE80"
+  filing-violet: "#7C3AED"
+  filing-violet-dark: "#A78BFA"
+  filing-rose: "#C4201A"
+  filing-rose-dark: "#FF6B5E"
+  filing-amber: "#A64B07"
+  filing-amber-dark: "#FBBF24"
+  filing-slate: "#475569"
+  filing-slate-dark: "#94A3B8"
+  instapaper-orange: "#FF6600"
+  box-ground: "#F6F7F5"
+  slip-white: "#FFFFFF"
+  raised-grey: "#F0F1EF"
+  hover-grey: "#E9EBE8"
+  edge-subtle: "#E2E4E1"
+  edge-strong: "#C6C9C5"
+  ink: "#1B1C1E"
+  graphite: "#4B4F55"
+  pencil: "#62666C"
+  status-success: "#15803D"
+  status-attention: "#B45309"
+  status-error: "#B42318"
+  box-ground-dark: "#141618"
+  slip-dark: "#1C1F22"
+  raised-dark: "#22262A"
+  hover-dark: "#2A2E33"
+  edge-subtle-dark: "#2C3035"
+  edge-strong-dark: "#3F444A"
+  ink-dark: "#E9EAEC"
+  graphite-dark: "#AFB3B9"
+  pencil-dark: "#959AA2"
+  status-success-dark: "#4ADE80"
+  status-attention-dark: "#FBBF24"
+  status-error-dark: "#FF7A6B"
 typography:
-  # Self-hosted variable fonts (SIL OFL), embedded in the binary under fonts/.
-  font-sans:  "'InterVar', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
-  font-serif: "'Source Serif 4 Var', Georgia, 'Times New Roman', serif"
-  font-mono:  "'JetBrains Mono Var', SFMono-Regular, Menlo, Consolas, monospace"
-  base: "15px (chrome). Reading body defaults to 1.2rem (~18px), user-adjustable."
-  scales:
-    list-title:   { size: "15px", weight: "600 unread / 400 read" }
-    list-meta:    { size: "12px", weight: 400 }
-    article-h1:   { size: "1.6em", lineHeight: 1.2 }
-    article-body: { size: "~18px (1.2rem default)", lineHeight: 1.6, measure: "70ch" }
+  headline:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "1.6em"
+    fontWeight: 600
+    lineHeight: 1.2
+  title:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "1.4rem"
+    fontWeight: 600
+    lineHeight: 1.25
+  body:
+    fontFamily: "Literata Var, Georgia, Times New Roman, serif"
+    fontSize: "1.2rem"
+    fontWeight: 400
+    lineHeight: 1.6
+  ui:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 400
+    lineHeight: 1.5
+  slip-title-unread:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 600
+  label:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "0.8rem"
+    fontWeight: 400
+  address:
+    fontFamily: "JetBrains Mono Var, SFMono-Regular, Menlo, Consolas, monospace"
+    fontSize: "0.72rem"
+    fontWeight: 500
+    lineHeight: 1
+    fontFeature: "tnum"
+  counter:
+    fontFamily: "JetBrains Mono Var, SFMono-Regular, Menlo, Consolas, monospace"
+    fontSize: "0.78rem"
+    fontWeight: 400
+    fontFeature: "tnum"
+  wordmark:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 700
+    letterSpacing: "-0.01em"
 rounded:
-  base: "6px"   # --radius, applied globally
-  lg: "16px"    # triage card
-  pill: "1.5rem" # undo toast, action pills
+  slip: "4px"
+  control: "3px"
+  tab: "2px 2px 0 0"
+  swatch: "50%"
 spacing:
-  xs: "4px"
-  sm: "8px"
-  md: "16px"
-  toolbar: "2rem"
-  toolbar-mobile: "3rem"
-  touch: "44px"
+  stack-gap: "6px"
+  stack-gap-tabbed: "10px"
+  chip-gap: "0.375rem"
+  slip-pad: "0.55rem 0.75rem 0.6rem"
+  chip-pad: "0.3rem 0.6rem"
+  open-slip-pad: "2.25rem 2.75rem 2.75rem"
+  open-slip-pad-phone: "1.25rem 1.1rem 1.75rem"
+  card-pad: "1.5rem"
+  stack-width: "400px"
+  touch-target: "44px"
 components:
-  toolbar-item-active:
-    backgroundColor: "var(--accent)"
-    textColor: "var(--on-accent)"
-    rounded: "{rounded.base}"
-  selectgroup-item-selected:
-    backgroundColor: "var(--accent)"
-    textColor: "var(--on-accent)"
-    rounded: "{rounded.base}"
-  button-default:
-    backgroundColor: "var(--surface-base)"
-    textColor: "var(--text-primary)"
-    border: "1px solid var(--border-strong)"
-    rounded: "{rounded.base}"
-  input:
-    backgroundColor: "var(--surface-base)"
-    textColor: "var(--text-primary)"
-    rounded: "{rounded.base}"
-  dropdown-menu:
-    backgroundColor: "var(--surface-raised)"
-    border: "1px solid var(--border-subtle)"
+  slip:
+    backgroundColor: "{colors.slip-white}"
+    textColor: "{colors.graphite}"
+    rounded: "{rounded.slip}"
+    padding: "{spacing.slip-pad}"
+  slip-unread:
+    backgroundColor: "{colors.slip-white}"
+    textColor: "{colors.ink}"
+    typography: "{typography.slip-title-unread}"
+  slip-tab:
+    backgroundColor: "{colors.filing-blue}"
+    rounded: "{rounded.tab}"
+    width: "18px"
+    height: "5px"
+  chip:
+    backgroundColor: "{colors.slip-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.slip}"
+    padding: "{spacing.chip-pad}"
+  open-slip:
+    backgroundColor: "{colors.slip-white}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body}"
+    rounded: "{rounded.slip}"
+    padding: "{spacing.open-slip-pad}"
   triage-card:
-    backgroundColor: "var(--surface-raised)"
-    textColor: "var(--text-primary)"
-    border: "1px solid var(--border-subtle)"
-    rounded: "{rounded.lg}"
+    backgroundColor: "{colors.slip-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.slip}"
+    padding: "{spacing.card-pad}"
+    width: "640px"
+  triage-card-phone:
     width: "400px"
-  undo-toast:
-    backgroundColor: "rgba(20,20,20,0.92)"  # always dark
-    textColor: "#fff"
-    rounded: "{rounded.pill}"
+  button-default:
+    backgroundColor: "{colors.slip-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.slip}"
+  button-star:
+    backgroundColor: "{colors.slip-white}"
+    textColor: "{colors.filing-blue}"
+    rounded: "{rounded.slip}"
+    padding: "0.25rem 0.85rem"
+  toolbar-icon:
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "0.25rem 0.5rem"
+  segmented-active:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.slip-white}"
+    height: "{spacing.touch-target}"
+  search-field:
+    backgroundColor: "{colors.slip-white}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
 ---
 
 # Design System: yarr
 
-## 1. Overview
+## Overview
 
-**Creative North Star: "The Calm Reading Instrument"**
+**Creative North Star: "The Slip Box"**
 
-yarr is a clean, just-the-facts instrument — a terminal for the feeds you chose.
-It is not a magazine, not a discovery engine, not a place to linger over chrome.
-The whole surface exists to move a backlog of unread items past your eyes
-quickly, let you keep the few that matter, and get out of the way. The interface
-earns trust by getting out of the way, ranking information ruthlessly, and never
-moving or shouting without a reason the user caused.
+yarr is a scholar's slip box for feeds. Every article is a slip with an address; slips lie in a stack on a cool box ground, the ones you keep get filed with a small coloured tab, the rest go back in the box, and the one you open lies enlarged on the same ground as the single thing asking for attention. The interface is quiet, fast and utilitarian: chrome recedes to hairlines and pencil-grey text so the stack and the open slip carry the screen.
 
-Three columns carry the entire desktop experience (feeds → items → article),
-collapsing to one column at a time on a phone with no duplicate markup. Chrome is
-held to a 2rem toolbar band and a single 1px divider. There is exactly one accent
-color at a time, and it never decorates — it only signals state (selected, active,
-focused, link). The reading surface is deliberately unstyled beyond legibility:
-the article is the content, the app is the frame.
+There is no permanent sidebar. From tablet width up a single top bar holds the wordmark, the four view filters, and the folders as chips with the current folder's feeds strung inline after it. Below it the stack (about 400px) and the open slip share one row on the desk; on tablet and phone they take turns. Density comes from many small, legible slips, not from packing, and the colour budget is spent almost entirely on one filing colour that marks filed state and focus. It explicitly refuses the boxed three-pane reader with a grey sidebar, and the heavy, loud fields of the rejected Contact Sheet world.
 
-This system rejects the ad-driven reader (Feedly and kin): no promoted content,
-no "discover" rails, no engagement nudges. It also rejects the 2026 AI-cream
-aesthetic — no warm-neutral paper backgrounds, no tracked-uppercase eyebrows, no
-identical icon-heading-text card grids.
+Light and dark are co-equal: every role has a value in both, contrast is checked in both, and neither is a derived afterthought.
 
 **Key Characteristics:**
-- Information-dense, three-pane terminal that collapses to single-pane on mobile.
-- **One semantic token layer, two co-equal themes (light / dark).** Components
-  reference roles (`--surface-*`, `--text-*`, `--accent`), never raw colors.
-- **A user-selectable accent** (seven options, blue default), independent of
-  theme; used only for state. Plus user controls for density and motion.
-- Keyboard is a primary path, not a power-user extra; visible focus is required.
-- Flat by default; lift (shadow) is reserved for the two floating objects — the
-  triage card and the undo toast.
+- White slips with a 1px edge, a 4px corner and a barely-there shadow, 6px apart on a cool off-white (or graphite) box ground.
+- A mono address on every slip (feed code and position in the view, e.g. `FB·03`) that is bold ink while unread.
+- One filing colour (user-selectable, seven options, blue by default) reserved for filed state, the star, focus and text selection.
+- Selection is drawn in ink as an outline on the object, never an accent fill.
+- Hanken Grotesk for interface and titles, JetBrains Mono for addresses and numbers, Literata for reading. All self-hosted.
 
-## 2. Colors
+## Colors
 
-A near-monochrome neutral field per theme, carrying a single functional accent.
-Color is information, not ornament.
+A near-monochrome ink-on-paper palette with one deliberately scarce filing colour; light and dark carry the same roles.
 
-### The token layer
-Every color is a semantic role defined once per theme on the `.theme-light` /
-`.theme-dark` class. Surfaces step `base → raised → hover`; text steps
-`primary → secondary → tertiary`; borders step `subtle → strong`. Elevation is a
-**surface step plus a 1px border**, never a heavy shadow. All values are
-contrast-checked: body text targets AAA (7:1), all UI text clears AA (4.5:1).
+### Primary
+- **Filing Blue** (`filing-blue`, dark `filing-blue-dark`): the default filing colour. It paints the tab on a starred slip, the star marker, the triage Star button's outline and label, the focus ring, focused input borders, the triage hint link, and (as a 22% tint) `::selection`. The user may swap it for **Teal**, **Green**, **Violet**, **Rose**, **Amber** or **Slate** under "Filing colour" in Settings; each option has its own light and dark value, all clearing AA as text on box, slip and raised surfaces of their theme. On the always-dark toast the filing colour is lightened toward white for legibility.
 
-### Accent (selectable)
-The accent is the one chromatic color in the chrome, chosen by the user from
-seven options (blue default). Each option carries a **light value and a deliberate
-dark override** (a mid-blue that passes on white fails on near-black), plus
-`--on-accent` for text on an accent fill — white on the deep light values,
-near-black on the bright dark values. `--accent-hover` and `--focus-ring` derive
-from `--accent` via `color-mix`, so adding an accent is just two hex values.
+### Secondary
+- **Instapaper Orange** (`instapaper-orange`): the one fixed brand colour, identical in both themes, used only where an action sends to Instapaper (the triage "save" pill and stat). It is not part of the filing vocabulary.
 
-### Functional / brand
-- **Instapaper Orange** (`--instapaper: #FF6600`): the single fixed action color,
-  reserved for the "save to Instapaper" affordance. Identical in both themes.
-- **Status** (`--status-success` / `--status-attention` / `--status-error`):
-  tuned per theme; **never the sole carrier of meaning** — always paired with an
-  icon, label, or weight change.
-- **Offline banner** (`#C2362C`): a fixed deep red with white text that clears AA
-  in both themes (it's a fill, not text, so it doesn't use the status token).
+### Neutral
+- **Box Ground** (`box-ground` / `box-ground-dark`): the page, the stack column, the reader column and the triage view. Everything else lies on it.
+- **Slip White** (`slip-white` / `slip-dark`): slips, chips, the open slip, the triage card, inputs and default buttons.
+- **Raised Grey** (`raised-grey` / `raised-dark`): menus, modals, the command palette and code blocks in the reader.
+- **Hover Grey** (`hover-grey` / `hover-dark`): pointer hover on controls (only under `hover: hover`).
+- **Subtle Edge** (`edge-subtle` / `edge-subtle-dark`): the 1px edge of every slip and chip, hairline dividers, the top bar's bottom rule.
+- **Strong Edge** (`edge-strong` / `edge-strong-dark`): hovered slips, the open folder chip, the triage card, default and outline buttons, segmented tracks.
+- **Ink** (`ink` / `ink-dark`): primary text, links, and the selection outline. 15.9:1 (light) and 15.1:1 (dark) on the box.
+- **Graphite** (`graphite` / `graphite-dark`): read slip titles, counters, bylines' feed name, secondary actions.
+- **Pencil** (`pencil` / `pencil-dark`): tertiary text: slip meta, addresses on read slips, placeholders, captions, the "n of m" stack position.
+- **Status** (`status-success`, `status-attention`, `status-error`, each with a dark value): semantic feedback only, never decoration.
 
 ### Named Rules
-**The One Accent Rule.** The accent only ever means *state* — selected, active,
-focused, or a link. It never appears as decoration. If two unrelated things on
-screen carry the accent, one is wrong.
+**The Filing Colour Rule.** The filing colour means "filed" or "focused". It marks the starred tab and star, keyboard focus, focused fields and the text-selection tint, and nothing else: not links, not selection, not headers, not scrollbars.
 
-**The Token Rule.** Components reference roles, never raw hex. A literal color in
-a component rule is a bug — it won't survive the other theme.
+**The Ink Link Rule.** Links are ink. In the reader they are ink with an underline; in the chrome they are ink and identified by context. A link is never filing-coloured.
 
-**The Two-Equal-Themes Rule.** Light and dark are co-equal. Any new surface is
-designed and contrast-checked in both, across every accent, before it ships.
-Never design for light and patch dark.
+**The Pencil Floor Rule.** Pencil (tertiary) text must stay at or above 4.5:1 on both the slip and raised surfaces in both themes. The e2e suite measures it; a new grey that fails it is wrong, not the test.
 
-## 3. Typography
+## Typography
 
-This is a reading application, so type is the product, not decoration.
+**Display Font:** none; titles are set in the interface face.
+**Body Font:** Literata (with Georgia) for reading; Hanken Grotesk (with system-ui) for everything else.
+**Label/Mono Font:** JetBrains Mono (with SFMono-Regular, Menlo).
 
-**UI / body:** **Inter** (variable, self-hosted) — one family carries headings,
-labels, data, and UI. **Reading fonts (reader pane, user-selectable):** **Source
-Serif 4** (serif) and **JetBrains Mono** (mono), both variable and self-hosted.
-All three are SIL OFL, embedded in the binary (`src/assets/fonts/`) — no
-third-party requests, consistent with local-first.
+**Character:** A plain, slightly warm grotesk runs the instrument; a bookish serif takes over only inside the open slip; a mono face stamps addresses and numbers like a library index. All three are variable WOFF2 files self-hosted from `src/assets/fonts` under the SIL OFL, split latin / latin-ext. No third-party font requests.
 
-Base font size is **15px** for chrome (`html { font-size: 15px }`). The reading
-body defaults to **~18px** (`theme.size` 1.2rem) and is user-adjustable; article
-headings use `em` so they scale with it.
+The root size is 15px; the reading size is user-controlled (default 1.2rem) and reader headings scale with it in `em`.
 
 ### Hierarchy
-- **Article h1** (1.6em, line-height 1.2): the reader-pane title — the single
-  largest type in the app; scales with the reading-size control.
-- **Article body** (~18px, line-height 1.6): reader prose, **capped at a 70ch
-  measure** regardless of window width and centered.
-- **List title** (15px; 600 when unread, 400 when read): item-list headlines.
-  The weight shift *is* the unread signal (survives grayscale).
-- **List meta** (12px): feed names, timestamps, counters — `--text-tertiary`.
+- **Headline** (Hanken Grotesk 600, 1.6em of the reading size, 1.2): the open slip's article title, balanced wrapping.
+- **Title** (Hanken Grotesk 600, 1.4rem, 1.25): the triage card headline.
+- **Body** (Literata 400, 1.2rem default, 1.6): article text in the open slip. Users may switch to sans or mono; each reading font has its own measure (Literata 35em, Hanken 33em, JetBrains Mono 44em) so all three land at roughly 70 characters per line. The triage excerpt is Literata at 1rem in graphite.
+- **UI** (Hanken Grotesk 400, 1rem): slip titles, chips, menus, settings. Unread slip titles step up to 600 in ink; read titles drop to graphite at 400.
+- **Label** (Hanken Grotesk 400, 0.8rem): slip meta, bylines (sans, pencil, tabular), "n of m", settings labels, the triage card header. Filter labels in the top bar are 0.875rem and appear only at 992px and up.
+- **Address** (JetBrains Mono 500, 0.72rem, tabular): the slip address `XX·NN`; 700 and ink while unread. Counters use the same face at 0.78rem in graphite.
+- **Wordmark** (Hanken Grotesk 700, -0.01em): "yarr" beside the anchor mark, top bar only.
 
 ### Named Rules
-**The No-Display-Face Rule.** UI labels, buttons, and data never use a display
-font; hierarchy comes from weight and size on Inter.
+**The Weight Is Unread Rule.** Unread is carried by weight (600 title, 700 address) and ink, which survive grayscale. Read slips step back a text tier, never an opacity.
 
-**The Reader-Only Serif/Mono Rule.** Source Serif 4 and JetBrains Mono appear
-*only* in the article reading pane (and `<pre>`), as a user preference. They
-never leak into toolbars, lists, or labels.
+**The Measure Rule.** The open slip holds 62 to 76 characters per line in every reading font (pinned by the e2e suite). Measure is set in `em` per font, not `ch`.
 
-**The Measure Rule.** Article body never exceeds ~70ch per line. Full-width prose
-on a wide monitor is the most common reading-app failure.
+**The No Eyebrow Rule.** Captions are quiet sentence-case labels. There is no tracked uppercase anywhere in the system; group labels mark where a group ends and never shout.
 
-## 4. Elevation
+## Layout
 
-Flat by default. Depth is conveyed by the **surface step** (`raised` over `base`)
-plus a 1px `--border-subtle`, not by shadow. Two elements, and only two, float:
-the **triage card** and the **undo toast**. Reject heavy drop shadows and
-glassmorphism in both themes — they barely read on dark and cost contrast on
-light.
+The page is the box. Three widths:
+
+- **Desktop (992px and up):** a top bar (min 3.25rem, bottom hairline) spans the window; below it a CSS grid places the stack (default 400px, user-resizable via the stored list width) and the reader side by side. View filters show icon plus label.
+- **Tablet (768px to 991.98px):** the same top bar, filters as icons only. One working column below: the stack fills it, and opening an article replaces the stack with the open slip.
+- **Phone (below 768px):** no top bar. Feeds, stack and open slip take turns full-width; the reader gets a bottom thumb-zone bar with labelled previous/next and the address. Secondary reader actions fold into an overflow menu so six 44px controls fit 320px.
+
+The top bar is one horizontal scroller with hidden scrollbar: folder chips, and after the current folder's chip, that folder's feed chips inline (other folders' feeds are hidden). Chips sit `0.375rem` apart.
+
+Spacing rhythm is small and fixed: slips 6px apart (10px above a tabbed slip, so the tab clears the slip above), slip padding `0.55rem 0.75rem 0.6rem`, 8px above the first slip. The open slip is a centred card with `2.25rem 2.75rem 2.75rem` padding (`1.25rem 1.1rem 1.75rem` on phones) and the measure inside it. The triage card is 640px wide on desk, 400px on phone, centred with its action line and legend directly beneath.
+
+Touch: below 992px every toolbar control, list row and menu item is at least 44px; a compact density option tightens rows on fine pointers only.
+
+### Named Rules
+**The No Sidebar Rule.** From tablet up, navigation is the top bar. There is no permanent vertical feed column at any width above phone.
+
+**The One Ground Rule.** Stack, reader and triage all sit on the box ground; panes are not separate tinted boxes. The only column divider is the stack's hairline right edge.
+
+## Elevation & Depth
+
+Nearly flat. Depth is a white card on a tinted ground plus a 1px edge; the shadow is a whisper that only confirms the slip is paper. Overlays (palette, toasts) are the only things that truly float.
 
 ### Shadow Vocabulary
-- **Hairline** (`0 1px 2px rgba(0,0,0,0.1)`): default buttons/selects.
-- **Inset field** (`inset 0 1px 1px rgba(0,0,0,0.07)`): form inputs.
-- **Menu** (`0 1px 5px rgba(0,0,0,0.07)`): the settings dropdown.
-- **Floating card** (`0 4px 24px rgba(0,0,0,0.12)`): the triage card.
-- **Toast** (`0 4px 16px rgba(0,0,0,0.25)`): the undo toast.
-
-## 5. Components
-
-A single global radius (`--radius: 6px`) applies to buttons, inputs, menus, and
-rows; the triage card (16px) and pills/toast (1.5rem) are the only exceptions.
-
-### Buttons
-- **Toolbar item (icon button):** transparent at rest, `--surface-hover` wash on
-  hover. **Active fills with `--accent`, text flips to `--on-accent`** — the
-  primary "selected/active" signal across the app.
-- **Default button:** `--surface-base`, 1px `--border-strong`, hairline shadow;
-  active flattens to `--surface-hover`.
-- **Focus:** keyboard `:focus-visible` shows a 2px `--focus-ring` (the accent),
-  offset 2px (inset −2px inside clipped/scrolling containers). Pointer focus
-  stays quiet.
-
-### List rows (the selectgroup — signature)
-Feed list and item list are radio inputs rendered as full-width rows; the native
-input is visually hidden and the `.selectgroup-label` is the visible row.
-**Selected fills with `--accent` / `--on-accent`** — the same vocabulary as the
-active toolbar item. Compact density tightens row padding on fine pointers only;
-touch keeps 44px targets.
-
-### Inputs / Dropdown / Modal
-Inputs sit on `--surface-base` with an inset hairline; focus border shifts to
-`--accent`. The settings dropdown and modals are **raised** surfaces
-(`--surface-raised` + `--border-subtle`). The settings menu hosts the
-theme (light/dark), accent picker (7 swatches), density, and motion controls.
-
-### Triage card (signature, mobile core loop)
-16px radius — the softest shape in the system. Background `--surface-raised`,
-1px `--border-subtle`, Floating-card shadow. Swipe right = mark read (accent
-tint, derived from `--accent` via `color-mix`); swipe left = save to Instapaper
-(`--instapaper` tint) or keep unread; tap = open. A 4-second **undo toast**
-follows every swipe; the server write is deferred until that window closes. All
-swipe motion is suppressed under reduced-motion.
-
-### Undo toast (signature)
-Always-dark pill (`rgba(20,20,20,0.92)`), white label, "Undo" button colored from
-the active accent lightened 35% toward white (`color-mix`) for legibility on the
-dark pill, 1.5rem radius. Fixed bottom-center thumb zone; 44px touch target.
+- **Slip** (`--slip-shadow`: `0 1px 2px rgba(27,28,30,.06)` light, `0 1px 2px rgba(0,0,0,.3)` dark): every slip in the stack and the open slip.
+- **Toast** (`0 4px 16px rgba(0,0,0,.25)`): the always-dark toast and swipe-undo pill.
+- **Palette** (`0 16px 48px rgba(0,0,0,.4)`): the command palette over its dark backdrop.
 
 ### Named Rules
-**The One Selection Vocabulary Rule.** "Selected / active" looks the same
-everywhere — accent fill, on-accent text. The eye learns it once.
+**The Paper Not Plastic Rule.** A resting surface never gets more than the slip shadow. Hover changes the edge (subtle to strong), not the elevation.
 
-## 6. Motion
+## Shapes
 
-Functional or gone (150–250ms). Permitted: state-change confirmation, skeleton-
-to-content, pane expand/collapse, mark-as-read. Banned: load-time entrances,
-attention loops, parallax, scroll-triggered reveals. Motion honors **both** the
-OS `prefers-reduced-motion` and an in-app toggle (`body[data-motion="reduce"]`),
-so users can force it off regardless of system setting.
+Cut card. One small corner (4px) for every slip, chip, card, button, segmented track and toast; 3px on toolbar icon buttons, the search field and focus outlines; the filing tab is a 18 by 5px strip with only its top corners rounded (2px), sitting 4px above a slip's top edge at the right. Accent swatches are the only circles. Edges are 1px hairlines; the only 2px strokes are the selection outline and the focus ring. Blockquotes take a 3px strong-edge rule on the left.
 
-## 7. Do's and Don'ts
+## Components
+
+### Slip (stack row)
+The signature object.
+- **Shape:** slip white, 1px subtle edge, 4px corner, slip shadow.
+- **Content:** a meta line (unread dot or filing-coloured star, mono address, feed name, reading time, relative age, all in pencil) over the title.
+- **States:** unread = 600 ink title and 700 ink address; read = graphite title. Hover (pointer only) = strong edge. Selected = ink edge and a 2px inset ink outline, background unchanged. Keyboard focus = 2px filing-colour ring inset.
+- **Filed:** a starred slip carries the filing tab on its top edge; the tab is decorative, the star icon carries the state.
+
+### Open Slip (reader)
+- One large white slip centred on the box ground, holding the article at the measure: sans headline, a one-line sans byline caption (feed name in graphite 600, then short date "Oct 27, 09:42" and reading time in pencil), then Literata body.
+- The reader toolbar groups actions by space, not dividers: state (star, read), reading (appearance, read here, listen), send (Instapaper, copy, open). At the right, the slip's address and "n of m" in pencil beside prev/next and close.
+- Code blocks sit on raised grey with a hairline, scroll sideways with a right-edge fade while more remains.
+- Opening fades the slip in (0.18s, 4px rise).
+
+### Chips (top bar)
+- **Style:** slip white, 1px subtle edge, 4px corner, `0.3rem 0.6rem`, icon plus name plus mono counter; names truncate at 14rem.
+- **State:** the open folder's chip is 600 with a strong edge, heading its inline feed run. The selected chip takes the 2px inset ink outline. A chip's actions menu appears on hover or focus (and on right-click).
+
+### View Filters
+Unread, Starred, All, Triage as icon buttons in the top bar, labelled at 992px and up. The active one is outlined in ink on slip white at 600, never filled.
+
+### Buttons
+- **Toolbar icon:** transparent, 3px corner, `0.25rem 0.5rem`; hover grey under a real pointer; disabled = graphite at 0.7 opacity.
+- **Default:** slip white, strong edge, 4px corner; pressed = hover grey.
+- **Star (triage):** the one triage verb without a gesture, so it is a labelled button drawn in the filing colour (1px filing border, filing text, slip white ground).
+- **Segmented toggle (settings):** a strong-edge track of equal 44px segments with subtle dividers; the active segment inverts to ink.
+
+### Inputs / Fields
+- **Search:** slip white, borderless, 3px corner, leading icon, its own clear button; focus fills hover grey and keyboard focus adds the ring.
+- **Form fields:** slip white; focus turns the border filing-coloured. Placeholders are pencil at full opacity.
+
+### Triage Card
+One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain, then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s.
+
+### Toasts
+An always-dark pill (4px corner, toast shadow), bottom centre in the thumb zone, auto-dismissing; the undo variant carries a lightened filing-colour action.
+
+### Accent Picker
+Seven circular swatches under "Filing colour", each previewing its own theme's value; the chosen one gets an ink ring and a check mark so the choice survives colour blindness.
+
+## Do's and Don'ts
 
 ### Do:
-- **Do** reference tokens (`var(--accent)`, `var(--surface-raised)`, …), never
-  raw hex, in component rules.
-- **Do** keep the accent for state only — selection, active, focus, links — and
-  pair status/unread with weight, icon, or label (verify in grayscale).
-- **Do** design and contrast-check every new surface in light AND dark, across
-  every accent, before shipping. AAA body, AA UI.
-- **Do** cap reading measure at ~70ch and keep chrome to the 2rem toolbar band
-  and a single 1px divider.
-- **Do** give every interactive element a full keyboard path and a visible
-  `--focus-ring`; keep touch targets ≥44px.
-- **Do** provide a reduced-motion alternative for every animation.
+- **Do** put every article on a slip: slip white, 1px subtle edge, 4px corner, slip shadow, 6px apart on the box ground.
+- **Do** give every slip its mono address (feed initials, a middle dot, two-digit position in the current view), bold ink while unread.
+- **Do** mark selection with an ink outline on the object (2px inset), leaving its surface white.
+- **Do** keep `--focus-ring` equal to `--accent` and declare accent derivations on `body`, where the `[data-accent]` value actually lands.
+- **Do** keep the accent keys `blue`, `teal`, `green`, `violet`, `rose`, `amber`, `slate`, each with a light and dark value and a matching swatch.
+- **Do** reference roles (`--surface-*`, `--text-*`, `--ink-select`, `--accent`), never raw colours, in components.
+- **Do** design and check every change in light and dark.
+- **Do** self-host any face under an open licence and keep the reading measure at 62 to 76 characters per line.
 
 ### Don't:
-- **Don't** add promoted content, "discover" rails, engagement nudges, or
-  confetti. The user's feed list is the whole product.
-- **Don't** drift toward the AI-cream aesthetic — no warm-neutral paper
-  backgrounds, no tracked-uppercase eyebrows, no identical card grids.
-- **Don't** introduce a second simultaneous accent or use the accent
-  decoratively.
-- **Don't** use a display font in chrome; serif/mono live only in the reader.
-- **Don't** add drop shadows for looks. Flat by default; only the triage card
-  and undo toast float.
-- **Don't** use `border-left`/`border-right` > 1px as a colored accent stripe.
-- **Don't** ship a surface that's legible in light but muddy in dark — the most
-  common regression here.
+- **Don't** reintroduce a permanent sidebar or a grey three-pane frame above phone width.
+- **Don't** use the filing colour for links, selection fills, headings, scrollbars or decoration.
+- **Don't** flood a selected slip, chip or filter with colour; ink outline only.
+- **Don't** add elevation beyond the slip shadow to resting surfaces.
+- **Don't** use opacity to de-emphasise text; use graphite or pencil.
+- **Don't** add tracked uppercase eyebrows or kickers above titles or groups.
+- **Don't** request fonts, icons or scripts from a third-party host, or add a JS framework or bundler.

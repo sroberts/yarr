@@ -1,4 +1,4 @@
-var CACHE_NAME = 'yarr-v10';
+var CACHE_NAME = 'yarr-v11';
 var STATIC_ASSETS = [
   './static/stylesheets/base.css',
   './static/stylesheets/app.css',
@@ -8,8 +8,12 @@ var STATIC_ASSETS = [
   './static/javascripts/app.js',
   './static/javascripts/key.js',
   './static/javascripts/swipe.js',
-  './static/fonts/inter.woff2',
-  './static/fonts/source-serif-4.woff2',
+  './static/fonts/hanken-grotesk-latin.woff2',
+  './static/fonts/hanken-grotesk-latin-ext.woff2',
+  './static/fonts/literata-latin.woff2',
+  './static/fonts/literata-latin-ext.woff2',
+  './static/fonts/literata-latin-italic.woff2',
+  './static/fonts/literata-latin-ext-italic.woff2',
   './static/fonts/jetbrains-mono.woff2',
   './static/graphicarts/favicon.svg',
   './static/graphicarts/favicon.png',

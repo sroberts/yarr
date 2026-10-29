@@ -433,7 +433,10 @@ function dateRepr(d) {
   else if (sec < 604800)  // less than a week
     out = Math.round(sec / 86400) + 'd'
   else
-    out = d.toLocaleDateString(undefined, {year: "numeric", month: "long", day: "numeric"})
+    // short, so it never squeezes the feed name; the year only when it isn't this one
+    out = d.toLocaleDateString(undefined, d.getFullYear() === new Date().getFullYear()
+      ? {month: "short", day: "numeric"}
+      : {year: "numeric", month: "short", day: "numeric"})
 
   if (neg) return '-' + out
   return out
@@ -547,7 +550,7 @@ function rootComponent() { return {
       'ttsPlaying': false,
       'ttsPaused': false,
       'itemSortNewestFirst': s.sort_newest_first,
-      'itemListWidth': s.item_list_width || 300,
+      'itemListWidth': s.item_list_width || 400,
 
       'filteredFeedStats': {},
       'filteredFolderStats': {},
@@ -573,8 +576,8 @@ function rootComponent() { return {
         'motion': s.theme_motion || 'system',
       },
       'themeColors': {
-        'light': '#FFFFFF',
-        'dark': '#0E1116',
+        'light': '#F6F7F5',
+        'dark': '#141618',
       },
       'refreshRate': s.refresh_rate,
       'authenticated': app.authenticated,
@@ -724,6 +727,23 @@ function rootComponent() { return {
     },
     cardDone: function() {
       return this.cardMode && this.cardIndex >= this.cardItems.length && !this.cardLoading
+    },
+    // Where the open slip sits in the stack: its position and the length of
+    // the stack loaded so far ("15+" while more can load).
+    itemFrame: function() {
+      if (this.itemSelected == null) return null
+      var id = this.itemSelected
+      var i = this.items.findIndex(function(it) { return it.id == id })
+      if (i < 0) return null
+      return {n: i + 1, total: this.items.length + (this.itemsHasMore ? '+' : '')}
+    },
+    // The folder whose feed chips show inline in the top bar: the selected
+    // folder, or the folder of the selected feed.
+    chipFolderId: function() {
+      var cur = this.current
+      if (cur.type == 'folder') return cur.folder.id || null
+      if (cur.type == 'feed') return cur.feed.folder_id || null
+      return null
     },
     cardExcerpt: function() {
       if (!this.currentCard || !this.currentCard.content) return ''
@@ -1312,6 +1332,22 @@ function rootComponent() { return {
     },
     // ms: failures name an article and a recovery, so they stay up longer
     // than the routine 2.5s confirmations.
+    // A slip's address: its feed's code and its place in this view, e.g.
+    // SN·12. The code is the initials of the feed's first two words (or the
+    // first two letters of a one-word title); the number is zero-padded to
+    // two places and simply grows past 99. Front-end only: it renumbers when
+    // the view changes, by design.
+    feedCode: function(feed) {
+      var words = ((feed && feed.title) || '').replace(/[^\p{L}\p{N}\s]/gu, ' ').trim().split(/\s+/).filter(Boolean)
+      if (!words.length) return '··'
+      var code = words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 2)
+      return code.toUpperCase()
+    },
+    slipAddress: function(item, index) {
+      if (!item) return ''
+      var n = index + 1
+      return this.feedCode(this.feedsById[item.feed_id]) + '·' + (n < 10 ? '0' + n : n)
+    },
     showToast: function(text, ms) {
       var self = this
       this.toast = {text: text}
@@ -1387,6 +1423,14 @@ function rootComponent() { return {
     toggleFolderExpanded: function(folder) {
       folder.is_expanded = !folder.is_expanded
       api.folders.update(folder.id, {is_expanded: folder.is_expanded})
+    },
+    // The byline's caption date: "Oct 27, 09:42", with the year only when it
+    // isn't this one. formatDate keeps the long form for tooltips.
+    shortDate: function(datestr) {
+      var d = new Date(datestr)
+      var opts = {month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"}
+      if (d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric"
+      return d.toLocaleString(undefined, opts)
     },
     formatDate: function(datestr) {
       var options = {
