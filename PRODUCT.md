@@ -107,9 +107,9 @@ its 24×24 / stroke-2 geometry rather than introducing a second set.
   is the whole product.
 - **The generic AI-cream aesthetic:** no warm-neutral paper/sand body
   backgrounds, no tracked-uppercase eyebrows above sections, no identical
-  icon-heading-text card grids. yarr's calm light + dark themes (one semantic
-  token layer, a user-selectable accent) are the identity — don't drift them
-  toward trend-of-the-month neutrals.
+  icon-heading-text card grids. yarr's light print + dark negative themes (one
+  semantic token layer, a user-selectable marker colour) are the identity —
+  don't drift them toward trend-of-the-month neutrals.
 - More broadly: no bloated dashboard chrome, no hero metrics, no surfaces that
   exist to look busy rather than to do a job.
 
@@ -152,10 +152,12 @@ surface, including the readme.
    lowest-friction actions in the app, on desk and on phone alike.
 4. **Two themes, one system.** Light and dark are co-equal citizens, generated
    from a single semantic token layer (`--surface-*`, `--text-*`, `--accent`…);
-   components reference roles, never raw colors. A user-selectable accent (seven
-   options, blue default) and the reading fonts are independent axes. Any new
-   surface must look deliberate and legible in both themes and every accent —
-   never designed for light and patched for dark.
+   components reference roles, never raw colors. A user-selectable marker
+   colour (`--accent`; seven options, red default) marks keepers, links and
+   focus, while selection is always ink. The marker and the reading fonts are
+   independent axes. Any new surface must look deliberate and legible in both
+   themes and every marker colour — never designed for light and patched for
+   dark.
 5. **Local-first, always.** No telemetry, no remote logging, no network
    dependency beyond the user's own feeds. The UI assumes it may be offline.
 

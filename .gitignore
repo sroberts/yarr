@@ -14,8 +14,12 @@ versioninfo.rc
 /result-*
 .direnv/
 
-# impeccable local critique snapshots (design.json is tracked; these aren't)
+# impeccable local working files (design.json and surfaces/ are tracked; these aren't)
 .impeccable/critique/
+.impeccable/mocks/
+.impeccable/questions/
+.impeccable/review/
+.impeccable/live/
 /test/e2e/node_modules/
 /test/e2e/test-results/
 /test/e2e/playwright-report/

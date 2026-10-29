@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>yarr!</title>
-    <link rel="preload" href="./static/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="./static/fonts/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="./static/stylesheets/base.css">
     <link rel="stylesheet" href="./static/stylesheets/app.css">
     <link rel="icon" href="./static/graphicarts/favicon.svg" type="image/svg+xml">
@@ -14,7 +14,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="yarr!">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0E1116" />
+    <meta name="theme-color" content="#16181B" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
     <script>
         window.app = window.app || {}
@@ -39,7 +39,7 @@
             // sync the browser-chrome color to the resolved theme before paint so
             // dark users don't get a white bar until Vue mounts (updateMetaTheme).
             var m = document.querySelector('meta[name=theme-color]')
-            if (m) m.content = document.body.className.indexOf('theme-dark') !== -1 ? '#0E1116' : '#FFFFFF'
+            if (m) m.content = document.body.className.indexOf('theme-dark') !== -1 ? '#16181B' : '#FFFFFF'
         })()
     </script>
     <!-- #app is the Vue mount container; Vue 3 ignores :class here, so the
@@ -135,12 +135,15 @@
             <div id="card-view" class="d-flex flex-column flex-grow-1 border-top" v-if="cardMode">
                 <!-- folder filter -->
                 <div class="card-view-hints px-4 pt-2 pb-0 d-flex justify-content-center">
-                    <select class="card-folder-select text-muted small"
-                            :value="cardFolder"
-                            @change="changeCardFolder($event.target.value)">
-                        <option value="">all folders ▾</option>
-                        <option v-for="folder in folders" :value="folder.id">{{ folder.title }}</option>
-                    </select>
+                    <span class="card-folder-pick text-muted small">
+                        <select class="card-folder-select"
+                                aria-label="Folder to triage"
+                                :value="cardFolder"
+                                @change="changeCardFolder($event.target.value)">
+                            <option value="">all folders</option>
+                            <option v-for="folder in folders" :value="folder.id">{{ folder.title }}</option>
+                        </select>
+                    </span>
                 </div>
                 <!-- loading state -->
                 <div v-if="cardLoading && cardItems.length === 0" class="flex-grow-1 d-flex align-items-center justify-content-center">
@@ -153,6 +156,7 @@
                          swipe decision stays one gesture away. o opens the original. -->
                     <div class="triage-card" id="triage-card" :key="currentCard.id"
                          @click="cardTap($event)">
+                        <div class="triage-card-rebate" aria-hidden="true"><span>{{ frameNo(cardIndex + 1) }}</span></div>
                         <div class="triage-card-feed">
                             <span>{{ (feedsById[currentCard.feed_id] || {}).title }}</span>
                             <span class="triage-card-date"><relative-time :val="currentCard.date"/></span>
@@ -166,7 +170,7 @@
                             <span class="triage-card-hint" v-else>
                                 <a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop>Open original</a><span class="hint-pointer"> · Esc to go back</span>
                             </span>
-                            <span class="triage-card-counter">{{ cardIndex + 1 }} / {{ cardItems.length }}</span>
+                            <span class="triage-card-counter">Frame <b class="frame-tag">{{ frameNo(cardIndex + 1) }}</b> of {{ cardItems.length }}</span>
                         </div>
                     </div>
                 </div>
@@ -174,8 +178,8 @@
                 <div class="card-view-action" id="card-action-indicator"></div>
                 <!-- swipe hints -->
                 <div v-if="currentCard && !cardDone" class="card-view-hints card-view-legend px-4 pb-3 d-flex align-items-center justify-content-between small">
-                    <span v-if="instapaperUsername">← instapaper</span>
-                    <span v-else>← keep unread</span>
+                    <span class="d-inline-flex align-items-center" v-if="instapaperUsername"><span class="icon mr-1">{% inline "chevron-left.svg" %}</span>instapaper</span>
+                    <span class="d-inline-flex align-items-center" v-else><span class="icon mr-1">{% inline "chevron-left.svg" %}</span>keep unread</span>
                     <div class="d-flex align-items-center">
                         <!-- star is the verb swipes can't carry: left and right
                              are taken, and vertical drags scroll the excerpt -->
@@ -197,7 +201,7 @@
                             <span class="icon" v-else>{% inline "pause.svg" %}</span>
                         </button>
                     </div>
-                    <span>mark read →</span>
+                    <span class="d-inline-flex align-items-center">mark read<span class="icon ml-1">{% inline "chevron-right.svg" %}</span></span>
                 </div>
                 <!-- stats screen -->
                 <div v-if="cardDone" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center">
@@ -378,14 +382,14 @@
                     <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
                     <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
                 </div>
-                <label v-for="item in items" :key="item.id"
+                <label v-for="(item, index) in items" :key="item.id"
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected">
                     <div class="selectgroup-label d-flex flex-column">
                         <div class="item-meta d-flex align-items-center">
                             <transition name="indicator">
                                 <span class="icon icon-small mr-1" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
-                                <span class="icon icon-small mr-1" v-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
+                                <span class="icon icon-small mr-1 marker" v-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
                             </transition>
                             <small class="flex-fill text-truncate mr-1">
                                 {{ (feedsById[item.feed_id] || {}).title }}
@@ -395,6 +399,11 @@
                         </div>
                         <div class="item-title" :class="{'item-title-unread': item.status == 'unread'}">{{ item.title || 'untitled' }}</div>
                     </div>
+                    <!-- frame number in the rebate band. After the label so the
+                         input + .selectgroup-label selection and focus rules
+                         still match; decorative (the row announces its state). -->
+                    <span class="frame-no" aria-hidden="true"
+                          :class="{'frame-unread': item.status == 'unread', 'frame-starred': item.status == 'starred'}"><span>{{ frameNo(index + 1) }}</span></span>
                 </label>
                 <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length"></button>
             </div>
@@ -435,7 +444,7 @@
                         title="Mark Starred"
                         aria-label="Star article"
                         :aria-pressed="itemSelectedDetails.status=='starred' ? 'true' : 'false'">
-                    <span class="icon" v-if="itemSelectedDetails.status=='starred'" >{% inline "star-full.svg" %}</span>
+                    <span class="icon marker" v-if="itemSelectedDetails.status=='starred'" >{% inline "star-full.svg" %}</span>
                     <span class="icon" v-else-if="itemSelectedDetails.status!='starred'" >{% inline "star.svg" %}</span>
                 </button>
                 <!-- title tracks the action this click performs; the static
@@ -574,7 +583,7 @@
                         Open link
                     </a>
                 </dropdown>
-                <div class="flex-grow-1"></div>
+                <div class="flex-grow-1 reader-frame-label" aria-hidden="true"><span class="d-none d-md-inline-flex" v-if="itemFrame">Frame <b :class="{'is-starred': itemSelectedDetails && itemSelectedDetails.status == 'starred'}">{{ frameNo(itemFrame.n) }}</b> of {{ itemFrame.total }}</span></div>
                 <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
                      and the reader-nav bar under the article cover them, and
                      keeping them here overflowed the toolbar past the viewport
@@ -600,15 +609,11 @@
                  :style="{'font-size': theme.size + 'rem'}">
                 <div class="content-wrapper" :key="itemSelected">
                     <h1 class="content-title"><b>{{ itemSelectedDetails.title || 'untitled' }}</b></h1>
-                    <div class="text-muted">
-                        <div>
-                            <span class="cursor-pointer" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">
-                                {{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}
-                            </span>
-                        </div>
-                        <time>{{ formatDate(itemSelectedDetails.date) }}</time>
-                        <span v-if="readingTime(itemSelectedDetails)" class="small"> · {{ readingTime(itemSelectedDetails) }} min</span>
-                        <span v-if="itemOffline" class="small"> · offline copy</span>
+                    <div class="content-byline">
+                        <span class="byline-feed cursor-pointer" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">{{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}</span>
+                        · <time :title="formatDate(itemSelectedDetails.date)">{{ shortDate(itemSelectedDetails.date) }}</time>
+                        <span v-if="readingTime(itemSelectedDetails)"> · {{ readingTime(itemSelectedDetails) }} min</span>
+                        <span v-if="itemOffline"> · offline copy</span>
                     </div>
                     <hr>
                     <div v-if="!itemSelectedReadability">
@@ -635,6 +640,7 @@
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                     Previous
                 </button>
+                <span class="reader-frame-label" v-if="itemFrame" aria-hidden="true">Frame <b :class="{'is-starred': itemSelectedDetails && itemSelectedDetails.status == 'starred'}">{{ frameNo(itemFrame.n) }}</b> of {{ itemFrame.total }}</span>
                 <button type="button" class="reader-nav-btn"
                         @click="navigateToItem(+1)"
                         :disabled="!items.length || itemSelected == items[items.length - 1].id">
@@ -659,9 +665,9 @@
                         </div>
                     </div>
                     <div class="settings-section">
-                        <label class="settings-label">Accent</label>
+                        <label class="settings-label">Marker colour</label>
                         <div class="accent-swatches">
-                            <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="(theme.accent == a) ? 'true' : 'false'" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
+                            <button class="accent-swatch" :class="'swatch-'+a" :aria-label="({rose: 'red', slate: 'graphite'})[a] || a" :aria-pressed="(theme.accent == a) ? 'true' : 'false'" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
                                 <span class="accent-check" v-if="theme.accent == a">{% inline "check.svg" %}</span>
                             </button>
                         </div>

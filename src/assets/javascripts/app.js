@@ -433,7 +433,10 @@ function dateRepr(d) {
   else if (sec < 604800)  // less than a week
     out = Math.round(sec / 86400) + 'd'
   else
-    out = d.toLocaleDateString(undefined, {year: "numeric", month: "long", day: "numeric"})
+    // short, so it never squeezes the feed name; the year only when it isn't this one
+    out = d.toLocaleDateString(undefined, d.getFullYear() === new Date().getFullYear()
+      ? {month: "short", day: "numeric"}
+      : {year: "numeric", month: "short", day: "numeric"})
 
   if (neg) return '-' + out
   return out
@@ -568,13 +571,13 @@ function rootComponent() { return {
         'name': normalizeThemePref(s.theme_name),
         'font': s.theme_font,
         'size': s.theme_size,
-        'accent': s.theme_accent || 'blue',
+        'accent': s.theme_accent || 'rose',
         'density': s.theme_density || 'comfortable',
         'motion': s.theme_motion || 'system',
       },
       'themeColors': {
         'light': '#FFFFFF',
-        'dark': '#0E1116',
+        'dark': '#16181B',
       },
       'refreshRate': s.refresh_rate,
       'authenticated': app.authenticated,
@@ -724,6 +727,15 @@ function rootComponent() { return {
     },
     cardDone: function() {
       return this.cardMode && this.cardIndex >= this.cardItems.length && !this.cardLoading
+    },
+    // Where the open article sits on the roll: its frame number and the
+    // length of the strip loaded so far ("15+" while more can load).
+    itemFrame: function() {
+      if (this.itemSelected == null) return null
+      var id = this.itemSelected
+      var i = this.items.findIndex(function(it) { return it.id == id })
+      if (i < 0) return null
+      return {n: i + 1, total: this.items.length + (this.itemsHasMore ? '+' : '')}
     },
     cardExcerpt: function() {
       if (!this.currentCard || !this.currentCard.content) return ''
@@ -1312,6 +1324,11 @@ function rootComponent() { return {
     },
     // ms: failures name an article and a recovery, so they stay up longer
     // than the routine 2.5s confirmations.
+    // Frame numbers are zero-padded to two places, like a contact sheet's
+    // edge print; past 99 they simply grow.
+    frameNo: function(n) {
+      return n < 10 ? '0' + n : String(n)
+    },
     showToast: function(text, ms) {
       var self = this
       this.toast = {text: text}
@@ -1387,6 +1404,14 @@ function rootComponent() { return {
     toggleFolderExpanded: function(folder) {
       folder.is_expanded = !folder.is_expanded
       api.folders.update(folder.id, {is_expanded: folder.is_expanded})
+    },
+    // The byline's caption date: "Oct 27, 09:42", with the year only when it
+    // isn't this one. formatDate keeps the long form for tooltips.
+    shortDate: function(datestr) {
+      var d = new Date(datestr)
+      var opts = {month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"}
+      if (d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric"
+      return d.toLocaleString(undefined, opts)
     },
     formatDate: function(datestr) {
       var options = {

@@ -1,172 +1,1312 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-06-16T15:00:00Z",
+  "generatedAt": "2026-10-28T00:00:00Z",
   "title": "Design System: yarr",
   "extensions": {
     "colorMeta": {
-      "signal-blue": {
-        "role": "primary",
-        "displayName": "Signal Blue",
-        "canonical": "#0080d4",
-        "tonalRamp": ["#012438", "#01405f", "#015888", "#0067ab", "#0080d4", "#33a0e0", "#7cc4ee", "#cce8f8"]
+      "surface-base": {
+        "role": "neutral",
+        "displayName": "Photo Paper",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ],
+        "theme": "light"
       },
-      "instapaper-orange": {
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Grey Board",
+        "canonical": "#F1F2F4",
+        "oklch": "oklch(96.1% 0.003 264.5)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#242526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#A4A5A7",
+          "#C8C9CB",
+          "#EEEEF0"
+        ],
+        "theme": "light"
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Board Hover",
+        "canonical": "#E6E8EB",
+        "oklch": "oklch(93.0% 0.005 258.3)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A3A5A8",
+          "#C7C9CC",
+          "#EDEEF1"
+        ],
+        "theme": "light"
+      },
+      "border-subtle": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#E1E3E7",
+        "oklch": "oklch(91.5% 0.006 264.5)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242527",
+          "#414245",
+          "#606164",
+          "#808286",
+          "#A3A5A8",
+          "#C7C9CC",
+          "#EDEEF2"
+        ],
+        "theme": "light"
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Edge",
+        "canonical": "#C3C7CD",
+        "oklch": "oklch(82.8% 0.009 258.3)",
+        "tonalRamp": [
+          "#090B0E",
+          "#232529",
+          "#3F4246",
+          "#5E6166",
+          "#7F8388",
+          "#A2A5AB",
+          "#C6C9CE",
+          "#EBEFF4"
+        ],
+        "theme": "light"
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Print Black",
+        "canonical": "#111214",
+        "oklch": "oklch(18.2% 0.004 264.5)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A4A5A8",
+          "#C8C9CC",
+          "#EDEEF1"
+        ],
+        "theme": "light"
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Second Tier",
+        "canonical": "#4A4F57",
+        "oklch": "oklch(42.6% 0.015 259.8)",
+        "tonalRamp": [
+          "#090B10",
+          "#22252B",
+          "#3E4249",
+          "#5D6269",
+          "#7D838B",
+          "#A0A5AE",
+          "#C4C9D2",
+          "#EAEFF7"
+        ],
+        "theme": "light"
+      },
+      "text-tertiary": {
+        "role": "neutral",
+        "displayName": "Caption Grey",
+        "canonical": "#61666E",
+        "oklch": "oklch(50.9% 0.014 259.8)",
+        "tonalRamp": [
+          "#090B10",
+          "#22252B",
+          "#3E4249",
+          "#5D6169",
+          "#7D838B",
+          "#A0A5AD",
+          "#C5C9D1",
+          "#EAEFF6"
+        ],
+        "theme": "light"
+      },
+      "ink-select": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#111214",
+        "oklch": "oklch(18.2% 0.004 264.5)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A4A5A8",
+          "#C8C9CC",
+          "#EDEEF1"
+        ],
+        "theme": "light"
+      },
+      "on-ink-select": {
+        "role": "neutral",
+        "displayName": "On Ink",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ],
+        "theme": "light"
+      },
+      "rebate": {
+        "role": "neutral",
+        "displayName": "Rebate",
+        "canonical": "#111214",
+        "oklch": "oklch(18.2% 0.004 264.5)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A4A5A8",
+          "#C8C9CC",
+          "#EDEEF1"
+        ],
+        "theme": "light"
+      },
+      "rebate-text": {
+        "role": "neutral",
+        "displayName": "Seen Frame",
+        "canonical": "#8E939B",
+        "oklch": "oklch(66.2% 0.013 259.8)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252A",
+          "#3E4248",
+          "#5D6168",
+          "#7E838A",
+          "#A1A5AD",
+          "#C5C9D1",
+          "#EAEFF6"
+        ],
+        "theme": "light"
+      },
+      "rebate-text-strong": {
+        "role": "neutral",
+        "displayName": "Unread Frame",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ],
+        "theme": "light"
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Marker Red",
+        "canonical": "#C4201A",
+        "oklch": "oklch(52.8% 0.198 28.6)",
+        "tonalRamp": [
+          "#330000",
+          "#5C0000",
+          "#860000",
+          "#B31C16",
+          "#E04135",
+          "#FF6F5F",
+          "#FF9A88",
+          "#FFC4B2"
+        ],
+        "theme": "light"
+      },
+      "on-accent": {
+        "role": "neutral",
+        "displayName": "On Marker",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 89.9)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ],
+        "theme": "light"
+      },
+      "marker-on-rebate": {
+        "role": "primary",
+        "displayName": "Marker on Rebate",
+        "canonical": "#FF6B5E",
+        "oklch": "oklch(70.9% 0.183 27.7)",
+        "tonalRamp": [
+          "#300000",
+          "#580000",
+          "#820003",
+          "#AE2723",
+          "#DA4940",
+          "#FD7567",
+          "#FF9E8F",
+          "#FFC8B8"
+        ],
+        "theme": "light"
+      },
+      "status-success": {
+        "role": "status",
+        "displayName": "Success",
+        "canonical": "#15803D",
+        "oklch": "oklch(52.7% 0.137 150.1)",
+        "tonalRamp": [
+          "#001400",
+          "#003200",
+          "#00521B",
+          "#127537",
+          "#379854",
+          "#65BB7A",
+          "#8FDFA0",
+          "#BAFFC8"
+        ],
+        "theme": "light"
+      },
+      "status-attention": {
+        "role": "status",
+        "displayName": "Attention",
+        "canonical": "#B45309",
+        "oklch": "oklch(55.5% 0.146 49.0)",
+        "tonalRamp": [
+          "#280000",
+          "#4D0300",
+          "#732500",
+          "#9C4300",
+          "#C56324",
+          "#E88954",
+          "#FFB07E",
+          "#FFD8A9"
+        ],
+        "theme": "light"
+      },
+      "status-error": {
+        "role": "status",
+        "displayName": "Error",
+        "canonical": "#C4201A",
+        "oklch": "oklch(52.8% 0.198 28.6)",
+        "tonalRamp": [
+          "#330000",
+          "#5C0000",
+          "#860000",
+          "#B31C16",
+          "#E04135",
+          "#FF6F5F",
+          "#FF9A88",
+          "#FFC4B2"
+        ],
+        "theme": "light"
+      },
+      "scrollbar-thumb": {
+        "role": "neutral",
+        "displayName": "Scrollbar Thumb",
+        "canonical": "#C3C7CD",
+        "oklch": "oklch(82.8% 0.009 258.3)",
+        "tonalRamp": [
+          "#090B0E",
+          "#232529",
+          "#3F4246",
+          "#5E6166",
+          "#7F8388",
+          "#A2A5AB",
+          "#C6C9CE",
+          "#EBEFF4"
+        ],
+        "theme": "light"
+      },
+      "scrollbar-thumb-hover": {
+        "role": "neutral",
+        "displayName": "Scrollbar Thumb Hover",
+        "canonical": "#A3A8B0",
+        "oklch": "oklch(73.0% 0.013 259.8)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252A",
+          "#3F4248",
+          "#5D6168",
+          "#7E838A",
+          "#A1A5AD",
+          "#C5C9D0",
+          "#EAEFF5"
+        ],
+        "theme": "light"
+      },
+      "surface-base-negative": {
+        "role": "neutral",
+        "displayName": "Photo Paper (negative)",
+        "canonical": "#16181B",
+        "oklch": "oklch(20.8% 0.007 258.4)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232528",
+          "#404245",
+          "#5F6165",
+          "#808286",
+          "#A3A5A9",
+          "#C7C9CD",
+          "#ECEFF2"
+        ],
+        "theme": "dark"
+      },
+      "surface-raised-negative": {
+        "role": "neutral",
+        "displayName": "Grey Board (negative)",
+        "canonical": "#1D2024",
+        "oklch": "oklch(24.2% 0.009 255.6)",
+        "tonalRamp": [
+          "#090B0E",
+          "#232529",
+          "#3F4246",
+          "#5E6166",
+          "#7F8388",
+          "#A2A5AA",
+          "#C6C9CE",
+          "#EBEFF3"
+        ],
+        "theme": "dark"
+      },
+      "surface-hover-negative": {
+        "role": "neutral",
+        "displayName": "Board Hover (negative)",
+        "canonical": "#272B30",
+        "oklch": "oklch(28.7% 0.011 254.0)",
+        "tonalRamp": [
+          "#090B0E",
+          "#222529",
+          "#3F4247",
+          "#5D6267",
+          "#7E8389",
+          "#A1A5AB",
+          "#C5CACF",
+          "#EBEFF4"
+        ],
+        "theme": "dark"
+      },
+      "border-subtle-negative": {
+        "role": "neutral",
+        "displayName": "Hairline (negative)",
+        "canonical": "#2B2F35",
+        "oklch": "oklch(30.4% 0.012 258.4)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252A",
+          "#3F4248",
+          "#5D6268",
+          "#7E838A",
+          "#A1A5AC",
+          "#C5C9D0",
+          "#EBEFF5"
+        ],
+        "theme": "dark"
+      },
+      "border-strong-negative": {
+        "role": "neutral",
+        "displayName": "Edge (negative)",
+        "canonical": "#3E434A",
+        "oklch": "oklch(38.1% 0.014 256.8)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252A",
+          "#3E4248",
+          "#5D6269",
+          "#7D838B",
+          "#A0A5AD",
+          "#C4CAD1",
+          "#EAEFF6"
+        ],
+        "theme": "dark"
+      },
+      "text-primary-negative": {
+        "role": "neutral",
+        "displayName": "Print Black (negative)",
+        "canonical": "#ECEDEF",
+        "oklch": "oklch(94.6% 0.003 264.5)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#242526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#A4A5A7",
+          "#C8C9CB",
+          "#EEEEF0"
+        ],
+        "theme": "dark"
+      },
+      "text-secondary-negative": {
+        "role": "neutral",
+        "displayName": "Second Tier (negative)",
+        "canonical": "#AEB3BA",
+        "oklch": "oklch(76.5% 0.011 256.7)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252A",
+          "#3F4247",
+          "#5D6267",
+          "#7E8389",
+          "#A1A5AC",
+          "#C5C9D0",
+          "#EBEFF5"
+        ],
+        "theme": "dark"
+      },
+      "text-tertiary-negative": {
+        "role": "neutral",
+        "displayName": "Caption Grey (negative)",
+        "canonical": "#8D939C",
+        "oklch": "oklch(66.1% 0.015 258.4)",
+        "tonalRamp": [
+          "#080B10",
+          "#21252B",
+          "#3E4249",
+          "#5C6269",
+          "#7D838C",
+          "#A0A5AE",
+          "#C4CAD2",
+          "#EAEFF7"
+        ],
+        "theme": "dark"
+      },
+      "ink-select-negative": {
+        "role": "neutral",
+        "displayName": "Ink (negative)",
+        "canonical": "#ECEDEF",
+        "oklch": "oklch(94.6% 0.003 264.5)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#242526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#A4A5A7",
+          "#C8C9CB",
+          "#EEEEF0"
+        ],
+        "theme": "dark"
+      },
+      "on-ink-select-negative": {
+        "role": "neutral",
+        "displayName": "On Ink (negative)",
+        "canonical": "#16181B",
+        "oklch": "oklch(20.8% 0.007 258.4)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232528",
+          "#404245",
+          "#5F6165",
+          "#808286",
+          "#A3A5A9",
+          "#C7C9CD",
+          "#ECEFF2"
+        ],
+        "theme": "dark"
+      },
+      "rebate-negative": {
+        "role": "neutral",
+        "displayName": "Rebate (negative)",
+        "canonical": "#D3D6DA",
+        "oklch": "oklch(87.5% 0.006 255.5)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232528",
+          "#404245",
+          "#5F6165",
+          "#808286",
+          "#A3A5A9",
+          "#C7C9CD",
+          "#ECEFF2"
+        ],
+        "theme": "dark"
+      },
+      "rebate-text-negative": {
+        "role": "neutral",
+        "displayName": "Seen Frame (negative)",
+        "canonical": "#4E535B",
+        "oklch": "oklch(44.1% 0.015 259.8)",
+        "tonalRamp": [
+          "#090B10",
+          "#22252B",
+          "#3E4249",
+          "#5D6269",
+          "#7D838B",
+          "#A0A5AE",
+          "#C4C9D2",
+          "#EAEFF6"
+        ],
+        "theme": "dark"
+      },
+      "rebate-text-strong-negative": {
+        "role": "neutral",
+        "displayName": "Unread Frame (negative)",
+        "canonical": "#111214",
+        "oklch": "oklch(18.2% 0.004 264.5)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A4A5A8",
+          "#C8C9CC",
+          "#EDEEF1"
+        ],
+        "theme": "dark"
+      },
+      "accent-negative": {
+        "role": "primary",
+        "displayName": "Marker Red (negative)",
+        "canonical": "#FF6B5E",
+        "oklch": "oklch(70.9% 0.183 27.7)",
+        "tonalRamp": [
+          "#300000",
+          "#580000",
+          "#820003",
+          "#AE2723",
+          "#DA4940",
+          "#FD7567",
+          "#FF9E8F",
+          "#FFC8B8"
+        ],
+        "theme": "dark"
+      },
+      "on-accent-negative": {
+        "role": "neutral",
+        "displayName": "On Marker (negative)",
+        "canonical": "#16181B",
+        "oklch": "oklch(20.8% 0.007 258.4)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#232528",
+          "#404245",
+          "#5F6165",
+          "#808286",
+          "#A3A5A9",
+          "#C7C9CD",
+          "#ECEFF2"
+        ],
+        "theme": "dark"
+      },
+      "marker-on-rebate-negative": {
+        "role": "primary",
+        "displayName": "Marker on Rebate (negative)",
+        "canonical": "#C4201A",
+        "oklch": "oklch(52.8% 0.198 28.6)",
+        "tonalRamp": [
+          "#330000",
+          "#5C0000",
+          "#860000",
+          "#B31C16",
+          "#E04135",
+          "#FF6F5F",
+          "#FF9A88",
+          "#FFC4B2"
+        ],
+        "theme": "dark"
+      },
+      "status-success-negative": {
+        "role": "status",
+        "displayName": "Success (negative)",
+        "canonical": "#4ADE80",
+        "oklch": "oklch(80.0% 0.182 151.7)",
+        "tonalRamp": [
+          "#001600",
+          "#003500",
+          "#005707",
+          "#007A28",
+          "#009F45",
+          "#39C26D",
+          "#71E695",
+          "#A1FFBE"
+        ],
+        "theme": "dark"
+      },
+      "status-attention-negative": {
+        "role": "status",
+        "displayName": "Attention (negative)",
+        "canonical": "#FBBF24",
+        "oklch": "oklch(83.7% 0.164 84.4)",
+        "tonalRamp": [
+          "#200000",
+          "#411800",
+          "#643600",
+          "#895500",
+          "#AF7600",
+          "#D19B00",
+          "#F4C14F",
+          "#FFE783"
+        ],
+        "theme": "dark"
+      },
+      "status-error-negative": {
+        "role": "status",
+        "displayName": "Error (negative)",
+        "canonical": "#FF6B5E",
+        "oklch": "oklch(70.9% 0.183 27.7)",
+        "tonalRamp": [
+          "#300000",
+          "#580000",
+          "#820003",
+          "#AE2723",
+          "#DA4940",
+          "#FD7567",
+          "#FF9E8F",
+          "#FFC8B8"
+        ],
+        "theme": "dark"
+      },
+      "scrollbar-thumb-negative": {
+        "role": "neutral",
+        "displayName": "Scrollbar Thumb (negative)",
+        "canonical": "#3E434A",
+        "oklch": "oklch(38.1% 0.014 256.8)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252A",
+          "#3E4248",
+          "#5D6269",
+          "#7D838B",
+          "#A0A5AD",
+          "#C4CAD1",
+          "#EAEFF6"
+        ],
+        "theme": "dark"
+      },
+      "scrollbar-thumb-hover-negative": {
+        "role": "neutral",
+        "displayName": "Scrollbar Thumb Hover (negative)",
+        "canonical": "#555B63",
+        "oklch": "oklch(46.9% 0.015 255.6)",
+        "tonalRamp": [
+          "#080B10",
+          "#21252B",
+          "#3D4249",
+          "#5C6269",
+          "#7D838B",
+          "#9FA6AE",
+          "#C4CAD2",
+          "#E9EFF7"
+        ],
+        "theme": "dark"
+      },
+      "marker-blue": {
+        "role": "primary",
+        "displayName": "Marker Blue",
+        "canonical": "#2563EB",
+        "oklch": "oklch(54.6% 0.215 262.9)",
+        "tonalRamp": [
+          "#04004C",
+          "#000A76",
+          "#0132A2",
+          "#1C54D1",
+          "#3777FF",
+          "#5F9EFF",
+          "#87C5FF",
+          "#B1EDFF"
+        ],
+        "theme": "light"
+      },
+      "marker-blue-negative": {
+        "role": "primary",
+        "displayName": "Marker Blue (negative)",
+        "canonical": "#5B8DEF",
+        "oklch": "oklch(65.5% 0.156 262.5)",
+        "tonalRamp": [
+          "#00003A",
+          "#011C60",
+          "#173C88",
+          "#315CB3",
+          "#4E7EDE",
+          "#73A3FF",
+          "#9AC8FF",
+          "#C2EFFF"
+        ],
+        "theme": "dark"
+      },
+      "marker-teal": {
+        "role": "primary",
+        "displayName": "Marker Teal",
+        "canonical": "#0F766E",
+        "oklch": "oklch(51.1% 0.086 186.4)",
+        "tonalRamp": [
+          "#00120F",
+          "#002F2A",
+          "#004E48",
+          "#157068",
+          "#39938A",
+          "#66B6AD",
+          "#90D9D1",
+          "#BBFEF6"
+        ],
+        "theme": "light"
+      },
+      "marker-teal-negative": {
+        "role": "primary",
+        "displayName": "Marker Teal (negative)",
+        "canonical": "#2DD4BF",
+        "oklch": "oklch(78.5% 0.133 181.9)",
+        "tonalRamp": [
+          "#00150E",
+          "#003329",
+          "#005446",
+          "#007766",
+          "#009B88",
+          "#24BEAB",
+          "#66E1CF",
+          "#99FFF4"
+        ],
+        "theme": "dark"
+      },
+      "marker-green": {
+        "role": "primary",
+        "displayName": "Marker Green",
+        "canonical": "#137337",
+        "oklch": "oklch(48.9% 0.126 150.3)",
+        "tonalRamp": [
+          "#001400",
+          "#003104",
+          "#005120",
+          "#20733B",
+          "#419759",
+          "#6BBA7E",
+          "#95DDA4",
+          "#BEFFCC"
+        ],
+        "theme": "light"
+      },
+      "marker-green-negative": {
+        "role": "primary",
+        "displayName": "Marker Green (negative)",
+        "canonical": "#4ADE80",
+        "oklch": "oklch(80.0% 0.182 151.7)",
+        "tonalRamp": [
+          "#001600",
+          "#003500",
+          "#005707",
+          "#007A28",
+          "#009F45",
+          "#39C26D",
+          "#71E695",
+          "#A1FFBE"
+        ],
+        "theme": "dark"
+      },
+      "marker-violet": {
+        "role": "primary",
+        "displayName": "Marker Violet",
+        "canonical": "#7C3AED",
+        "oklch": "oklch(54.1% 0.247 293.0)",
+        "tonalRamp": [
+          "#1A004E",
+          "#320078",
+          "#4E00A5",
+          "#6D2FD4",
+          "#8E53FF",
+          "#AF7FFF",
+          "#D1A9FF",
+          "#F5D3FF"
+        ],
+        "theme": "light"
+      },
+      "marker-violet-negative": {
+        "role": "primary",
+        "displayName": "Marker Violet (negative)",
+        "canonical": "#A78BFA",
+        "oklch": "oklch(70.9% 0.159 293.5)",
+        "tonalRamp": [
+          "#120036",
+          "#2B0C5B",
+          "#482C83",
+          "#674BAC",
+          "#886CD7",
+          "#AA91F8",
+          "#CDB7FF",
+          "#F2DFFF"
+        ],
+        "theme": "dark"
+      },
+      "marker-rose": {
+        "role": "primary",
+        "displayName": "Marker Rose",
+        "canonical": "#C4201A",
+        "oklch": "oklch(52.8% 0.198 28.6)",
+        "tonalRamp": [
+          "#330000",
+          "#5C0000",
+          "#860000",
+          "#B31C16",
+          "#E04135",
+          "#FF6F5F",
+          "#FF9A88",
+          "#FFC4B2"
+        ],
+        "theme": "light"
+      },
+      "marker-rose-negative": {
+        "role": "primary",
+        "displayName": "Marker Rose (negative)",
+        "canonical": "#FF6B5E",
+        "oklch": "oklch(70.9% 0.183 27.7)",
+        "tonalRamp": [
+          "#300000",
+          "#580000",
+          "#820003",
+          "#AE2723",
+          "#DA4940",
+          "#FD7567",
+          "#FF9E8F",
+          "#FFC8B8"
+        ],
+        "theme": "dark"
+      },
+      "marker-amber": {
+        "role": "primary",
+        "displayName": "Marker Amber",
+        "canonical": "#A64B07",
+        "oklch": "oklch(52.1% 0.138 48.5)",
+        "tonalRamp": [
+          "#270000",
+          "#4B0700",
+          "#712700",
+          "#994509",
+          "#C2652D",
+          "#E58B5A",
+          "#FFB183",
+          "#FFD9AE"
+        ],
+        "theme": "light"
+      },
+      "marker-amber-negative": {
+        "role": "primary",
+        "displayName": "Marker Amber (negative)",
+        "canonical": "#FBBF24",
+        "oklch": "oklch(83.7% 0.164 84.4)",
+        "tonalRamp": [
+          "#200000",
+          "#411800",
+          "#643600",
+          "#895500",
+          "#AF7600",
+          "#D19B00",
+          "#F4C14F",
+          "#FFE783"
+        ],
+        "theme": "dark"
+      },
+      "marker-slate": {
+        "role": "primary",
+        "displayName": "Marker Slate",
+        "canonical": "#475569",
+        "oklch": "oklch(44.6% 0.037 257.3)",
+        "tonalRamp": [
+          "#050B17",
+          "#1C2634",
+          "#374353",
+          "#556275",
+          "#748499",
+          "#98A6BB",
+          "#BCCADF",
+          "#E2F0FF"
+        ],
+        "theme": "light"
+      },
+      "marker-slate-negative": {
+        "role": "primary",
+        "displayName": "Marker Slate (negative)",
+        "canonical": "#94A3B8",
+        "oklch": "oklch(71.1% 0.035 256.8)",
+        "tonalRamp": [
+          "#050B16",
+          "#1C2633",
+          "#384352",
+          "#556274",
+          "#758498",
+          "#98A6BA",
+          "#BDCADD",
+          "#E3F0FF"
+        ],
+        "theme": "dark"
+      },
+      "instapaper": {
         "role": "secondary",
         "displayName": "Instapaper Orange",
-        "canonical": "#ff6600",
-        "tonalRamp": ["#3d1900", "#5c2600", "#8a3900", "#c25100", "#ff6600", "#ff8c40", "#ffb380", "#ffe0cc"]
+        "canonical": "#FF6600",
+        "oklch": "oklch(69.6% 0.204 43.5)",
+        "tonalRamp": [
+          "#330000",
+          "#5B0000",
+          "#860000",
+          "#B22400",
+          "#DF4800",
+          "#FF752F",
+          "#FF9F64",
+          "#FFC993"
+        ],
+        "theme": "both"
       },
-      "alert-red": {
-        "role": "tertiary",
-        "displayName": "Alert Red",
-        "canonical": "#e74c3c",
-        "tonalRamp": ["#3a0f0a", "#5c1810", "#8a2519", "#c0392b", "#e74c3c", "#ee7a6f", "#f4a89f", "#fbd9d4"]
-      },
-      "light-ink": {
+      "toast-leader": {
         "role": "neutral",
-        "displayName": "Light Ink",
-        "canonical": "#212529",
-        "tonalRamp": ["#212529", "#3a3f44", "#565c63", "#6c757d", "#adb5bd", "#dee2e6", "#f0f0f0", "#ffffff"]
-      },
-      "sepia-ink": {
-        "role": "neutral",
-        "displayName": "Sepia Ink",
-        "canonical": "#433422",
-        "tonalRamp": ["#2b2014", "#433422", "#5c4a33", "#8a7a66", "#b3a589", "#e0d6ba", "#ede8d8", "#f4f0e5"]
-      },
-      "night-ink": {
-        "role": "neutral",
-        "displayName": "Night Ink",
-        "canonical": "#d1d1d1",
-        "tonalRamp": ["#0e0e0e", "#1a1a1a", "#2b2b2b", "#444444", "#888888", "#aaaaaa", "#d1d1d1", "#f0f0f0"]
+        "displayName": "Toast Leader",
+        "canonical": "#111214",
+        "oklch": "oklch(18.2% 0.004 264.5)",
+        "tonalRamp": [
+          "#0A0B0D",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#A4A5A8",
+          "#C8C9CC",
+          "#EDEEF1"
+        ],
+        "theme": "both"
       }
     },
+    "themes": {
+      "light": {
+        "selector": ".theme-light",
+        "name": "the print"
+      },
+      "dark": {
+        "selector": ".theme-dark",
+        "name": "the negative",
+        "tokenSuffix": "-negative"
+      },
+      "markerSelector": "[data-accent] on <body>; options blue, teal, green, violet, rose (default, labelled red), amber, slate (labelled graphite)"
+    },
     "typographyMeta": {
-      "headline": { "displayName": "Headline", "purpose": "Article title in the reader pane; the single largest type in the app." },
-      "title": { "displayName": "Title", "purpose": "Triage-card article title and section emphasis." },
-      "body": { "displayName": "Body", "purpose": "Item titles, article body, most UI text; reader prose capped at 60rem." },
-      "label": { "displayName": "Label", "purpose": "Feed names, timestamps, counters, swipe hints — secondary metadata, often muted." },
-      "reading-serif": { "displayName": "Reading Serif", "purpose": "Reader-pane preference only (Georgia). Never in chrome." },
-      "reading-mono": { "displayName": "Reading Mono", "purpose": "Reader-pane preference only (SFMono/Menlo/Consolas). Never in chrome." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Reader article title, Literata, scales with the reading-size control (1.6em)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Triage card article title."
+      },
+      "body": {
+        "displayName": "Reading Body",
+        "purpose": "Reader prose at the user's reading size (default 1.2rem, serif), measure 35em (33em in sans, 44em in mono)."
+      },
+      "body-ui": {
+        "displayName": "Interface Body",
+        "purpose": "Feed names, read article titles, menus."
+      },
+      "title": {
+        "displayName": "Unread Title",
+        "purpose": "Unread article titles; weight is the unread signal."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Row meta, bylines, settings labels, triage footer; sentence case, untracked."
+      },
+      "frame-number": {
+        "displayName": "Frame Number",
+        "purpose": "Two-digit numbers in the rebate band; 700 when unread."
+      },
+      "frame-tag": {
+        "displayName": "Frame Tag",
+        "purpose": "Inverted stamp in 'Frame 07 of 15'."
+      },
+      "count": {
+        "displayName": "Count",
+        "purpose": "Sidebar unread counts."
+      }
     },
     "shadows": [
-      { "name": "hairline", "value": "0 1px 2px rgba(0,0,0,0.1)", "purpose": "Default buttons and selects — barely-there pressable edge." },
-      { "name": "inset-field", "value": "inset 0 1px 1px rgba(0,0,0,0.07)", "purpose": "Form inputs — recessed well." },
-      { "name": "menu", "value": "0 1px 5px rgba(0,0,0,0.07)", "purpose": "Settings dropdown — separates it from the list beneath." },
-      { "name": "floating-card", "value": "0 4px 24px rgba(0,0,0,0.12)", "purpose": "The triage card — the one genuinely lifted reading surface." },
-      { "name": "toast", "value": "0 4px 16px rgba(0,0,0,0.25)", "purpose": "The undo toast — floats above everything in the thumb zone." }
+      {
+        "name": "palette-lift",
+        "value": "0 16px 48px rgba(0, 0, 0, 0.4)",
+        "purpose": "Command palette over its dimmed backdrop."
+      },
+      {
+        "name": "toast-lift",
+        "value": "0 4px 16px rgba(0, 0, 0, 0.25)",
+        "purpose": "App toast and swipe-undo toast."
+      },
+      {
+        "name": "menu-hint",
+        "value": "0px 1px 5px rgba(0, 0, 0, 0.07)",
+        "purpose": "Settings dropdown."
+      },
+      {
+        "name": "control-press",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.1)",
+        "purpose": "Resting default button; removed on press."
+      },
+      {
+        "name": "input-inset",
+        "value": "inset 0px 1px 1px rgba(0, 0, 0, 0.07)",
+        "purpose": "Input wells."
+      },
+      {
+        "name": "frame-select-outline",
+        "value": "inset 0 0 0 2px var(--ink-select)",
+        "purpose": "Selected frame on the roll (an outline, not elevation)."
+      },
+      {
+        "name": "keeper-ring",
+        "value": "0 0 0 2px var(--marker-on-rebate, var(--accent))",
+        "purpose": "Marker ring on starred frame numbers and frame tags (with border-radius 50% 45% 55% 48% and rotate(-4deg) on the rebate)."
+      }
     ],
     "motion": [
-      { "name": "state", "value": "0.15s ease", "purpose": "Action-pill fade, quick state feedback." },
-      { "name": "transition", "value": "0.2s ease", "purpose": "Pull-to-refresh height/opacity, offline banner, toast fade." },
-      { "name": "card-move", "value": "0.3s ease", "purpose": "Triage card snap-back and fly-away; indicator enter/leave." },
-      { "name": "reduced", "value": "0.001ms", "purpose": "All motion collapses to instant under prefers-reduced-motion." }
+      {
+        "name": "state",
+        "value": "background-color .12s ease, color .12s ease, border-color .12s ease",
+        "purpose": "Hover and selection on rows, toolbar items, menu items, buttons, swatches."
+      },
+      {
+        "name": "article-in",
+        "value": "opacity 0 to 1 and translateY(4px) to none, .18s ease",
+        "purpose": "Fade-rise of a freshly opened article."
+      },
+      {
+        "name": "toast",
+        "value": "opacity .2s ease, transform .2s ease",
+        "purpose": "Toast enter and leave."
+      },
+      {
+        "name": "card-snap",
+        "value": "transform 0.3s ease",
+        "purpose": "Triage card returning after an incomplete swipe."
+      },
+      {
+        "name": "card-fly",
+        "value": "transform 0.3s ease, opacity 0.3s ease",
+        "purpose": "Triage card leaving after a committed swipe."
+      },
+      {
+        "name": "action-pill",
+        "value": "opacity 0.15s ease",
+        "purpose": "Swipe action indicator."
+      },
+      {
+        "name": "reduced",
+        "value": "all durations 0.001ms",
+        "purpose": "prefers-reduced-motion or body[data-motion=reduce]."
+      }
     ],
+    "focus": {
+      "ring": "2px solid var(--focus-ring)",
+      "offset": "2px outside; -2px inset inside clipped or scrolling containers",
+      "trigger": ":focus-visible only",
+      "onDark": "2px solid #fff on the always-dark toast"
+    },
     "breakpoints": [
-      { "name": "mobile", "value": "767.98px", "purpose": "Single-pane: one column at a time (feeds → items → article)." },
-      { "name": "tablet", "value": "991.98px", "purpose": "Two-pane (feeds + items); triage card mode is shown at/below this width." },
-      { "name": "desktop", "value": "992px", "purpose": "Full three-pane terminal." }
+      {
+        "name": "phone-max",
+        "value": "767.98px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "tablet-max",
+        "value": "991.98px"
+      },
+      {
+        "name": "desktop",
+        "value": "992px"
+      },
+      {
+        "name": "modal-narrow",
+        "value": "480px"
+      }
     ],
-    "zIndex": [
-      { "name": "drag-handle", "value": 900 },
-      { "name": "offline-banner", "value": 1000 },
-      { "name": "undo-toast", "value": 1100 }
-    ]
+    "contrast": {
+      "source": "CSS comments in src/assets/stylesheets/app.css unless marked computed",
+      "light": {
+        "text-primary": "18.7:1 on base",
+        "text-secondary": "8.2:1 base, 7.4:1 raised",
+        "text-tertiary": "5.8:1 base, 5.2:1 raised, 4.7:1 hover",
+        "rebate-text": "6.1:1 on rebate"
+      },
+      "dark": {
+        "text-primary": "15.2:1 on base",
+        "text-secondary": "8.4:1 base, 7.8:1 raised",
+        "text-tertiary": "5.8:1 base, 5.3:1 raised, 4.6:1 hover",
+        "rebate-text": "5.3:1 on rebate (computed)"
+      },
+      "markers": "Every [data-accent] pair clears AA as text on base and raised of its theme (comment). Red keeper ring on rebate: 6.7:1 print, 4.0:1 negative (computed)."
+    }
   },
   "components": [
-    {
-      "name": "Toolbar Item (active)",
-      "kind": "button",
-      "refersTo": "toolbar-item-active",
-      "description": "Icon button in the 2rem toolbar band; the active/selected state fills with the accent.",
-      "html": "<button class=\"ds-toolbar-item ds-active\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"currentColor\"><circle cx=\"12\" cy=\"12\" r=\"8\"/></svg></button>",
-      "css": ".ds-toolbar-item { display:inline-flex; align-items:center; justify-content:center; background:transparent; color:#212529; border:1px solid transparent; padding:0.25rem 0.5rem; border-radius:3px; line-height:1; cursor:pointer; } .ds-toolbar-item:hover { background:#f0f0f0; } .ds-toolbar-item.ds-active { background:#0067ab; color:#fff; } .ds-toolbar-item:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
-    },
-    {
-      "name": "List Row (selected)",
-      "kind": "nav",
-      "refersTo": "selectgroup-item-selected",
-      "description": "Feed/item list row (radio rendered as a full-width row); selected state uses the accent fill.",
-      "html": "<div class=\"ds-row ds-selected\"><span class=\"ds-row-title\">All Unread</span><span class=\"ds-row-count\">128</span></div>",
-      "css": ".ds-row { display:flex; align-items:center; width:100%; padding:0.375rem 0.5rem; border-radius:4px; color:#212529; cursor:pointer; } .ds-row:hover { background:#f0f0f0; } .ds-row-title { flex:1 1 auto; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ds-row-count { padding-left:0.5rem; opacity:0.6; } .ds-row.ds-selected { background:#0067ab; color:#fff; } .ds-row.ds-selected .ds-row-count { opacity:0.85; }"
-    },
     {
       "name": "Default Button",
       "kind": "button",
       "refersTo": "button-default",
-      "description": "Standard pressable button with a hairline shadow.",
-      "html": "<button class=\"ds-btn-default\">Add</button>",
-      "css": ".ds-btn-default { background:#fff; color:#212529; border:1px solid #ced4da; border-radius:4px; box-shadow:0 1px 2px rgba(0,0,0,0.1); padding:0.375rem 0.75rem; cursor:pointer; } .ds-btn-default:active { background:#f5f7f9; box-shadow:none; } .ds-btn-default:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+      "description": "The resting action button: paper well, edge outline, a faint press shadow that drops when pressed.",
+      "html": "<button class=\"ds-btn-default\">Add your first feed</button>",
+      "css": ".ds-btn-default{font:400 15px/1.5 'Hanken Grotesk Var',system-ui,sans-serif;padding:.375rem .75rem;background:var(--surface-base, #FFFFFF);color:var(--text-primary, #111214);border:1px solid var(--border-strong, #C3C7CD);border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);cursor:pointer;transition:background-color .12s ease,border-color .12s ease}.ds-btn-default:hover{background:var(--surface-hover, #E6E8EB)}.ds-btn-default:active{background:var(--surface-hover, #E6E8EB);box-shadow:none}.ds-btn-default:focus-visible{outline:2px solid var(--accent, #C4201A);outline-offset:2px;border-color:var(--accent, #C4201A)}"
     },
     {
-      "name": "Search Input",
+      "name": "Star Button",
+      "kind": "button",
+      "refersTo": "button-star",
+      "description": "The keeper verb in triage: marker outline and marker label, the one labelled button in the legend.",
+      "html": "<button class=\"ds-btn-star\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z\"/></svg>Star</button>",
+      "css": ".ds-btn-star{display:inline-flex;align-items:center;gap:.35rem;min-height:2rem;padding:.25rem .85rem;border:1px solid var(--accent, #C4201A);border-radius:3px;background:var(--surface-base, #FFFFFF);color:var(--accent, #C4201A);font:600 15px/1.5 'Hanken Grotesk Var',system-ui,sans-serif;cursor:pointer;transition:background-color .12s ease}.ds-btn-star:hover{background:var(--surface-hover, #E6E8EB)}.ds-btn-star:focus-visible{outline:2px solid var(--accent, #C4201A);outline-offset:2px}"
+    },
+    {
+      "name": "Toolbar Item",
+      "kind": "button",
+      "refersTo": "toolbar-item",
+      "description": "Icon control in the 2rem toolbar; hover steps to the hover surface, toggled-on inverts to ink.",
+      "html": "<div class=\"ds-toolbar\"><button class=\"ds-tool\" aria-label=\"Unread\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"12\" cy=\"12\" r=\"7\"/></svg></button><button class=\"ds-tool active\" aria-pressed=\"true\" aria-label=\"All\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M4 6h16M4 12h10M4 18h14\"/></svg></button></div>",
+      "css": ".ds-toolbar{display:flex;gap:4px;color:var(--text-primary, #111214)}.ds-tool{display:inline-flex;align-items:center;justify-content:center;padding:.25rem .5rem;border:1px solid transparent;border-radius:3px;background:transparent;color:inherit;line-height:1;cursor:pointer;transition:background-color .12s ease,color .12s ease}.ds-tool:hover{background:var(--surface-hover, #E6E8EB)}.ds-tool.active{background:var(--ink-select, #111214);color:var(--on-ink-select, #FFFFFF)}.ds-tool:focus-visible{outline:2px solid var(--accent, #C4201A);outline-offset:2px}"
+    },
+    {
+      "name": "Search Field and Input",
       "kind": "input",
       "refersTo": "input",
-      "description": "Toolbar search / text field with a recessed well and accent focus.",
-      "html": "<input class=\"ds-input\" type=\"search\" placeholder=\"Search\">",
-      "css": ".ds-input { background:#fff; color:#212529; border:1px solid #ced4da; border-radius:4px; box-shadow:inset 0 1px 1px rgba(0,0,0,0.07); padding:0.375rem 0.75rem; width:100%; } .ds-input:focus { border-color:#0080d4; outline:none; } .ds-input:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
+      "description": "Paper well with an edge outline; focus turns the border to the marker and adds the marker ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Feed URL\">",
+      "css": ".ds-input{display:block;width:100%;max-width:20rem;padding:.375rem .75rem;font:400 15px/1.5 'Hanken Grotesk Var',system-ui,sans-serif;background:var(--surface-base, #FFFFFF);color:var(--text-primary, #111214);border:1px solid var(--border-strong, #C3C7CD);border-radius:3px;box-shadow:inset 0 1px 1px rgba(0,0,0,.07)}.ds-input::placeholder{color:var(--text-tertiary, #61666E);opacity:1}.ds-input:focus{border-color:var(--accent, #C4201A);outline:none}.ds-input:focus-visible{outline:2px solid var(--accent, #C4201A);outline-offset:2px}"
+    },
+    {
+      "name": "Feed Sidebar Row",
+      "kind": "nav",
+      "refersTo": "feed-row-selected",
+      "description": "Feed rows on the grey board with mono counts; the selected row is inverted to ink and its count inverts with it.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-row\" href=\"#\">All Feeds<span class=\"ds-count\">20</span></a><a class=\"ds-nav-row selected\" href=\"#\">Engineering<span class=\"ds-count\">6</span></a><a class=\"ds-nav-row\" href=\"#\">News<span class=\"ds-count\">8</span></a></nav>",
+      "css": ".ds-nav{width:250px;padding:.5rem;background:var(--surface-raised, #F1F2F4);font:400 15px/1.5 'Hanken Grotesk Var',system-ui,sans-serif}.ds-nav-row{display:flex;justify-content:space-between;padding:.375rem .5rem;border-radius:3px;color:var(--text-primary, #111214);text-decoration:none;transition:background-color .12s ease,color .12s ease}.ds-nav-row+.ds-nav-row{margin-top:.25rem}.ds-nav-row:hover{background:var(--surface-hover, #E6E8EB)}.ds-nav-row.selected{background:var(--ink-select, #111214);color:var(--on-ink-select, #FFFFFF)}.ds-count{font:400 .78rem/1.9 'JetBrains Mono Var',Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--text-secondary, #4A4F57)}.ds-nav-row.selected .ds-count{color:var(--on-ink-select, #FFFFFF)}.ds-nav-row:focus-visible{outline:2px solid var(--accent, #C4201A);outline-offset:-2px}"
+    },
+    {
+      "name": "The Roll",
+      "kind": "custom",
+      "refersTo": "rebate-band",
+      "description": "The article list as film: a rebate band of mono frame numbers, bright when unread, faded when seen, marker-ringed when starred; the selected frame is an inset ink outline.",
+      "html": "<div class=\"ds-roll\"><div class=\"ds-frame\"><span class=\"ds-fno starred\"><span>01</span></span><div class=\"ds-meta\">Systems Notebook · 2d</div><div class=\"ds-title\">Self-hosting without the yak shave</div></div><div class=\"ds-frame selected\"><span class=\"ds-fno sel\"><span>02</span></span><div class=\"ds-meta\">Long Reads Weekly · 3d</div><div class=\"ds-title\">On reading slowly</div></div><div class=\"ds-frame\"><span class=\"ds-fno unread\"><span>03</span></span><div class=\"ds-meta\">Systems Notebook · 7d</div><div class=\"ds-title unread\">Notes on keyboard-first interfaces</div></div></div>",
+      "css": ".ds-roll{width:320px;padding:.5rem .5rem .5rem 0;background-color:var(--surface-base, #FFFFFF);background-image:linear-gradient(90deg,var(--rebate, #111214) 40px,transparent 40px);font:400 15px/1.5 'Hanken Grotesk Var',system-ui,sans-serif}.ds-frame{position:relative;margin-left:calc(40px + .5rem);padding:.375rem .5rem;border-radius:3px}.ds-frame+.ds-frame{margin-top:.25rem}.ds-frame.selected{box-shadow:inset 0 0 0 2px var(--ink-select, #111214)}.ds-meta{font-size:.8rem;line-height:1.2;color:var(--text-tertiary, #61666E)}.ds-title{color:var(--text-secondary, #4A4F57)}.ds-title.unread{font-weight:600;color:var(--text-primary, #111214)}.ds-frame.selected .ds-title{color:var(--text-primary, #111214)}.ds-fno{position:absolute;top:0;bottom:0;left:calc(-1 * (40px + .5rem));width:40px;display:flex;justify-content:center;padding-top:.55rem;font:500 .72rem/1 'JetBrains Mono Var',Menlo,monospace;font-variant-numeric:tabular-nums;letter-spacing:.02em;color:var(--rebate-text, #8E939B)}.ds-fno>span{display:inline-block;height:max-content;padding:.2rem .25rem;border-radius:2px}.ds-fno.unread{color:var(--rebate-text-strong, #FFFFFF);font-weight:700}.ds-fno.starred>span{color:var(--rebate-text-strong, #FFFFFF);box-shadow:0 0 0 2px var(--marker-on-rebate, #FF6B5E);border-radius:50% 45% 55% 48%;transform:rotate(-4deg)}.ds-fno.sel>span{background:var(--surface-base, #FFFFFF);color:var(--text-primary, #111214);font-weight:700}"
+    },
+    {
+      "name": "Frame Tag",
+      "kind": "chip",
+      "refersTo": "frame-tag",
+      "description": "Inverted rebate stamp giving the open article's place on the roll; ringed in marker when the article is starred.",
+      "html": "<span class=\"ds-frame-label\">Frame <b class=\"ds-ftag\">07</b> of 15</span> <span class=\"ds-frame-label\">Frame <b class=\"ds-ftag starred\">02</b> of 16</span>",
+      "css": ".ds-frame-label{font:400 .8rem/1.5 'Hanken Grotesk Var',system-ui,sans-serif;color:var(--text-tertiary, #61666E);margin-right:1rem}.ds-ftag{display:inline-block;margin:0 .3em;padding:.1rem .3rem;border-radius:2px;background:var(--rebate, #111214);color:var(--rebate-text-strong, #FFFFFF);font:600 .75rem/1.2 'JetBrains Mono Var',Menlo,monospace;font-variant-numeric:tabular-nums}.ds-ftag.starred{box-shadow:0 0 0 2px var(--marker-on-rebate, #FF6B5E)}"
     },
     {
       "name": "Triage Card",
       "kind": "card",
       "refersTo": "triage-card",
-      "description": "The mobile core-loop card. Swipe right = read, left = Instapaper/keep, tap = open.",
-      "html": "<div class=\"ds-card\"><div class=\"ds-card-feed\"><span>Hacker News</span><span>2h</span></div><div class=\"ds-card-domain\">example.com</div><div class=\"ds-card-title\">A clean, just-the-facts headline</div><div class=\"ds-card-excerpt\">The excerpt uses a dedicated token so it clears 4.5:1 in light, sepia, and night themes alike.</div><div class=\"ds-card-footer\"><span>tap to read full article</span><span>3 / 47</span></div></div>",
-      "css": ".ds-card { width:100%; max-width:400px; background:#fff; color:#222; border-radius:16px; padding:1.5rem; box-shadow:0 4px 24px rgba(0,0,0,0.12); } .ds-card-feed { display:flex; justify-content:space-between; font-size:0.8rem; color:#888; margin-bottom:0.75rem; } .ds-card-domain { font-size:0.75rem; color:#888; margin-bottom:0.75rem; } .ds-card-title { font-size:1.25rem; font-weight:600; line-height:1.3; margin-bottom:0.75rem; } .ds-card-excerpt { font-size:0.9rem; line-height:1.6; color:#595959; } .ds-card-footer { display:flex; justify-content:space-between; margin-top:0.75rem; padding-top:0.5rem; border-top:1px solid rgba(128,128,128,0.1); font-size:0.75rem; opacity:0.5; }"
+      "description": "A single print on the grey board: paper, edge outline, square corners, its own rebate strip, Literata headline and excerpt.",
+      "html": "<div class=\"ds-board\"><article class=\"ds-card\"><div class=\"ds-card-rebate\"><span>01</span></div><div class=\"ds-card-feed\"><span>Long Reads Weekly</span><span>7h</span></div><div class=\"ds-card-title\">On reading slowly</div><p class=\"ds-card-excerpt\">An argument for letting the backlog wait, and for reading the few things you keep all the way through.</p><div class=\"ds-card-foot\">Enter to read here</div></article></div>",
+      "css": ".ds-board{padding:1.25rem;background:var(--surface-raised, #F1F2F4)}.ds-card{position:relative;max-width:400px;overflow:hidden;padding:1.5rem 1.5rem 1.5rem calc(40px + 1.25rem);background:var(--surface-base, #FFFFFF);color:var(--text-primary, #111214);border:1px solid var(--border-strong, #C3C7CD);border-radius:3px;font:400 15px/1.5 'Hanken Grotesk Var',system-ui,sans-serif}.ds-card-rebate{position:absolute;top:0;bottom:0;left:0;width:40px;display:flex;justify-content:center;padding-top:1.55rem;background:var(--rebate, #111214);color:var(--rebate-text-strong, #FFFFFF);font:700 .78rem/1 'JetBrains Mono Var',Menlo,monospace;font-variant-numeric:tabular-nums}.ds-card-feed{display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-tertiary, #61666E);margin-bottom:.75rem}.ds-card-title{font:600 1.4rem/1.25 'Literata Var',Georgia,serif;margin-bottom:.75rem;text-wrap:balance}.ds-card-excerpt{font:400 1rem/1.6 'Literata Var',Georgia,serif;color:var(--text-secondary, #4A4F57);margin:0}.ds-card-foot{margin-top:.75rem;padding-top:.5rem;border-top:1px solid var(--border-subtle, #E1E3E7);font-size:.8rem;color:var(--text-tertiary, #61666E)}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "chip",
+      "refersTo": "segmented-active",
+      "description": "Settings toggle: a bordered track of equal 44px segments; the active segment is inverted to ink.",
+      "html": "<div class=\"ds-seg\"><button>auto</button><button class=\"active\" aria-pressed=\"true\">light</button><button>dark</button></div>",
+      "css": ".ds-seg{display:flex;max-width:20rem;border:1px solid var(--border-strong, #C3C7CD);border-radius:3px;overflow:hidden}.ds-seg>button{flex:1;min-height:44px;padding:.4rem .5rem;border:0;border-left:1px solid var(--border-subtle, #E1E3E7);background:transparent;color:var(--text-primary, #111214);font:400 15px/1.5 'Hanken Grotesk Var',system-ui,sans-serif;cursor:pointer;transition:background-color .12s ease,color .12s ease}.ds-seg>button:first-child{border-left:0}.ds-seg>button:hover{background:var(--surface-hover, #E6E8EB)}.ds-seg>button.active{background:var(--ink-select, #111214);color:var(--on-ink-select, #FFFFFF)}.ds-seg>button:focus-visible{outline:2px solid var(--accent, #C4201A);outline-offset:-2px}"
     },
     {
       "name": "Undo Toast",
       "kind": "custom",
-      "refersTo": "undo-toast",
-      "description": "Thumb-zone toast after a triage swipe; the server write is deferred until it dismisses.",
-      "html": "<div class=\"ds-toast\"><span class=\"ds-toast-label\">Marked read</span><button class=\"ds-toast-btn\">Undo</button></div>",
-      "css": ".ds-toast { display:inline-flex; align-items:center; gap:0.5rem; padding:0 0.25rem 0 1rem; border-radius:1.5rem; background:rgba(20,20,20,0.92); color:#fff; font-size:0.875rem; box-shadow:0 4px 16px rgba(0,0,0,0.25); } .ds-toast-label { white-space:nowrap; } .ds-toast-btn { min-height:44px; min-width:44px; padding:0 1rem; border:none; border-radius:1.25rem; background:transparent; color:#4db4ff; font-weight:600; font-size:0.875rem; cursor:pointer; } .ds-toast-btn:focus-visible { outline:2px solid #0080d4; outline-offset:2px; }"
-    },
-    {
-      "name": "Offline Banner",
-      "kind": "custom",
-      "refersTo": "offline-banner",
-      "description": "Full-width top bar shown when the network drops.",
-      "html": "<div class=\"ds-offline\">Offline — showing cached items</div>",
-      "css": ".ds-offline { width:100%; background:#e74c3c; color:#fff; text-align:center; padding:0.375rem; font-size:0.8rem; font-weight:600; }"
+      "refersTo": "toast",
+      "description": "Always-dark pill in the thumb zone with a marker-tinted undo action and a white focus ring.",
+      "html": "<div class=\"ds-toast\"><span>Marked read</span><button class=\"ds-toast-btn\">Undo</button></div>",
+      "css": ".ds-toast{display:inline-flex;align-items:center;gap:.75rem;padding:.5rem 1rem;border-radius:3px;background:#111214;color:#fff;font:400 .875rem/1.5 'Hanken Grotesk Var',system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.25)}.ds-toast-btn{border:0;background:none;padding:0;font:inherit;font-weight:600;color:color-mix(in srgb,var(--accent, #C4201A) 65%,white);cursor:pointer}.ds-toast-btn:focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:2px}"
     }
   ],
   "narrative": {
-    "northStar": "The News Terminal",
-    "overview": "yarr is a clean, just-the-facts instrument — a Bloomberg terminal for the feeds you chose. It is not a magazine, not a discovery engine, not a place to linger over chrome. The whole surface exists to move a backlog of unread items past your eyes quickly, let you keep the few that matter, and get out of the way. Density and speed are the aesthetic; the interface should feel like a well-worn CLI that happens to have a screen — instant, predictable, unsurprising. Three columns carry the desktop experience (feeds → items → article), collapsing to one at a time on a phone with no duplicate markup. There is exactly one accent color, and it never decorates — it only signals state.",
+    "northStar": "The Contact Sheet",
+    "overview": "Triage is editing a roll of film. Every article in the list is a numbered frame printed beside a solid rebate band; the frames you have not looked at print bright, the ones you have fade, keepers are ringed with a china marker, and the article you open is the enlargement. The board the sheet lies on is cool grey, the print itself is photo-paper white, and nothing else in the chrome asks for attention. Density is a working editor's density: tight rows, a 2rem toolbar at the desk, 44px targets under a thumb.\n\nThe two themes are co-equal and are one material read two ways. The light theme is **the print**: white paper, black rebate, deep marker. The dark theme is **the negative**: graphite paper, a light rebate, and a brighter marker. Every component references roles only (`--surface-*`, `--text-*`, `--border-*`, `--ink-select`, `--rebate*`, `--accent`), so a component written once is correct in both.\n\nColour carries exactly two jobs. Ink (`--ink-select`) is selection: whatever is chosen right now is inverted. The marker (`--accent`) is judgement: keepers, links and focus, nothing else. The marker is the user's own pen, one of seven colours, red by default. The system rejects the grey-sidebar, blue-accent three-pane reader with dot-only unread state that this world replaced.",
     "keyCharacteristics": [
-      "Information-dense, three-pane terminal that collapses to single-pane on mobile.",
-      "One accent (Signal Blue), used only for state — selection, active, focus.",
-      "Three first-class themes; every surface must read in all three.",
-      "Keyboard is a primary path, not a power-user extra; visible focus is required.",
-      "Flat by default; lift is reserved for the triage card and the undo toast."
+      "A solid rebate band down the article list's left edge, carrying two-digit mono frame numbers that scroll with the rows.",
+      "Selection is ink (black on the print, near-white on the negative), never the marker.",
+      "The marker colour (`--accent`) appears only for keeper state, links and keyboard focus.",
+      "Hanken Grotesk for the interface, Literata for reading, JetBrains Mono for numbers only.",
+      "Corners are cut square and only softened (3px); the one curve is the hand-drawn keeper ring.",
+      "Flat surfaces stepped by tone; shadows exist only on things that float above the sheet."
     ],
     "rules": [
-      { "name": "The One Signal Rule", "body": "Signal Blue is the only accent and it only ever means state — selected, active, focused, or a link. Orange means one thing (Instapaper); red means one thing (error/offline). Three functional colors, zero decorative ones.", "section": "colors" },
-      { "name": "The Filled-State Rule", "body": "When white text sits on the accent (selected row, active filter), use Signal Blue Deep (#0067ab), not Signal Blue — #fff on #0080d4 is only ~3.9:1 and fails AA.", "section": "colors" },
-      { "name": "The Three-Equal-Themes Rule", "body": "Light, sepia, and night are equal citizens. Any new surface must be designed and contrast-checked in all three before it ships.", "section": "colors" },
-      { "name": "The No-Display-Face Rule", "body": "UI labels, buttons, and data never use a display or decorative font. Hierarchy comes from weight and size on one sans.", "section": "typography" },
-      { "name": "The Reader-Only Serif Rule", "body": "Georgia and the mono stack appear only in the article reading pane as a user preference; never in chrome.", "section": "typography" },
-      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadow is reserved for the two objects that float over content (triage card, undo toast) and hairline pressable affordances.", "section": "elevation" },
-      { "name": "The One Selection Vocabulary Rule", "body": "Selected/active looks the same everywhere — accent fill, white text — so the eye learns it once.", "section": "components" }
+      {
+        "name": "The Ink Selects, The Marker Judges Rule",
+        "body": "Selection (the active feed, the checked segment, the highlighted palette row, the toggled toolbar button) is always `ink-select` with `on-ink-select`. The marker is never used to show selection, and ink is never used to show a keeper.",
+        "section": "colors"
+      },
+      {
+        "name": "The Marker's Three Jobs Rule",
+        "body": "`--accent` paints exactly three things: keeper state, links, and keyboard focus. If a new element wants the marker and is none of those, it doesn't get it.",
+        "section": "colors"
+      },
+      {
+        "name": "The Roles Only Rule",
+        "body": "Components reference role tokens, never raw hex values. The marker derivations (`--accent-hover`, `--focus-ring`) are declared on `body`, not `:root`, so they resolve against the selected `data-accent`.",
+        "section": "colors"
+      },
+      {
+        "name": "The Numbers Are Mono Rule",
+        "body": "JetBrains Mono sets numbers that line up (frame numbers, frame tags, counts) and code, and nothing else. Words are never set in mono outside code and the user's own mono reading choice.",
+        "section": "typography"
+      },
+      {
+        "name": "The Weight Is Unread Rule",
+        "body": "Unread is shown by weight (600 against 400) and a brighter frame number, and this signal survives grayscale. Opacity is never used to show that something has been read.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Sheet Rule",
+        "body": "Surfaces on the sheet (rows, cards, panes, the reader) carry no drop shadow. Only overlays (the palette, toasts, menus) lift.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Square Print Rule",
+        "body": "Corners soften but never round. Anything that reads as a print, a frame or a control stays at 3px or less; only the hand-drawn marker ring and the swatches curve.",
+        "section": "shapes"
+      }
     ],
     "dos": [
-      "Do keep Signal Blue (#0080d4) for state only, and reach for Signal Blue Deep (#0067ab) whenever white text sits on the accent.",
-      "Do design and contrast-check every new surface in light, sepia, AND night before shipping; AA (4.5:1 body) is the floor.",
-      "Do keep chrome to the 2rem toolbar band (3rem mobile) and a single 1px divider.",
-      "Do give every interactive element a full keyboard path and a visible :focus-visible ring.",
-      "Do provide a prefers-reduced-motion alternative for every animation.",
-      "Do keep one type family in chrome; build hierarchy from weight and size.",
-      "Do keep touch targets >=44px on mobile."
+      "**Do** show selection in ink (`--ink-select` / `--on-ink-select`) in both themes.",
+      "**Do** reserve `--accent` for keeper state, links and keyboard focus, and use `--marker-on-rebate` for any marker drawn on the rebate band.",
+      "**Do** number frames with two-digit tabular mono (`01`, `02`…) and show unread state with weight and brightness, never with colour alone.",
+      "**Do** design every new component against the print and the negative together, using role tokens only.",
+      "**Do** keep corners at 3px (2px for stamps) and keep the sheet flat; lift only overlays.",
+      "**Do** keep meta, placeholders and captions at `--text-tertiary` or stronger, never lowered with opacity.",
+      "**Do** give touch controls a 44px minimum and confine hover feedback to `(hover: hover)`."
     ],
     "donts": [
-      "Don't add promoted content, discover rails, engagement nudges, or celebratory confetti/emoji. yarr is not Feedly.",
-      "Don't drift the themes toward the AI-cream aesthetic — no warm-neutral paper backgrounds, no tracked-uppercase eyebrows, no identical icon-heading-text card grids.",
-      "Don't introduce a second accent or use the accent decoratively.",
-      "Don't use a display or decorative font anywhere in the UI; serif/mono live only inside the reader pane.",
-      "Don't add drop shadows for looks. Flat by default; only the triage card and undo toast float.",
-      "Don't use border-left/border-right greater than 1px as a colored accent stripe.",
-      "Don't ship a surface that's legible in light but muddy in sepia or night."
+      "**Don't** use the marker for selection, active tabs or toggled controls; selection is ink.",
+      "**Don't** fill or flood the selected frame; outline it in ink.",
+      "**Don't** set words in JetBrains Mono outside code and the user's mono reading choice.",
+      "**Don't** round prints, cards or controls past 3px.",
+      "**Don't** add drop shadows to rows, cards or panes on the sheet.",
+      "**Don't** show unread with only a coloured dot; weight is the signal.",
+      "**Don't** hard-code a colour in a component when a role token exists."
     ]
   }
 }

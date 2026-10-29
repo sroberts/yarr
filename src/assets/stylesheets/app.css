@@ -7,26 +7,65 @@ html {
 }
 
 /* ============================================================
-   Design tokens — one semantic layer, two co-equal themes.
-   Components reference ROLES only (--surface-*, --text-*, --accent…),
-   never raw colors. Accent is a separate, theme-independent axis
-   selected via [data-accent] on <body>. (UI Design Spec v1.0 §3.)
+   Design tokens — Contact Sheet. Triage as editing a roll of film:
+   articles are numbered frames in a rebate band, keepers carry a
+   marker, the open article is the enlargement. One semantic layer,
+   two co-equal themes (light = the print, dark = the negative).
+   Components reference ROLES only (--surface-*, --text-*, --ink-*,
+   --rebate-*, --accent), never raw colors. --accent is the marker:
+   keepers, links and focus only; selection is ink. The marker colour
+   is user-selectable via [data-accent] on <body>.
    ============================================================ */
 
-/* Self-hosted variable fonts (SIL OFL — see fonts/LICENSE-*). */
+/* Self-hosted variable fonts (SIL OFL — see fonts/LICENSE-*), split into
+   latin and latin-ext so a page only fetches the ranges it renders. */
 @font-face {
-  font-family: 'InterVar';
+  font-family: 'Hanken Grotesk Var';
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('../fonts/inter.woff2') format('woff2');
+  src: url('../fonts/hanken-grotesk-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 @font-face {
-  font-family: 'Source Serif 4 Var';
+  font-family: 'Hanken Grotesk Var';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('../fonts/hanken-grotesk-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Literata Var';
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
-  src: url('../fonts/source-serif-4.woff2') format('woff2');
+  src: url('../fonts/literata-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Literata Var';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../fonts/literata-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Literata Var';
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../fonts/literata-latin-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Literata Var';
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url('../fonts/literata-latin-ext-italic.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 @font-face {
   font-family: 'JetBrains Mono Var';
@@ -37,11 +76,13 @@ html {
 }
 
 :root {
-  --font-sans: 'InterVar', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-serif: 'Source Serif 4 Var', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Hanken Grotesk Var', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: 'Literata Var', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono Var', SFMono-Regular, Menlo, Consolas, monospace;
 
-  --radius: 6px;
+  /* prints and frames are cut square: corners only soften, never round */
+  --radius: 3px;
+  --rebate-w: 40px;
 
   /* reading view (article pane) */
   --article-h1-leading: 1.2;
@@ -50,70 +91,90 @@ html {
   /* the single fixed brand action color (Instapaper), both themes */
   --instapaper: #FF6600;
 
-  /* blue fallback if [data-accent] is somehow absent */
-  --accent: #2563EB;
+  /* marker-red fallback if [data-accent] is somehow absent */
+  --accent: #C4201A;
   --on-accent: #FFFFFF;
+  /* a ring on the rebate takes whichever marker value contrasts with the
+     band: bright on the black rebate (print), deep on the light one (negative) */
+  --marker-on-rebate: #FF6B5E;
 }
 
 .theme-light {
   color-scheme: light;
+  /* the print: photo-paper white on a cool grey board */
   --surface-base: #FFFFFF;
-  --surface-raised: #F7F8FA;
-  --surface-hover: #EEF1F5;
-  --border-subtle: #E2E6EC;
-  --border-strong: #C7CDD6;
-  --text-primary: #16191D;   /* ~15.8:1 on base — AAA */
-  --text-secondary: #4A515B; /* ~8.3:1 — AAA */
-  --text-tertiary: #666D79;  /* 5.2:1 base, 4.6:1 on hover surface — AA */
+  --surface-raised: #F1F2F4;
+  --surface-hover: #E6E8EB;
+  --border-subtle: #E1E3E7;
+  --border-strong: #C3C7CD;
+  --text-primary: #111214;   /* 18.7:1 on base — AAA */
+  --text-secondary: #4A4F57; /* 8.2:1 base, 7.4:1 raised — AAA */
+  --text-tertiary: #61666E;  /* 5.8:1 base, 5.2:1 raised, 4.7:1 hover — AA */
+  /* selection is ink, never the marker */
+  --ink-select: #111214;
+  --on-ink-select: #FFFFFF;
+  /* the film rebate: a black band carrying frame numbers */
+  --rebate: #111214;
+  --rebate-text: #8E939B;        /* 6.1:1 — frames already looked at */
+  --rebate-text-strong: #FFFFFF; /* unread frames */
   --status-success: #15803D;
   --status-attention: #B45309;
-  --status-error: #DC2626;
-  --scrollbar-thumb: #C7CDD6;
-  --scrollbar-thumb-hover: #A9B1BC;
+  --status-error: #C4201A;
+  --scrollbar-thumb: #C3C7CD;
+  --scrollbar-thumb-hover: #A3A8B0;
 }
 
 .theme-dark {
   color-scheme: dark;
-  --surface-base: #0E1116;
-  --surface-raised: #161B22;
-  --surface-hover: #1F2630;
-  --border-subtle: #262D38;
-  --border-strong: #38414F;
-  --text-primary: #E6EAF0;   /* ~13.5:1 on base — AAA */
-  --text-secondary: #A4ADBA; /* ~7.4:1 — AAA */
-  --text-tertiary: #868FA0;  /* 5.8:1 base, 5.3:1 raised, 4.7:1 hover — AA */
+  /* the negative: graphite paper, and the rebate turns light */
+  --surface-base: #16181B;
+  --surface-raised: #1D2024;
+  --surface-hover: #272B30;
+  --border-subtle: #2B2F35;
+  --border-strong: #3E434A;
+  --text-primary: #ECEDEF;   /* 15.2:1 on base — AAA */
+  --text-secondary: #AEB3BA; /* 8.4:1 base, 7.8:1 raised — AAA */
+  --text-tertiary: #8D939C;  /* 5.8:1 base, 5.3:1 raised, 4.6:1 hover — AA */
+  --ink-select: #ECEDEF;
+  --on-ink-select: #16181B;
+  --rebate: #D3D6DA;
+  --rebate-text: #4E535B;
+  --rebate-text-strong: #111214;
   --status-success: #4ADE80;
   --status-attention: #FBBF24;
-  --status-error: #F87171;
-  --scrollbar-thumb: #38414F;
-  --scrollbar-thumb-hover: #4F5A6B;
-  /* accent fallback for dark when no [data-accent] is present */
-  --accent: #5B8DEF;
-  --on-accent: #0E1116;
+  --status-error: #FF6B5E;
+  --scrollbar-thumb: #3E434A;
+  --scrollbar-thumb-hover: #555B63;
+  /* marker fallback for dark when no [data-accent] is present */
+  --accent: #FF6B5E;
+  --on-accent: #16181B;
+  --marker-on-rebate: #C4201A;
 }
 
-/* Selectable accent (Spec §3.5). Each option: a light value + a dark
-   override; --on-accent flips (deep light accents take white, bright dark
-   accents take near-black). Every pair clears contrast in both themes. */
-[data-accent="blue"]               { --accent: #2563EB; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="blue"]    { --accent: #5B8DEF; --on-accent: #0E1116; }
-[data-accent="teal"]               { --accent: #0F766E; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="teal"]    { --accent: #2DD4BF; --on-accent: #0E1116; }
-[data-accent="green"]              { --accent: #15803D; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="green"]   { --accent: #4ADE80; --on-accent: #0E1116; }
-[data-accent="violet"]             { --accent: #7C3AED; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="violet"]  { --accent: #A78BFA; --on-accent: #0E1116; }
-[data-accent="rose"]               { --accent: #BE123C; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="rose"]    { --accent: #FB7185; --on-accent: #0E1116; }
-[data-accent="amber"]              { --accent: #B45309; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="amber"]   { --accent: #FBBF24; --on-accent: #0E1116; }
-[data-accent="slate"]              { --accent: #475569; --on-accent: #FFFFFF; }
-.theme-dark[data-accent="slate"]   { --accent: #94A3B8; --on-accent: #0E1116; }
+/* Selectable marker colour (the china marker you mark keepers with). Each
+   option: a light value + a dark override; --on-accent flips (deep light
+   markers take white, bright dark markers take near-black). Every pair clears
+   AA as text on both the base and raised surfaces of its theme. "rose" is the
+   red marker and the default. */
+[data-accent="blue"]               { --accent: #2563EB; --on-accent: #FFFFFF; --marker-on-rebate: #5B8DEF; }
+.theme-dark[data-accent="blue"]    { --accent: #5B8DEF; --on-accent: #16181B; --marker-on-rebate: #2563EB; }
+[data-accent="teal"]               { --accent: #0F766E; --on-accent: #FFFFFF; --marker-on-rebate: #2DD4BF; }
+.theme-dark[data-accent="teal"]    { --accent: #2DD4BF; --on-accent: #16181B; --marker-on-rebate: #0F766E; }
+[data-accent="green"]              { --accent: #137337; --on-accent: #FFFFFF; --marker-on-rebate: #4ADE80; }
+.theme-dark[data-accent="green"]   { --accent: #4ADE80; --on-accent: #16181B; --marker-on-rebate: #137337; }
+[data-accent="violet"]             { --accent: #7C3AED; --on-accent: #FFFFFF; --marker-on-rebate: #A78BFA; }
+.theme-dark[data-accent="violet"]  { --accent: #A78BFA; --on-accent: #16181B; --marker-on-rebate: #7C3AED; }
+[data-accent="rose"]               { --accent: #C4201A; --on-accent: #FFFFFF; --marker-on-rebate: #FF6B5E; }
+.theme-dark[data-accent="rose"]    { --accent: #FF6B5E; --on-accent: #16181B; --marker-on-rebate: #C4201A; }
+[data-accent="amber"]              { --accent: #A64B07; --on-accent: #FFFFFF; --marker-on-rebate: #FBBF24; }
+.theme-dark[data-accent="amber"]   { --accent: #FBBF24; --on-accent: #16181B; --marker-on-rebate: #A64B07; }
+[data-accent="slate"]              { --accent: #475569; --on-accent: #FFFFFF; --marker-on-rebate: #94A3B8; }
+.theme-dark[data-accent="slate"]   { --accent: #94A3B8; --on-accent: #16181B; --marker-on-rebate: #475569; }
 
 /* Accent derivations — identical formula in both themes, but they MUST be
    declared here rather than on :root. A custom property substitutes at the
    element that declares it, so --focus-ring: var(--accent) written on :root
-   locks in :root's blue fallback and inherits that fixed blue downward; the
+   locks in :root's marker fallback and inherits that fixed value downward; the
    [data-accent] overrides land on <body> and never reach it. Declared on body,
    they resolve against the accent that's actually selected. */
 body {
@@ -278,9 +339,12 @@ select.form-control:not([multiple]):not([size]) {
 .counter {
   padding-left: .5rem;
   /* De-emphasise unread counts with a real token (AAA on every surface)
-     rather than opacity — .6 opacity on a selected row's on-accent text
-     dropped below AA in every accent. */
+     rather than opacity, which had no headroom on a selected row. Counts are
+     numbers, so they're set in mono. */
   color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .light {
@@ -315,7 +379,7 @@ select.form-control:not([multiple]):not([size]) {
 
 .selectgroup-label {
   padding: .375rem .5rem;
-  border-radius: 4px;
+  border-radius: var(--radius);
   overflow-wrap: break-word;
 }
 
@@ -575,8 +639,8 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .command-palette-row.selected {
-  background-color: var(--accent);
-  color: var(--on-accent);
+  background-color: var(--ink-select);
+  color: var(--on-ink-select);
 }
 
 .command-palette-row .cmd-label {
@@ -596,8 +660,8 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .command-palette-row.selected .cmd-hint {
-  color: var(--on-accent);
-  border-color: var(--on-accent);
+  color: var(--on-ink-select);
+  border-color: var(--on-ink-select);
 }
 
 .command-palette-empty {
@@ -637,8 +701,10 @@ select.form-control:not([multiple]):not([size]) {
   margin: 0 auto;
 }
 
-/* Measured at 18px: Inter and Source Serif 4 both land at ~71 characters on
-   35em; JetBrains Mono's fixed advance needs 44em to reach the same count. */
+/* Measured at 18px against the e2e prose: Literata lands at ~71 characters on
+   35em and JetBrains Mono needs 44em for ~71; Hanken Grotesk sets narrower and
+   reached 76 on 35em, so the sans reader takes 33em. */
+.content:not(.font-serif):not(.font-monospace) { --measure: 33em; }
 .content.font-monospace { --measure: 44em; }
 
 .content img, .content video {
@@ -807,7 +873,7 @@ select.form-control:not([multiple]):not([size]) {
   pointer-events: none;
 }
 
-/* links + the accent-filled selected/active states */
+/* links are marked in the marker colour; selected/active states are ink */
 a,
 .btn-link:hover {
   color: var(--accent);
@@ -817,13 +883,13 @@ a,
 .dropdown-item.active,
 .dropdown-item:active,
 .selectgroup input:checked + .selectgroup-label {
-  color: var(--on-accent);
-  background-color: var(--accent) !important;
+  color: var(--on-ink-select);
+  background-color: var(--ink-select) !important;
 }
 
-/* On a selected row the counter must ride the accent, not the muted token. */
+/* On a selected row the counter rides the ink, not the muted token. */
 .selectgroup input:checked + .selectgroup-label .counter {
-  color: var(--on-accent);
+  color: var(--on-ink-select);
 }
 
 /* One solid selection at a time. With an article open, j/k drive the article
@@ -841,10 +907,9 @@ a,
   }
 }
 
-/* Article rows. Weight is the unread signal (it survives grayscale and the
-   accent fill); read titles step back a text tier. Meta uses the tertiary
-   token instead of opacity, which had no headroom on the accent fill
-   (3.3:1 light, 3.7:1 dark). Selected rows ride --on-accent throughout. */
+/* Article rows. Weight is the unread signal (it survives grayscale); read
+   titles step back a text tier. Meta uses the tertiary token, never opacity.
+   The selected frame is outlined in ink rather than flooded (see "The roll"). */
 .item-meta {
   line-height: 100%;
   margin-bottom: .1rem;
@@ -857,9 +922,119 @@ a,
   font-weight: 600;
   color: var(--text-primary);
 }
-.selectgroup input:checked + .selectgroup-label .item-meta,
-.selectgroup input:checked + .selectgroup-label .item-title {
-  color: var(--on-accent);
+#item-list-scroll .selectgroup input:checked + .selectgroup-label {
+  background-color: var(--surface-base) !important;
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 2px var(--ink-select);
+}
+#item-list-scroll .selectgroup input:checked + .selectgroup-label .item-title {
+  color: var(--text-primary);
+}
+#item-list-scroll .selectgroup input:checked + .selectgroup-label .item-meta {
+  color: var(--text-secondary);
+}
+
+/* ── The roll ─────────────────────────────────────────
+   The article list is a strip of film: a solid rebate band down its left
+   edge numbers every frame. Unread frames print bright, frames you have
+   looked at fade, the selected frame is inverted, and a starred frame is
+   ringed in the marker. The band is the list's own background (attached
+   locally, so it scrolls with the rows and runs the full length). */
+#item-list-scroll {
+  padding-left: 0 !important;
+  background-color: var(--surface-base);
+  background-image: linear-gradient(90deg, var(--rebate) var(--rebate-w), transparent var(--rebate-w));
+  background-attachment: local;
+}
+#item-list-scroll > * {
+  margin-left: calc(var(--rebate-w) + .5rem);
+}
+.frame-no {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * (var(--rebate-w) + .5rem));
+  width: var(--rebate-w);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: .55rem;
+  font: 500 .72rem/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+  color: var(--rebate-text);
+  pointer-events: none;
+}
+.frame-no > span {
+  display: inline-block;
+  padding: .2rem .25rem;
+  border-radius: 2px;
+}
+.frame-no.frame-unread { color: var(--rebate-text-strong); font-weight: 700; }
+/* the keeper mark: a marker ring, slightly hand-drawn but kept crisp */
+.frame-no.frame-starred > span {
+  color: var(--rebate-text-strong);
+  box-shadow: 0 0 0 2px var(--marker-on-rebate, var(--accent));
+  border-radius: 50% 45% 55% 48%;
+  transform: rotate(-4deg);
+}
+/* the frame under the loupe */
+#item-list-scroll .selectgroup input:checked ~ .frame-no > span {
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+@media (max-width: 767.98px) {
+  #app { --rebate-w: 34px; }
+}
+
+/* keeper state is always the marker, wherever it shows */
+.marker { color: var(--accent); }
+
+/* "Frame 07 of 15": where the open article sits on the roll. Mono numbers,
+   the frame itself in an inverted tag, quiet everywhere else. */
+.reader-frame-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: .75rem;
+  font-size: .8rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.reader-frame-label b,
+.frame-tag {
+  display: inline-block;
+  margin: 0 .3em;
+  padding: .1rem .3rem;
+  border-radius: 2px;
+  background: var(--rebate);
+  color: var(--rebate-text-strong);
+  font: 600 .75rem/1.2 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.reader-nav .reader-frame-label { padding-right: 0; }
+.reader-frame-label b.is-starred,
+.frame-tag.is-starred {
+  box-shadow: 0 0 0 2px var(--marker-on-rebate, var(--accent));
+}
+
+/* The byline sits under the enlargement like a caption: one quiet sans line,
+   never competing with the title or the body. */
+.content-byline {
+  margin-top: .35em;
+  font: 400 .8em/1.4 var(--font-sans);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.content-byline .byline-feed {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* the contact sheet sits on a grey board */
+#col-feed-list {
+  background-color: var(--surface-raised);
 }
 
 .btn-default:focus,
@@ -1120,8 +1295,9 @@ a,
 /* ── Card triage mode ────────────────────────── */
 
 
+/* a single print on the grey board */
 #card-view {
-  background: var(--surface-base);
+  background: var(--surface-raised);
   overflow: hidden;
   min-height: 0;
 }
@@ -1130,8 +1306,6 @@ a,
   padding: 1.25rem;
   position: relative;
   overflow: hidden;
-  justify-content: start !important;
-  padding-top: 15%;
 }
 
 .triage-card {
@@ -1142,12 +1316,14 @@ a,
   max-height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--surface-raised);
+  background: var(--surface-base);
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  /* the print keeps its own strip of rebate down the left edge */
+  position: relative;
+  overflow: hidden;
+  padding: 1.5rem 1.5rem 1.5rem calc(var(--rebate-w) + 1.25rem);
   user-select: none;
   -webkit-user-select: none;
   touch-action: pan-y;
@@ -1179,11 +1355,33 @@ a,
   white-space: nowrap;
 }
 
+.triage-card-rebate {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--rebate-w);
+  display: flex;
+  justify-content: center;
+  padding-top: 1.55rem;
+  background: var(--rebate);
+  color: var(--rebate-text-strong);
+  font: 700 .78rem/1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.triage-card-rebate > span {
+  display: inline-block;
+  height: max-content;
+  padding: .2rem .25rem;
+}
+
 .triage-card-title {
-  font-size: 1.25rem;
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.25;
   margin-bottom: 0.75rem;
+  text-wrap: balance;
 }
 
 /* The article, read inside the card (tap / Enter). Same growable, scrolling
@@ -1214,7 +1412,8 @@ a,
 .triage-card-hint a { color: var(--accent); }
 
 .triage-card-excerpt {
-  font-size: 0.9rem;
+  font-family: var(--font-serif);
+  font-size: 1rem;
   line-height: 1.6;
   color: var(--text-secondary);
   /* the one growable region: takes the slack and scrolls when content is
@@ -1248,7 +1447,7 @@ a,
 .card-action-pill {
   display: inline-block;
   padding: 0.375rem 1rem;
-  border-radius: 1.25rem;
+  border-radius: var(--radius);
   font-size: 0.875rem;
   font-weight: 600;
   color: #fff;
@@ -1265,8 +1464,8 @@ a,
 }
 
 .card-action-pill.action-read {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink-select);
+  color: var(--on-ink-select);
 }
 
 .card-view-hints {
@@ -1279,6 +1478,24 @@ a,
   padding-right: 2rem !important;
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)) !important;
 }
+
+/* the folder picker's caret is drawn, not a typed glyph */
+.card-folder-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.card-folder-pick::after {
+  content: "";
+  width: .75rem;
+  height: .75rem;
+  margin-left: -.9rem;
+  pointer-events: none;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6 -6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.card-view-legend .icon { width: .9rem; height: .9rem; }
 
 .card-folder-select {
   background: transparent;
@@ -1301,7 +1518,7 @@ a,
 }
 
 .card-stat-read {
-  color: var(--accent);
+  color: var(--text-primary);
 }
 
 .card-stat-instapaper {
@@ -1370,11 +1587,13 @@ a,
   gap: .35rem;
   min-height: 2rem;
   padding: .25rem .85rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 1.5rem;
+  /* star is the keeper verb, so it is drawn in the marker */
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
   background: var(--surface-base);
-  color: var(--text-primary);
+  color: var(--accent);
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
 }
 .card-star-btn .icon { width: 1rem; height: 1rem; }
@@ -1457,8 +1676,8 @@ a,
   gap: 0.5rem;
   max-width: calc(100% - 2rem);
   padding: 0 0.25rem 0 1rem;
-  border-radius: 1.5rem;
-  background: rgba(20, 20, 20, 0.92);
+  border-radius: var(--radius);
+  background: #111214;
   color: #fff;
   font-size: 0.875rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
@@ -1474,7 +1693,7 @@ a,
   min-width: 44px;
   padding: 0 1rem;
   border: none;
-  border-radius: 1.25rem;
+  border-radius: var(--radius);
   background: transparent;
   /* the toast is always dark; lighten the chosen accent for legibility on it */
   color: color-mix(in oklab, var(--accent), white 35%);
@@ -1597,19 +1816,19 @@ body[data-motion="reduce"] *::after {
 
 /* Swatch preview colors mirror the [data-accent] --accent values above so the
    dot matches the color selecting it paints. Each has a dark override, since
-   the applied accent shifts in dark mode (e.g. amber #B45309 → #FBBF24). */
+   the applied marker shifts in dark mode (e.g. amber #A64B07 → #FBBF24). */
 .swatch-blue   { --swatch: #2563EB; }
 .swatch-teal   { --swatch: #0F766E; }
-.swatch-green  { --swatch: #15803D; }
+.swatch-green  { --swatch: #137337; }
 .swatch-violet { --swatch: #7C3AED; }
-.swatch-rose   { --swatch: #BE123C; }
-.swatch-amber  { --swatch: #B45309; }
+.swatch-rose   { --swatch: #C4201A; }
+.swatch-amber  { --swatch: #A64B07; }
 .swatch-slate  { --swatch: #475569; }
 .theme-dark .swatch-blue   { --swatch: #5B8DEF; }
 .theme-dark .swatch-teal   { --swatch: #2DD4BF; }
 .theme-dark .swatch-green  { --swatch: #4ADE80; }
 .theme-dark .swatch-violet { --swatch: #A78BFA; }
-.theme-dark .swatch-rose   { --swatch: #FB7185; }
+.theme-dark .swatch-rose   { --swatch: #FF6B5E; }
 .theme-dark .swatch-amber  { --swatch: #FBBF24; }
 .theme-dark .swatch-slate  { --swatch: #94A3B8; }
 
@@ -1638,8 +1857,8 @@ body[data-motion="reduce"] *::after {
   z-index: 1100;
   max-width: calc(100% - 2rem);
   padding: 0.5rem 1rem;
-  border-radius: 1.5rem;
-  background: rgba(20, 20, 20, 0.92);
+  border-radius: var(--radius);
+  background: #111214;
   color: #fff;
   font-size: 0.875rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
@@ -1795,6 +2014,7 @@ body[data-motion="reduce"] *::after {
   border-collapse: collapse;
 }
 /* long unbroken title words wrap instead of overflowing */
+.content-title b { font-weight: 600; }
 .content-title {
   overflow-wrap: break-word;
   word-break: break-word;
@@ -1826,7 +2046,8 @@ body[data-motion="reduce"] *::after {
 /* ── Segmented control (settings toggles) ──────────────
    A bordered track of equal segments so inactive options read as
    selectable, not as floating text. Fixes the dense/ambiguous mobile
-   Settings toggles (#86). Active = accent fill; dividers between segments. */
+   Settings toggles (#86). Active = ink fill (selection is ink, never the
+   marker); dividers between segments. */
 .segmented {
   display: flex;
   border: 1px solid var(--border-strong);
@@ -1851,7 +2072,7 @@ body[data-motion="reduce"] *::after {
   cursor: pointer;
 }
 @media (hover: hover) { .segmented > button:hover { background: var(--surface-hover); } }
-.segmented > button.active { background: var(--accent); color: var(--on-accent); }
+.segmented > button.active { background: var(--ink-select); color: var(--on-ink-select); }
 .segmented > button:disabled { opacity: .4; cursor: not-allowed; }
 .segmented > button:disabled:hover { background: transparent; }
 .segmented > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
