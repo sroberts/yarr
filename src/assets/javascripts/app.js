@@ -592,6 +592,8 @@ function rootComponent() { return {
       'cardLoading': false,
       'cardUndo': null,
       'cardExpanded': false,
+      'instapaperSaved': false,
+      'isMac': /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
       'toast': null,
       'linkCopied': false,
       'itemOffline': false,
@@ -599,14 +601,14 @@ function rootComponent() { return {
       'cardFolder': '',
       'previousFilter': '',
       'refreshRateOptions': [
-        { title: "0", value: 0 },
-        { title: "10m", value: 10 },
-        { title: "30m", value: 30 },
-        { title: "1h", value: 60 },
-        { title: "2h", value: 120 },
-        { title: "4h", value: 240 },
-        { title: "12h", value: 720 },
-        { title: "24h", value: 1440 },
+        { title: "Off", value: 0 },
+        { title: "10 min", value: 10 },
+        { title: "30 min", value: 30 },
+        { title: "1 hour", value: 60 },
+        { title: "2 hours", value: 120 },
+        { title: "4 hours", value: 240 },
+        { title: "12 hours", value: 720 },
+        { title: "24 hours", value: 1440 },
       ],
     }
   },
@@ -676,6 +678,28 @@ function rootComponent() { return {
           vm.feedSelected = 'folder:' + fo.id; vm.itemSelected = null
         }})
       })
+      // An address ("fb04", "FB·04", or just "4") jumps to that slip in the
+      // stack; a bare code ("fb") to that feed. Both go to the top.
+      var jumps = []
+      var key = q.toUpperCase().replace(/[\s·.\-]/g, '')
+      if (key) {
+        var self = this
+        this.items.forEach(function(item, i) {
+          var addr = self.slipAddress(item, i)
+          if (addr.replace('·', '') === key || (/^\d+$/.test(key) && +key === i + 1)) {
+            jumps.push({group: 'Go to', label: addr + '  ' + (item.title || 'untitled'), run: function() {
+              vm.itemSelected = item.id
+            }})
+          }
+        })
+        this.feeds.forEach(function(f) {
+          if (self.feedCodes.feeds[f.id] === key) {
+            jumps.push({group: 'Go to', label: key + '  ' + (f.title || f.feed_link), run: function() {
+              vm.feedSelected = 'feed:' + f.id; vm.itemSelected = null
+            }})
+          }
+        })
+      }
       var results
       if (!q) {
         results = all
@@ -690,7 +714,7 @@ function rootComponent() { return {
           var box = document.getElementById('searchbar'); if (box) box.focus()
         }})
       }
-      return results.slice(0, 50)
+      return jumps.concat(results).slice(0, 50)
     },
     itemSelectedContent: function() {
       if (!this.itemSelected) return ''
@@ -698,7 +722,8 @@ function rootComponent() { return {
       if (this.itemSelectedReadability)
         return this.itemSelectedReadability
 
-      return this.itemSelectedDetails.content || ''
+      // itemSelected leads the fetch of its details; render nothing until they land
+      return (this.itemSelectedDetails && this.itemSelectedDetails.content) || ''
     },
     contentImages: function() {
       if (!this.itemSelectedDetails) return []
@@ -714,7 +739,7 @@ function rootComponent() { return {
     },
     refreshRateTitle: function () {
       const entry = this.refreshRateOptions.find(o => o.value === this.refreshRate)
-      return entry ? entry.title : '0'
+      return entry ? entry.title : 'Off'
     },
     cardMode: function() {
       return this.filterSelected === 'triage'
@@ -741,22 +766,59 @@ function rootComponent() { return {
     stackHeading: function() {
       if (this.feedSelected === null || !this.feeds.length) return null
       var cur = this.current, title, n
+      var code
       if (cur.type == 'feed') {
-        title = cur.feed.title; n = this.filteredFeedStats[cur.feed.id]
+        title = cur.feed.title; n = this.filteredFeedStats[cur.feed.id]; code = this.feedCodes.feeds[cur.feed.id]
       } else if (cur.type == 'folder') {
-        title = cur.folder.title; n = this.filteredFolderStats[cur.folder.id]
+        title = cur.folder.title; n = this.filteredFolderStats[cur.folder.id]; code = this.feedCodes.folders[cur.folder.id]
       } else {
         title = {unread: 'All Unread', starred: 'All Starred'}[this.filterSelected] || 'All Feeds'
+        code = {unread: 'AU', starred: 'AS'}[this.filterSelected] || 'AF'
         n = this.filteredTotalStats
       }
       if (!title) return null
       n = n || 0
       return {
-        code: this.feedCode({title: title}),
+        code: code || '··',
         title: title,
         n: n,
         count: n ? n + ' ' + (this.filterSelected == 'starred' ? 'starred' : 'unread') : '',
       }
+    },
+    // Unique codes for every feed and folder: two letters where they're free,
+    // a third (or a digit) to settle a clash. The view codes are reserved, and
+    // allocation runs in id order so a code only moves when its rival is new.
+    feedCodes: function() {
+      var used = {AU: true, AS: true, AF: true}
+      var self = this
+      function allocate(list) {
+        var out = {}
+        list.slice().sort(function(a, b) { return a.id - b.id }).forEach(function(x) {
+          var base = self.feedCode(x)
+          var rest = ((x.title || '').toUpperCase().match(/[\p{L}\p{N}]/gu) || []).slice(1)
+          var candidates = [base]
+          rest.forEach(function(ch) { candidates.push(base + ch) })
+          for (var d = 2; d <= 99; d++) candidates.push(base + d)
+          var code = candidates.find(function(c) { return !used[c] })
+          used[code] = true
+          out[x.id] = code
+        })
+        return out
+      }
+      var feeds = allocate(this.feeds)
+      return {feeds: feeds, folders: allocate(this.folders)}
+    },
+    // what a screen reader hears as each triage card arrives
+    cardAnnouncement: function() {
+      if (this.cardDone) return 'All caught up'
+      if (!this.currentCard) return ''
+      return 'Card ' + (this.cardIndex + 1) + ' of ' + this.cardItems.length + ': ' + (this.currentCard.title || 'untitled')
+    },
+    // the persistent live region's text: whichever toast is showing
+    liveStatus: function() {
+      if (this.feedUndo) return this.feedUndo.label
+      if (this.cardUndo) return this.cardUndoLabel
+      return this.toast ? this.toast.text : ''
     },
     cardExcerpt: function() {
       if (!this.currentCard || !this.currentCard.content) return ''
@@ -905,6 +967,12 @@ function rootComponent() { return {
         this.itemSelectedDetails = null
         return
       }
+      // keep the open slip in sight in the stack (prev/next, palette jumps)
+      this.$nextTick(function() {
+        var input = document.querySelector('#item-list-scroll input[value="' + newVal + '"]')
+        var label = input && input.closest('label')
+        if (label && label.scrollIntoView) label.scrollIntoView({block: 'nearest'})
+      })
       if (this.$refs.content) this.$refs.content.scrollTop = 0
 
       api.items.get(newVal).then(function(item) {
@@ -1361,7 +1429,7 @@ function rootComponent() { return {
     slipAddress: function(item, index) {
       if (!item) return ''
       var n = index + 1
-      return this.feedCode(this.feedsById[item.feed_id]) + '·' + (n < 10 ? '0' + n : n)
+      return (this.feedCodes.feeds[item.feed_id] || '··') + '·' + (n < 10 ? '0' + n : n)
     },
     showToast: function(text, ms) {
       var self = this
@@ -1373,6 +1441,9 @@ function rootComponent() { return {
     // scoped to the current selection. The server scopes bulk mark-read by feed
     // or folder only, so that is all the query carries.
     markItemsRead: function() {
+      // a search narrows the list but not the server's scope, so don't let
+      // "all" quietly mean far more than the results on screen
+      if (this.itemSearch) return this.showToast('Clear the search to mark all read')
       var cur = this.current
       if (cur.type == 'feed' && cur.feed.id) return this.markFeedRead(cur.feed)
       if (cur.type == 'folder' && cur.folder.id) return this.markFolderRead(cur.folder)
@@ -1780,7 +1851,11 @@ function rootComponent() { return {
       if (key === 'instapaper_password') this.instapaperPassword = value
       var update = {}
       update[key] = value
-      api.settings.update(update)
+      api.settings.update(update).then(function() {
+        vm.instapaperSaved = true
+        clearTimeout(vm._instapaperSavedTimer)
+        vm._instapaperSavedTimer = setTimeout(function() { vm.instapaperSaved = false }, 2500)
+      })
     },
     enterCardMode: function() {
       this.cardItems = []
@@ -1816,8 +1891,8 @@ function rootComponent() { return {
       }).catch(function() {
         vm.cardLoading = false
         if (vm.cardItems.length === 0) {
-          alert('Failed to load items.')
-          vm.filterSelected = ''
+          vm.exitCardMode()
+          vm.showToast("Couldn't load unread items. Check the connection and try again.", 4000)
         }
       })
     },

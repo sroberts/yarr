@@ -151,6 +151,11 @@ var triageBindings = {
   "p":          function() { vm.toggleListen() },
   "u":          function() { vm.undoCardAction() },
   "Escape":     function() { vm.cardExpanded ? (vm.cardExpanded = false) : vm.exitCardMode() },
+  // the global ways out and the help sheet work here too
+  "?":          shortcutFunctions.showShortcuts,
+  "1":          shortcutFunctions.showUnread,
+  "2":          shortcutFunctions.showStarred,
+  "3":          shortcutFunctions.showAll,
 }
 
 function isTextBox(element) {

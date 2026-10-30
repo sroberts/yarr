@@ -101,30 +101,27 @@
                         <span class="icon mr-1">{% inline "plus.svg" %}</span>
                         New Feed
                     </button>
-                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="fetchAllFeeds()">
                         <span class="icon mr-1">{% inline "rotate-cw.svg" %}</span>
                         Refresh Feeds
                     </button>
                     <div class="dropdown-divider"></div>
+                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="openPalette()">
                         <span class="icon mr-1">{% inline "search.svg" %}</span>
                         Command Palette
                     </button>
-
-                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="showSettings('settings')">
                         <span class="icon mr-1">{% inline "sliders.svg" %}</span>
                         Settings
                     </button>
-                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="showSettings('shortcuts')">
                         <span class="icon mr-1">{% inline "help-circle.svg" %}</span>
                         Shortcuts
                     </button>
-                    <div class="dropdown-item text-muted small cursor-default" v-if="version">
-                        Version {{ version }}
-                    </div>
+                    <!-- a caption, not an item: nothing to press -->
+                    <div class="dropdown-divider" v-if="version"></div>
+                    <div class="dropdown-caption" v-if="version">Version {{ version }}</div>
                     <div class="dropdown-divider" v-if="authenticated"></div>
                     <button class="dropdown-item" v-if="authenticated" @click="logout()">
                         <span class="icon mr-1">{% inline "log-out.svg" %}</span>
@@ -135,7 +132,7 @@
             <!-- card triage mode -->
             <div id="card-view" class="d-flex flex-column flex-grow-1 border-top" v-if="cardMode">
                 <!-- folder filter -->
-                <div class="card-view-hints px-4 pt-2 pb-0 d-flex justify-content-center">
+                <div class="card-view-hints card-folder-bar px-4 pt-2 pb-0 d-flex justify-content-center">
                     <span class="card-folder-pick text-muted small">
                         <select class="card-folder-select"
                                 aria-label="Folder to triage"
@@ -150,6 +147,8 @@
                 <div v-if="cardLoading && cardItems.length === 0" class="flex-grow-1 d-flex align-items-center justify-content-center">
                     <span class="text-muted">Loading unread items...</span>
                 </div>
+                <!-- announces each new card; persistent so screen readers hear changes -->
+                <div class="sr-only" aria-live="polite">{{ cardAnnouncement }}</div>
                 <!-- card -->
                 <div v-if="currentCard && !cardDone" class="card-view-area flex-grow-1 d-flex flex-column align-items-center justify-content-center" id="card-swipe-area">
                     <!-- Tap / Enter opens the article here in the card: the content is
@@ -235,7 +234,7 @@
                 </div>
                 <!-- undo last swipe -->
                 <transition name="undo">
-                    <div class="card-undo-toast" v-if="cardUndo" role="status" aria-live="polite">
+                    <div class="card-undo-toast" v-if="cardUndo">
                         <span class="card-undo-label">{{ cardUndoLabel }}</span>
                         <button type="button" class="card-undo-btn" @click="undoCardAction()">Undo</button>
                     </div>
@@ -324,10 +323,11 @@
         <div id="col-item-list" role="region" aria-label="Articles" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: itemListWidth+'px'}">
             <drag :width="itemListWidth" @resize="resizeItemList"></drag>
             <div class="px-2 toolbar d-flex align-items-center">
-                <button class="toolbar-item mr-2 d-block d-md-none"
+                <button class="toolbar-item toolbar-item-labelled mr-2 d-inline-flex d-md-none"
                         @click="feedSelected = null"
                         title="Show Feeds">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
+                    Feeds
                 </button>
                 <div class="input-icon flex-grow-1">
                     <span class="icon">{% inline "search.svg" %}</span>
@@ -369,8 +369,19 @@
                 <span class="slip-addr is-unread" aria-hidden="true">{{ stackHeading.code }}</span>
                 <h2 class="stack-heading-title text-truncate">{{ stackHeading.title }}</h2>
                 <span class="stack-heading-count" v-if="stackHeading.count">· {{ stackHeading.count }}</span>
-                <button type="button" class="stack-heading-action"
+                <!-- phones reach triage from here, in the thumb's path, instead of
+                     via the feed list's top-row icon -->
+                <button type="button" class="stack-heading-action d-md-none"
                         v-if="filterSelected == 'unread' && stackHeading.n"
+                        @click="filterSelected = 'triage'"
+                        aria-label="Triage unread, one card at a time">
+                    <span class="icon">{% inline "cards.svg" %}</span>
+                    Triage
+                </button>
+                <!-- hidden while searching: it would act on the whole feed or
+                     folder, not on the results on screen -->
+                <button type="button" class="stack-heading-action"
+                        v-if="filterSelected == 'unread' && stackHeading.n && !itemSearch"
                         @click="markItemsRead()"
                         :aria-label="'Mark all read in ' + stackHeading.title"
                         title="Mark all read (R)">
@@ -402,7 +413,9 @@
                                 <span class="icon icon-small mr-1" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
                                 <span class="icon icon-small mr-1 marker" v-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
                             </transition>
-                            <span class="slip-addr" :class="{'is-unread': item.status == 'unread'}" aria-hidden="true">{{ slipAddress(item, index) }}</span>
+                            <span class="sr-only" v-if="item.status == 'unread'">Unread,</span>
+                            <span class="sr-only" v-if="item.status == 'starred'">Starred,</span>
+                            <span class="slip-addr" :class="{'is-unread': item.status == 'unread'}">{{ slipAddress(item, index) }}</span>
                             <small class="flex-fill text-truncate mr-1">
                                 {{ (feedsById[item.feed_id] || {}).title }}
                             </small>
@@ -672,7 +685,7 @@
                     <div class="settings-section">
                         <label class="settings-label">Theme</label>
                         <div class="segmented">
-                            <button :aria-label="t" :aria-pressed="(theme.name == t) ? 'true' : 'false'" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
+                            <button :aria-label="t" :aria-pressed="(theme.name == t) ? 'true' : 'false'" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t[0].toUpperCase() + t.slice(1) }}</button>
                         </div>
                     </div>
                     <div class="settings-section">
@@ -702,18 +715,6 @@
                 <div class="settings-group">
                     <div class="settings-title">Reading</div>
                     <div class="settings-section">
-                        <label class="settings-label">Auto refresh</label>
-                        <div class="segmented">
-                            <button @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate" aria-label="less frequent">
-                                <span class="icon">{% inline "chevron-down.svg" %}</span>
-                            </button>
-                            <div class="segmented-value">{{ refreshRateTitle }}</div>
-                            <button @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value" aria-label="more frequent">
-                                <span class="icon">{% inline "chevron-up.svg" %}</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="settings-section">
                         <label class="settings-label">Show first</label>
                         <div class="segmented">
                             <button :aria-pressed="(itemSortNewestFirst) ? 'true' : 'false'" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
@@ -734,14 +735,14 @@
                     <p class="text-muted small mb-2" v-if="filters.length === 0">No filters yet.</p>
                     <form class="mt-1" @submit.prevent="createFilter()">
                         <div class="d-flex">
-                            <select class="form-control form-control-sm flex-shrink-0 mr-1" style="width:auto" v-model="filterDraft.action" aria-label="Filter action">
+                            <select class="form-control flex-shrink-0 mr-1" style="width:auto" v-model="filterDraft.action" aria-label="Filter action">
                                 <option value="read">Auto-read</option>
                                 <option value="star">Auto-star</option>
                                 <option value="mute">Mute</option>
                             </select>
-                            <input class="form-control form-control-sm flex-fill" v-model="filterDraft.keyword" placeholder="title contains…" aria-label="Keyword (case-insensitive)">
+                            <input class="form-control flex-fill" v-model="filterDraft.keyword" placeholder="title contains…" aria-label="Keyword (case-insensitive)">
                         </div>
-                        <select class="form-control form-control-sm mt-1" v-model="filterDraft.feedId" aria-label="Scope">
+                        <select class="form-control mt-1" v-model="filterDraft.feedId" aria-label="Scope">
                             <option :value="null">All feeds</option>
                             <option :value="feed.id" v-for="feed in feeds">{{ feed.title }}</option>
                         </select>
@@ -750,28 +751,44 @@
                             <span v-if="filterDraft.action == 'mute'">Also delete matching unread items now</span>
                             <span v-else>Also apply to current unread items</span>
                         </label>
-                        <button class="btn btn-sm btn-default mt-2" type="submit" :disabled="!filterDraft.keyword.trim()">Add rule</button>
+                        <button class="btn btn-default mt-2" type="submit" :disabled="!filterDraft.keyword.trim()">Add rule</button>
                     </form>
                 </div>
 
                 <div class="settings-group">
                     <div class="settings-title">Instapaper</div>
-                    <input type="text" class="form-control form-control-sm mb-1" aria-label="Instapaper username or email" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
-                    <input type="password" class="form-control form-control-sm" aria-label="Instapaper password" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
+                    <input type="text" class="form-control mb-1" aria-label="Instapaper username or email" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
+                    <input type="password" class="form-control" aria-label="Instapaper password" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
+                    <p class="settings-saved small mt-1 mb-0" role="status">{{ instapaperSaved ? 'Saved' : '' }}</p>
                 </div>
 
                 <div class="settings-group">
                     <div class="settings-title">Subscriptions</div>
-                    <div class="d-flex">
-                        <form id="opml-import-form" enctype="multipart/form-data" tabindex="-1" class="mr-2">
-                            <input type="file" id="opml-import" @change="importOPML" name="opml" style="opacity: 0; width: 1px; height: 0; position: absolute; z-index: -1;">
-                            <label class="btn btn-default mb-0 cursor-pointer" for="opml-import">
-                                <span class="icon mr-1">{% inline "download.svg" %}</span> Import
-                            </label>
-                        </form>
-                        <a class="btn btn-default" href="./opml/export">
-                            <span class="icon mr-1">{% inline "upload.svg" %}</span> Export
-                        </a>
+                    <div class="settings-section">
+                        <label class="settings-label">Auto refresh</label>
+                        <div class="segmented">
+                            <button @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate" aria-label="less frequent">
+                                <span class="icon">{% inline "chevron-down.svg" %}</span>
+                            </button>
+                            <div class="segmented-value">{{ refreshRateTitle }}</div>
+                            <button @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value" aria-label="more frequent">
+                                <span class="icon">{% inline "chevron-up.svg" %}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <label class="settings-label">OPML</label>
+                        <div class="d-flex">
+                            <form id="opml-import-form" enctype="multipart/form-data" tabindex="-1" class="mr-2">
+                                <input type="file" id="opml-import" @change="importOPML" name="opml" style="opacity: 0; width: 1px; height: 0; position: absolute; z-index: -1;">
+                                <label class="btn btn-default mb-0 cursor-pointer" for="opml-import">
+                                    <span class="icon mr-1">{% inline "download.svg" %}</span> Import
+                                </label>
+                            </form>
+                            <a class="btn btn-default" href="./opml/export">
+                                <span class="icon mr-1">{% inline "upload.svg" %}</span> Export
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -812,7 +829,7 @@
                                                             <td>show unread / starred / all feeds</td></tr>
                     <tr><td><kbd>4</kbd></td>               <td>triage unread, one card at a time</td></tr>
                     <tr><td><kbd>/</kbd></td>               <td>focus the search bar</td></tr>
-                    <tr><td><kbd>⌘</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
+                    <tr><td><kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
                     <tr><td><kbd>?</kbd></td>               <td>show keyboard shortcuts</td></tr>
 
                     <tr><td colspan=2>&nbsp;</td></tr>
@@ -841,11 +858,15 @@
                     <tr><td><kbd>o</kbd></td>               <td>open original link</td></tr>
                     <tr><td><kbd>u</kbd></td>               <td>undo last swipe</td></tr>
                     <tr><td><kbd>Esc</kbd></td>             <td>back to the card, then exit triage</td></tr>
+                    <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td> <td>leave triage for unread / starred / all</td></tr>
                 </table>
             </div>
         </modal>
+        <!-- One live region that outlives the toasts: a region created together
+             with its text is missed by some screen readers. -->
+        <div class="sr-only" role="status" aria-live="polite">{{ liveStatus }}</div>
         <transition name="toast">
-            <div class="app-toast" v-if="toast" role="status" aria-live="polite">{{ toast.text }}</div>
+            <div class="app-toast" v-if="toast">{{ toast.text }}</div>
         </transition>
         <!-- command palette (Cmd/Ctrl+K): jump to a feed/folder or run a command -->
         <div class="modal custom-modal command-palette" v-if="paletteOpen" @click="closePalette()">
@@ -894,7 +915,7 @@
         <!-- Undo toast for reversible feed actions (delete, move, mark read). The server
              write is deferred until this window closes, so Undo is instant. -->
         <transition name="toast">
-            <div class="app-toast app-toast-undo" v-if="feedUndo" role="status" aria-live="polite">
+            <div class="app-toast app-toast-undo" v-if="feedUndo">
                 <span class="text-truncate">{{ feedUndo.label }}</span>
                 <button type="button" class="app-toast-btn" @click="runFeedUndo()">Undo</button>
             </div>
