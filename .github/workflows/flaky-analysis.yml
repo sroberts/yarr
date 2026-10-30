@@ -11,6 +11,9 @@ on:
     - cron: '37 6 * * 1'  # Mondays 06:37 UTC
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   flaky-detect:
     runs-on: ubuntu-latest

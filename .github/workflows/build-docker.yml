@@ -9,6 +9,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: sroberts/yarr
 
+permissions:
+  contents: read
+
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest

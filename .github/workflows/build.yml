@@ -6,6 +6,9 @@ on:
       - v*
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build_macos:
     name: Build for MacOS
@@ -119,6 +122,9 @@ jobs:
   create_release:
     name: Create Release
     runs-on: ubuntu-latest
+    # attaching assets to the release is the one write this workflow needs
+    permissions:
+      contents: write
     needs: [build_macos, build_windows, build_multi_cli]
     # Run unless the whole workflow was cancelled — so a single platform
     # failing (historically macOS) still attaches every binary that built,
