@@ -91,6 +91,9 @@ var shortcutFunctions = {
   showShortcuts: function() {
     vm.showSettings('shortcuts')
   },
+  undoFeedAction: function() {
+    vm.runFeedUndo()
+  },
 }
 
 // If you edit, make sure you update the help modal
@@ -116,6 +119,7 @@ var keybindings = {
   "3": shortcutFunctions.showAll,
   "4": shortcutFunctions.startTriage,
   "?": shortcutFunctions.showShortcuts,
+  "u": shortcutFunctions.undoFeedAction,
 }
 
 var codebindings = {
@@ -138,6 +142,7 @@ var codebindings = {
   "Digit2": shortcutFunctions.showStarred,
   "Digit3": shortcutFunctions.showAll,
   "Digit4": shortcutFunctions.startTriage,
+  "KeyU": shortcutFunctions.undoFeedAction,
 }
 
 // Card triage mode runs its own keyboard map: the swipe loop, by keyboard.
@@ -149,7 +154,7 @@ var triageBindings = {
   "s":          function() { vm.cardStar() },
   "o":          function() { vm.cardOpenOriginal() },
   "p":          function() { vm.toggleListen() },
-  "u":          function() { vm.undoCardAction() },
+  "u":          function() { vm.cardUndo ? vm.undoCardAction() : vm.runFeedUndo() },
   "Escape":     function() { vm.cardExpanded ? (vm.cardExpanded = false) : vm.exitCardMode() },
   // the global ways out and the help sheet work here too
   "?":          shortcutFunctions.showShortcuts,
@@ -191,6 +196,12 @@ document.addEventListener('keydown',function(event) {
   }
   // In triage card mode the list/reader shortcuts don't apply; use the card map.
   if (vm.cardMode) {
+    // A focused control keeps its own keys: Enter/Space press the button or
+    // link, the arrows move through the folder picker. Everything else (and the
+    // arrows on a clicked legend button) still triages.
+    var tag = event.target.tagName
+    if ((event.key === 'Enter' || event.key === ' ') && event.target.closest('button, a[href], select, summary')) return
+    if (tag === 'SELECT' && event.key !== 'Escape') return
     var triageFunction = triageBindings[event.key]
     if (triageFunction) {
       event.preventDefault()

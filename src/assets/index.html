@@ -45,6 +45,7 @@
     <!-- #app is the Vue mount container; Vue 3 ignores :class here, so the
          responsive layout classes (feed-selected/item-selected/card-mode) are
          applied imperatively by the appLayoutClasses watcher in app.js. -->
+    <a class="skip-link" href="#col-item-list">Skip to articles</a>
     <div id="app" class="d-flex" v-cloak>
         <!-- feed list -->
         <div id="col-feed-list" role="navigation" aria-label="Feeds" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
@@ -214,18 +215,18 @@
                 </div>
                 <!-- stats screen -->
                 <div v-if="cardDone" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center">
-                    <h4 class="mb-4">All caught up</h4>
+                    <h2 class="card-done-title mb-4">All caught up</h2>
                     <div class="d-flex mb-4" style="gap: 2rem;">
                         <div class="text-center">
                             <div class="card-stat-number card-stat-read">{{ cardStats.read }}</div>
                             <div class="text-muted small">marked read</div>
                         </div>
                         <div class="text-center" v-if="instapaperUsername">
-                            <div class="card-stat-number card-stat-instapaper">{{ cardStats.instapaper }}</div>
+                            <div class="card-stat-number">{{ cardStats.instapaper }}</div>
                             <div class="text-muted small">instapaper</div>
                         </div>
                         <div class="text-center" v-else>
-                            <div class="card-stat-number card-stat-instapaper">{{ cardStats.kept }}</div>
+                            <div class="card-stat-number">{{ cardStats.kept }}</div>
                             <div class="text-muted small">kept unread</div>
                         </div>
                         <div class="text-center" v-if="cardStats.starred">
@@ -266,6 +267,7 @@
                         <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id"
                                :aria-label="folder.title + (filteredFolderStats[folder.id] ? ', ' + filteredFolderStats[folder.id] + ' ' + countNoun : '')">
                         <div class="selectgroup-label d-flex align-items-center w-100" v-if="folder.id"
+                             :class="{'ctx-open': feedContextMenu && feedContextMenu.folder === folder}"
                              @contextmenu.prevent="openFolderContextMenu(folder, $event)">
                             <span class="icon mr-2"
                                   role="button"
@@ -295,6 +297,7 @@
                             <input type="radio" name="feed" :value="'feed:'+feed.id" v-model="feedSelected"
                                    :aria-label="feed.title + (filteredFeedStats[feed.id] ? ', ' + filteredFeedStats[feed.id] + ' ' + countNoun : '') + (feed_errors[feed.id] ? ', has an error' : '')">
                             <div class="selectgroup-label d-flex align-items-center w-100"
+                                 :class="{'ctx-open': feedContextMenu && feedContextMenu.feed === feed}"
                                  @contextmenu.prevent="openFeedContextMenu(feed, $event)">
                                 <span class="icon mr-2" v-if="!feed.has_icon">{% inline "rss.svg" %}</span>
                                 <span class="icon mr-2" v-else><img :src="'./api/feeds/'+feed.id+'/icon'" alt="" loading="lazy"></span>
@@ -330,7 +333,7 @@
             </div>
         </div>
         <!-- item list -->
-        <div id="col-item-list" role="region" aria-label="Articles" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: itemListWidth+'px'}">
+        <div id="col-item-list" role="region" aria-label="Articles" tabindex="-1" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: itemListWidth+'px'}">
             <drag :width="itemListWidth" @resize="resizeItemList"></drag>
             <div class="px-2 toolbar d-flex align-items-center">
                 <button class="toolbar-item toolbar-item-labelled mr-2 d-inline-flex d-md-none"
@@ -466,7 +469,7 @@
                      alone is a last-resort accessible name and is invisible on
                      touch), and the toggles carry aria-pressed so state isn't
                      conveyed by a swapped glyph alone. -->
-                <button class="toolbar-item mr-1 d-block d-md-none"
+                <button class="toolbar-item mr-1 d-block reader-back"
                         @click="itemSelected = null"
                         title="Back"
                         aria-label="Back to article list">
@@ -502,8 +505,8 @@
                     <button class="dropdown-item font-monospace" :class="{active: theme.font == 'monospace'}" @click.stop="theme.font = 'monospace'">monospace</button>
 
                     <div class="d-flex text-center">
-                        <button class="dropdown-item" style="font-size: 0.8rem" @click.stop="incrFont(-1)">A</button>
-                        <button class="dropdown-item" style="font-size: 1.2rem" @click.stop="incrFont(1)">A</button>
+                        <button class="dropdown-item" style="font-size: 0.8rem" @click.stop="incrFont(-1)" aria-label="Smaller text" title="Smaller text">A</button>
+                        <button class="dropdown-item" style="font-size: 1.2rem" @click.stop="incrFont(1)" aria-label="Larger text" title="Larger text">A</button>
                     </div>
                 </dropdown>
                 <!-- The four secondary actions below are desktop/tablet-only:
@@ -649,7 +652,7 @@
                 <div class="content-wrapper" :key="itemSelected">
                     <h1 class="content-title"><b>{{ itemSelectedDetails.title || 'untitled' }}</b></h1>
                     <div class="content-byline">
-                        <span class="byline-feed cursor-pointer" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">{{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}</span>
+                        <button type="button" class="byline-feed" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">{{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}</button>
                         · <time :title="formatDate(itemSelectedDetails.date)">{{ shortDate(itemSelectedDetails.date) }}</time>
                         <span v-if="readingTime(itemSelectedDetails)"> · {{ readingTime(itemSelectedDetails) }} min</span>
                         <span v-if="itemOffline"> · offline copy</span>
@@ -698,29 +701,29 @@
                 <div class="settings-group">
                     <div class="settings-title">Appearance</div>
                     <div class="settings-section">
-                        <label class="settings-label">Theme</label>
-                        <div class="segmented">
+                        <span class="settings-label" id="set-theme">Theme</span>
+                        <div class="segmented" role="group" aria-labelledby="set-theme">
                             <button :aria-label="t" :aria-pressed="(theme.name == t) ? 'true' : 'false'" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t[0].toUpperCase() + t.slice(1) }}</button>
                         </div>
                     </div>
                     <div class="settings-section">
-                        <label class="settings-label">Filing colour</label>
-                        <div class="accent-swatches">
+                        <span class="settings-label" id="set-filing-colour">Filing colour</span>
+                        <div class="accent-swatches" role="group" aria-labelledby="set-filing-colour">
                             <button class="accent-swatch" :class="'swatch-'+a" :aria-label="({rose: 'red', slate: 'graphite'})[a] || a" :aria-pressed="(theme.accent == a) ? 'true' : 'false'" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
                                 <span class="accent-check" v-if="theme.accent == a">{% inline "check.svg" %}</span>
                             </button>
                         </div>
                     </div>
                     <div class="settings-section">
-                        <label class="settings-label">Density</label>
-                        <div class="segmented">
+                        <span class="settings-label" id="set-density">Density</span>
+                        <div class="segmented" role="group" aria-labelledby="set-density">
                             <button :aria-pressed="(theme.density == 'comfortable') ? 'true' : 'false'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
                             <button :aria-pressed="(theme.density == 'compact') ? 'true' : 'false'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
                         </div>
                     </div>
                     <div class="settings-section">
-                        <label class="settings-label">Motion</label>
-                        <div class="segmented">
+                        <span class="settings-label" id="set-motion">Motion</span>
+                        <div class="segmented" role="group" aria-labelledby="set-motion">
                             <button :aria-pressed="(theme.motion == 'system') ? 'true' : 'false'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
                             <button :aria-pressed="(theme.motion == 'reduce') ? 'true' : 'false'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
                         </div>
@@ -730,8 +733,8 @@
                 <div class="settings-group">
                     <div class="settings-title">Reading</div>
                     <div class="settings-section">
-                        <label class="settings-label">Show first</label>
-                        <div class="segmented">
+                        <span class="settings-label" id="set-show-first">Show first</span>
+                        <div class="segmented" role="group" aria-labelledby="set-show-first">
                             <button :aria-pressed="(itemSortNewestFirst) ? 'true' : 'false'" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
                             <button :aria-pressed="(!itemSortNewestFirst) ? 'true' : 'false'" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
                         </div>
@@ -780,8 +783,8 @@
                 <div class="settings-group">
                     <div class="settings-title">Subscriptions</div>
                     <div class="settings-section">
-                        <label class="settings-label">Auto refresh</label>
-                        <div class="segmented">
+                        <span class="settings-label" id="set-auto-refresh">Auto refresh</span>
+                        <div class="segmented" role="group" aria-labelledby="set-auto-refresh">
                             <button @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate" aria-label="less frequent">
                                 <span class="icon">{% inline "chevron-down.svg" %}</span>
                             </button>
@@ -792,8 +795,8 @@
                         </div>
                     </div>
                     <div class="settings-section">
-                        <label class="settings-label">OPML</label>
-                        <div class="d-flex">
+                        <span class="settings-label" id="set-opml">OPML</span>
+                        <div class="d-flex" role="group" aria-labelledby="set-opml">
                             <form id="opml-import-form" enctype="multipart/form-data" tabindex="-1" class="mr-2">
                                 <input type="file" id="opml-import" @change="importOPML" name="opml" style="opacity: 0; width: 1px; height: 0; position: absolute; z-index: -1;">
                                 <label class="btn btn-default mb-0 cursor-pointer" for="opml-import">
@@ -848,6 +851,7 @@
                     <tr><td><kbd>/</kbd></td>               <td>focus the search bar</td></tr>
                     <tr><td><kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
                     <tr><td><kbd>?</kbd></td>               <td>show keyboard shortcuts</td></tr>
+                    <tr><td><kbd>u</kbd></td>               <td>undo the last delete, move or mark all read</td></tr>
 
                     <tr><th colspan=2 scope="colgroup" class="shortcut-group">Moving around</th></tr>
                     <tr><td><kbd>j</kbd> <kbd>k</kbd></td>  <td>next / prev article</td></tr>
@@ -885,7 +889,7 @@
             <div class="app-toast" v-if="toast">{{ toast.text }}</div>
         </transition>
         <!-- command palette (Cmd/Ctrl+K): jump to a feed/folder or run a command -->
-        <div class="modal custom-modal command-palette" v-if="paletteOpen" @click="closePalette()">
+        <div class="modal custom-modal command-palette" v-if="paletteOpen" @click.stop="closePalette()">
             <div class="command-palette-dialog" role="dialog" aria-modal="true" aria-label="Command palette" @click.stop>
                 <input ref="paletteInput"
                        class="command-palette-input"
@@ -902,7 +906,7 @@
                        @keydown.down.prevent="paletteMove(1)"
                        @keydown.up.prevent="paletteMove(-1)"
                        @keydown.enter.prevent="paletteExecute(paletteIndex)"
-                       @keydown.esc.prevent="closePalette()">
+                       @keydown.esc.prevent.stop="closePalette()">
                 <div class="command-palette-results" id="palette-results" role="listbox" aria-label="Results">
                     <template v-for="(r, i) in paletteResults" :key="i">
                         <div class="command-palette-group" role="presentation" v-if="i === 0 || paletteResults[i-1].group !== r.group">{{ r.group }}</div>
@@ -940,9 +944,11 @@
         <!-- Undo toast for reversible feed actions (delete, move, mark read). The server
              write is deferred until this window closes, so Undo is instant. -->
         <transition name="toast">
-            <div class="app-toast app-toast-undo" v-if="feedUndo">
+            <div class="app-toast app-toast-undo" v-if="feedUndo"
+                 @mouseenter="pauseFeedUndo()" @mouseleave="resumeFeedUndo()"
+                 @focusin="pauseFeedUndo()" @focusout="resumeFeedUndo()">
                 <span class="text-truncate">{{ feedUndo.label }}</span>
-                <button type="button" class="app-toast-btn" @click="runFeedUndo()">Undo</button>
+                <button type="button" class="app-toast-btn" @click="runFeedUndo()" aria-keyshortcuts="u">Undo<kbd class="toast-kbd d-none d-md-inline-flex">u</kbd></button>
             </div>
         </transition>
         <!-- Right-click a feed row for its actions. Feed management is rare

@@ -378,6 +378,10 @@ select.form-control:not([multiple]):not([size]) {
 .selectgroup-label:hover {
   cursor: pointer;
 }
+/* the row whose actions menu is open */
+.selectgroup-label.ctx-open {
+  background-color: var(--surface-hover);
+}
 
 .toolbar-search:focus {
   background-color: var(--surface-hover);
@@ -573,8 +577,10 @@ select.form-control:not([multiple]):not([size]) {
   left: -999px;
 }
 
+/* The scrim dims the page rather than blacking it out: enough to set the
+   dialog apart, light enough that you still know where you are. */
 .custom-modal {
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(20, 22, 24, 0.45);
   overflow-y: auto;
   display: block !important;
 }
@@ -1166,8 +1172,18 @@ a,
   border-radius: var(--radius);
   box-shadow: var(--slip-shadow);
 }
+/* On a phone the slip is the screen: no box margin, border or shadow eating
+   the measure, so a line holds ~45 characters instead of ~32. */
 @media (max-width: 767.98px) {
-  #col-item .content-wrapper { padding: 1.25rem 1.1rem 1.75rem; margin-top: .5rem; }
+  #col-item,
+  #col-item .content { background-color: var(--surface-base); }
+  #col-item .content-wrapper {
+    margin: 0 auto;
+    padding: 1.25rem 1.1rem 1.75rem;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }
 .content-title { font-family: var(--font-sans); }
 
@@ -1180,9 +1196,15 @@ a,
   font-variant-numeric: tabular-nums;
 }
 .content-byline .byline-feed {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   color: var(--text-secondary);
   font-weight: 600;
+  cursor: pointer;
 }
+.content-byline .byline-feed:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── The feed column ───────────────────────────────────
    Three columns from tablet width up: feeds and folders in a sidebar, the
@@ -1662,8 +1684,10 @@ a,
   color: var(--text-primary);
 }
 
-.card-stat-instapaper {
-  color: var(--instapaper);
+.card-done-title {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -.01em;
 }
 
 .triage-card.swiping {
@@ -2058,6 +2082,16 @@ body[data-motion="reduce"] *::after {
      matching the swipe undo button. */
   color: color-mix(in srgb, var(--accent) 65%, white);
 }
+/* the keyboard route to Undo, quiet beside the word */
+.toast-kbd {
+  margin-left: .4rem;
+  padding: 0 .3rem;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 3px;
+  background: none;
+  color: rgba(255, 255, 255, .8);
+  font: 600 .7rem/1.4 var(--font-sans);
+}
 .app-toast-btn:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
@@ -2251,3 +2285,26 @@ body[data-motion="reduce"] *::after {
 .segmented > button:disabled:hover { background: transparent; }
 .segmented > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 .segmented-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* Below desk width the reader replaces the list, so it needs a way back;
+   at three columns the list is beside it. */
+@media (min-width: 992px) {
+  .reader-back { display: none !important; }
+}
+
+/* Skip link: off-screen until a keyboard user tabs to it. */
+.skip-link {
+  position: fixed;
+  top: .5rem;
+  left: .5rem;
+  z-index: 1200;
+  padding: .5rem .75rem;
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: none; }
+
+#col-item-list:focus { outline: none; }

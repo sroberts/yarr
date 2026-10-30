@@ -961,3 +961,83 @@ test('reader overflow menu: a link-less item disables the same actions the toolb
   })
   expect(ratio).toBeGreaterThanOrEqual(3)
 })
+
+test('triage: Enter on a focused button presses it instead of opening the card', async ({ page }) => {
+  // Regression: the triage key map took Enter from every focused control, so
+  // tabbing to "Mark read" and pressing Enter expanded the card instead.
+  await page.goto('/')
+  await page.evaluate(() => {
+    var list = [1, 2].map(function (n) {
+      return { id: 820000 + n, feed_id: 1, title: 'Card ' + n, status: 'unread', link: '', content: '<p>body</p>', date: new Date().toISOString() }
+    })
+    api.items.list = function () { return Promise.resolve({ list: list, has_more: false }) }
+    api.items.update = function () { return Promise.resolve() }
+    vm.filterSelected = 'triage'
+  })
+  await expect.poll(() => page.evaluate(() => vm.cardItems.length)).toBe(2)
+  const markRead = page.locator('.card-legend-btn').last()
+  await markRead.focus()
+  await page.keyboard.press('Enter')
+  await expect.poll(() => page.evaluate(() => vm.cardStats.read)).toBe(1)
+  expect(await page.evaluate(() => vm.cardExpanded)).toBe(false)
+})
+
+test('feed undo: u undoes, and hovering the toast holds it open', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    window.__undone = 0
+    vm.showFeedUndo('Deleted “Example”', function () { window.__undone++ }, function () {})
+  })
+  await expect(page.locator('.app-toast-undo')).toBeVisible()
+  await page.keyboard.press('u')
+  await expect(page.locator('.app-toast-undo')).toHaveCount(0)
+  expect(await page.evaluate(() => window.__undone)).toBe(1)
+
+  // a short window that would close while the pointer is on the toast
+  await page.evaluate(() => vm.showFeedUndo('Moved “Example”', function () {}, function () {}, 400))
+  await page.locator('.app-toast-undo').hover()
+  await page.waitForTimeout(800)
+  await expect(page.locator('.app-toast-undo')).toBeVisible()
+  await page.mouse.move(5, 5)
+  await expect(page.locator('.app-toast-undo')).toHaveCount(0, { timeout: 2000 })
+})
+
+test('palette over a dialog: Esc closes only the palette and focus stays in the dialog', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await page.getByRole('button', { name: 'Settings', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible()
+  await page.evaluate(() => vm.openPalette())
+  await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog', { name: 'Command palette' })).toHaveCount(0)
+  await expect(page.getByRole('dialog', { name: 'Settings' })).toBeVisible()
+  expect(await page.evaluate(() => !!document.activeElement.closest('.modal-content'))).toBe(true)
+})
+
+test('offline banner: silent online, announced offline', async ({ page, context }) => {
+  // Online, the banner used to sit off-screen with its text, so screen readers
+  // read "You're offline" to everyone.
+  await page.goto('/')
+  const banner = page.locator('.offline-banner')
+  await expect(banner).toHaveText('')
+  await context.setOffline(true)
+  await expect(banner).toHaveText('You’re offline')
+  await expect(banner).toHaveAttribute('role', 'status')
+  await context.setOffline(false)
+  await expect(banner).toHaveText('')
+})
+
+test('feed actions on a phone: ⋯ opens the menu without opening the feed', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/')
+  await page.evaluate(() => {
+    vm.filterSelected = ''
+    vm.feeds = [{ id: 830001, title: 'Phone Feed', folder_id: null, link: '', feed_link: 'https://example.com/f' }]
+  })
+  const row = page.locator('#col-feed-list .selectgroup', { hasText: 'Phone Feed' })
+  await row.locator('.feed-row-menu').click()
+  await expect(page.getByRole('menu', { name: 'Actions for Phone Feed' })).toBeVisible()
+  expect(await page.evaluate(() => vm.feedSelected)).toBeNull()
+  await expect(page.locator('#col-feed-list')).toBeVisible()
+})

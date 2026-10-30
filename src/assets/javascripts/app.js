@@ -379,6 +379,13 @@ vueApp.component('dropdown', {
     },
     keyHandler: function(e) {
       if (e.key === 'Escape') { this.hide(); this.$refs.btn.focus(); return }
+      // Tabbing out of the menu closes it, like clicking elsewhere does
+      if (e.key === 'Tab') {
+        setTimeout(function() {
+          if (this.open && !this.$el.contains(document.activeElement)) this.hide()
+        }.bind(this))
+        return
+      }
       var keys = {ArrowDown: 1, ArrowUp: -1, Home: 'first', End: 'last'}
       if (!(e.key in keys)) return
       var items = this.menuItems()
@@ -847,7 +854,7 @@ function rootComponent() { return {
     },
     // the persistent live region's text: whichever toast is showing
     liveStatus: function() {
-      if (this.feedUndo) return this.feedUndo.label
+      if (this.feedUndo) return this.feedUndo.label + '. Press u to undo.'
       if (this.cardUndo) return this.cardUndoLabel
       return this.toast ? this.toast.text : ''
     },
@@ -1201,20 +1208,20 @@ function rootComponent() { return {
     },
     // Feed row actions menu — opened by right-click OR the row's ⋯ button.
     // Positioned fixed (clamped to the viewport) so the overflow:auto feed list
-    // can't clip it; closes on any click, scroll, resize, or Escape. Opening it
-    // also selects the row, so the menu and the command palette act on the same
-    // feed. `event` is a mouse or keyboard event; keyboard activation has no
-    // cursor, so we fall back to the trigger element's box.
+    // can't clip it; closes on any click, scroll, resize, or Escape.
+    // `event` is a mouse or keyboard event; keyboard activation has no
+    // cursor, so we fall back to the trigger element's box. Opening it leaves the
+    // selection alone (on a phone, selecting navigates into the feed); the row
+    // whose menu is open is marked instead.
     openFeedContextMenu: function(feed, event) {
-      this.openContextMenu({feed: feed}, 'feed:' + feed.id, event)
+      this.openContextMenu({feed: feed}, event)
     },
     // Folder rows share the same menu; `feedContextMenu.folder` is set instead
     // of `.feed`, and the template switches on which one is present.
     openFolderContextMenu: function(folder, event) {
-      this.openContextMenu({folder: folder}, 'folder:' + folder.id, event)
+      this.openContextMenu({folder: folder}, event)
     },
-    openContextMenu: function(target, selection, event) {
-      this.feedSelected = selection
+    openContextMenu: function(target, event) {
       // remember the trigger so focus can return to it when the menu closes
       this._ctxTrigger = (event && event.currentTarget) || null
       var x = event && event.clientX, y = event && event.clientY
@@ -1581,15 +1588,24 @@ function rootComponent() { return {
       this.promptModal = null
       if (val) m.onConfirm(val)
     },
-    // Show a reversible-action toast. `onCommit` fires when the ~5s window closes
-    // (or is superseded); `onUndo` fires if the user hits Undo instead. Starting a
-    // new undo commits any pending one first, so a deferred server write is never
-    // dropped when actions are chained.
-    showFeedUndo: function(label, onUndo, onCommit) {
+    // Show a reversible-action toast. `onCommit` fires when the window closes
+    // (6s, or `ms` — deletes get longer) or is superseded; `onUndo` fires if the
+    // user hits Undo or presses u instead. Starting a new undo commits any
+    // pending one first, so a deferred server write is never dropped when
+    // actions are chained. Hovering or focusing the toast holds the window open.
+    showFeedUndo: function(label, onUndo, onCommit, ms) {
       if (this.feedUndo) this.runFeedUndoCommit()
-      var self = this
-      var timer = setTimeout(function() { self.runFeedUndoCommit() }, 5000)
-      this.feedUndo = {label: label, onUndo: onUndo, onCommit: onCommit, timer: timer}
+      this.feedUndo = {label: label, onUndo: onUndo, onCommit: onCommit, ms: ms || 6000, timer: null}
+      this.resumeFeedUndo()
+    },
+    pauseFeedUndo: function() {
+      if (this.feedUndo) clearTimeout(this.feedUndo.timer)
+    },
+    resumeFeedUndo: function() {
+      var u = this.feedUndo, self = this
+      if (!u) return
+      clearTimeout(u.timer)
+      u.timer = setTimeout(function() { if (self.feedUndo === u) self.runFeedUndoCommit() }, u.ms)
     },
     runFeedUndoCommit: function() {
       var u = this.feedUndo
@@ -1674,7 +1690,7 @@ function rootComponent() { return {
           vm.refreshStats()
           vm.refreshFeeds()
         })
-      })
+      }, 10000)
     },
     updateFeedLink: function(feed) {
       this.askPrompt({title: 'Change feed link', value: feed.feed_link, confirmLabel: 'Change', onConfirm: function(newLink) {
@@ -1705,7 +1721,7 @@ function rootComponent() { return {
           vm.refreshStats()
           vm.refreshFeeds()
         })
-      })
+      }, 10000)
     },
     createFeed: function(event) {
       this.feedNewError = ''
@@ -2236,11 +2252,15 @@ if ('serviceWorker' in navigator) {
 (function() {
   var banner = document.createElement('div')
   banner.className = 'offline-banner'
-  banner.textContent = 'You\u2019re offline'
+  banner.setAttribute('role', 'status')
   document.body.appendChild(banner)
 
+  // Online, the banner is parked off-screen and empty, so screen readers find
+  // nothing; going offline fills the live region, which announces it.
   function update() {
-    banner.classList.toggle('visible', !navigator.onLine)
+    var offline = !navigator.onLine
+    banner.classList.toggle('visible', offline)
+    banner.textContent = offline ? 'You\u2019re offline' : ''
   }
   window.addEventListener('online', update)
   window.addEventListener('offline', update)
