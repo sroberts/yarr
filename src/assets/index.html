@@ -106,7 +106,6 @@
                         Refresh Feeds
                     </button>
                     <div class="dropdown-divider"></div>
-                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="openPalette()">
                         <span class="icon mr-1">{% inline "search.svg" %}</span>
                         Command Palette
@@ -311,7 +310,7 @@
                 <div class="empty-hint" v-if="feeds.length === 0">
                     <p class="mb-2">No feeds yet.</p>
                     <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
-                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
+                    <p class="text-muted small mb-0">Or import an OPML file under <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> → Settings.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
                 </div>
             </div>
             <div class="p-2 toolbar d-flex align-items-center border-top flex-shrink-0" v-if="loading.feeds">
@@ -402,7 +401,7 @@
                 <div class="empty-hint" v-if="feeds.length === 0">
                     <p class="mb-2">No feeds yet.</p>
                     <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
-                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
+                    <p class="text-muted small mb-0">Or import an OPML file under <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> → Settings.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
                 </div>
                 <label v-for="(item, index) in items" :key="item.id"
                        class="selectgroup">
