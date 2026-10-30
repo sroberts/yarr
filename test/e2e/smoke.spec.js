@@ -1031,9 +1031,14 @@ test('offline banner: silent online, announced offline', async ({ page, context 
 test('feed actions on a phone: ⋯ opens the menu without opening the feed', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
+  // seed after the app's own first fetch, and keep later refreshes from
+  // replacing the seeded feed with the empty test DB's list
+  await page.waitForLoadState('networkidle')
   await page.evaluate(() => {
+    var feeds = [{ id: 830001, title: 'Phone Feed', folder_id: null, link: '', feed_link: 'https://example.com/f' }]
+    api.feeds.list = function () { return Promise.resolve(feeds) }
     vm.filterSelected = ''
-    vm.feeds = [{ id: 830001, title: 'Phone Feed', folder_id: null, link: '', feed_link: 'https://example.com/f' }]
+    vm.feeds = feeds
   })
   const row = page.locator('#col-feed-list .selectgroup', { hasText: 'Phone Feed' })
   await row.locator('.feed-row-menu').click()
