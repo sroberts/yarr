@@ -1572,10 +1572,17 @@ a,
   font-size: .85rem;
 }
 .triage-card-body > :first-child { margin-top: 0; }
-.triage-card-hint a { color: var(--accent); }
+/* links are ink, underlined: the filing colour means filed, not "link" */
+.triage-card-hint a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
+/* The excerpt and the article read in the card share the reader's font, so
+   expanding never changes the voice. Paragraph breaks survive (pre-line). */
 .triage-card-excerpt {
-  font-family: var(--font-serif);
+  white-space: pre-line;
   font-size: 1rem;
   line-height: 1.6;
   color: var(--text-secondary);
@@ -2154,7 +2161,7 @@ body[data-motion="reduce"] *::after {
    (≤991.98px), where the feed list is slid away. On the 3-pane desktop the
    feed-list CTA already covers it, so hide this one to avoid a double CTA. */
 @media (min-width: 992px) {
-  #col-item-list .empty-hint { display: none; }
+  #col-item-list .empty-hint:not(.stack-empty) { display: none; }
 }
 .reader-empty .icon {
   width: 2rem;
@@ -2287,9 +2294,13 @@ body[data-motion="reduce"] *::after {
 .segmented-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
 /* Below desk width the reader replaces the list, so it needs a way back;
-   at three columns the list is beside it. */
+   at three columns the list is beside it. One exit each: Back below desk
+   width, Close at it. */
 @media (min-width: 992px) {
   .reader-back { display: none !important; }
+}
+@media (max-width: 991.98px) {
+  .reader-close { display: none !important; }
 }
 
 /* Skip link: off-screen until a keyboard user tabs to it. */
@@ -2308,3 +2319,51 @@ body[data-motion="reduce"] *::after {
 .skip-link:focus { transform: none; }
 
 #col-item-list:focus { outline: none; }
+
+/* View filters name themselves where the toolbar has room: text replaces the
+   icons (whose glyphs, Triage's above all, can't be guessed), and the
+   wordmark steps aside until there is room for both. Narrow sidebars keep
+   the icons; the stack heading names the view either way. */
+.view-toolbar { container-type: inline-size; }
+.view-label { display: none; font-size: .8rem; font-weight: 600; }
+@container (min-width: 280px) {
+  .view-toolbar .view-label { display: inline; }
+  .view-toolbar .view-icon { display: none; }
+  .view-toolbar .wordmark { display: none !important; }
+}
+@media (min-width: 768px) {
+  @container (min-width: 380px) {
+    .view-toolbar .wordmark { display: inline-flex !important; }
+  }
+}
+
+/* the byline feed name is a link-sized word; on touch give it a finger's
+   worth of height without moving the line */
+@media (pointer: coarse) {
+  .content-byline .byline-feed { padding: .75rem 0; margin: -.75rem 0; }
+}
+
+/* "Not now" (with Instapaper on the left swipe): a plain outlined button
+   beside Star, quieter than the keeper verb. On a phone it takes Listen's
+   room in the legend; Listen stays in the reader. */
+.card-legend-btn.card-skip-btn {
+  min-height: 2rem;
+  margin: 0 .5rem 0 0;
+  padding: .25rem .85rem;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+@media (pointer: coarse) { .card-legend-btn.card-skip-btn { min-height: 44px; } }
+@media (max-width: 767.98px) {
+  .card-view-legend.has-skip .card-listen-btn { display: none; }
+  .card-view-legend.has-skip .card-star-btn { margin-right: 0 !important; }
+}
+@media (max-width: 359px) {
+  /* 320px with four verbs: Star keeps its glyph and its name for AT */
+  .card-view-legend.has-skip .card-star-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+  }
+  .card-view-legend.has-skip .card-star-btn { padding: .25rem .6rem; }
+  .card-view-legend.has-skip { padding-left: .9rem !important; padding-right: .9rem !important; }
+}

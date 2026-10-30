@@ -76,6 +76,11 @@ var shortcutFunctions = {
   closeItem: function () {
     vm.itemSelected = null
   },
+  // Esc closes the article too, unless it is closing a menu first
+  escapeItem: function () {
+    if (vm.feedContextMenu || document.querySelector('.dropdown-menu.show')) return
+    vm.itemSelected = null
+  },
   showAll() {
     vm.filterSelected = ''
   },
@@ -114,6 +119,7 @@ var keybindings = {
   "f": shortcutFunctions.scrollForward,
   "b": shortcutFunctions.scrollBackward,
   "q": shortcutFunctions.closeItem,
+  "Escape": shortcutFunctions.escapeItem,
   "1": shortcutFunctions.showUnread,
   "2": shortcutFunctions.showStarred,
   "3": shortcutFunctions.showAll,
@@ -152,6 +158,7 @@ var triageBindings = {
   "ArrowLeft":  function() { vm.cardSwipeLeft() },
   "Enter":      function() { vm.cardExpanded ? (vm.cardExpanded = false) : vm.cardTap() },
   "s":          function() { vm.cardStar() },
+  "n":          function() { vm.cardSkip() },
   "o":          function() { vm.cardOpenOriginal() },
   "p":          function() { vm.toggleListen() },
   "u":          function() { vm.cardUndo ? vm.undoCardAction() : vm.runFeedUndo() },
