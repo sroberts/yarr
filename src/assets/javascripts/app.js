@@ -35,7 +35,12 @@ function fuzzyMatch(query, text) {
       streak = 0
     }
   }
-  return qi === q.length ? score - ti * 0.01 : -1       // tiebreak: earlier finish
+  if (qi !== q.length) return -1
+  // Text that starts with the query, or has it whole at a word start, beats
+  // initials scattered across words: "ref" is Refresh feeds, not Rename feed.
+  if (t.indexOf(q) === 0) score += 40
+  else if (new RegExp('(^|[\\s\\W_])' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(t)) score += 20
+  return score - ti * 0.01                              // tiebreak: earlier finish
 }
 
 // Resume position: remember where you left off in a long article. Per-device,
@@ -785,7 +790,8 @@ function rootComponent() { return {
       return null
     },
     cardDone: function() {
-      return this.cardMode && this.cardIndex >= this.cardItems.length && !this.cardLoading
+      // a finished run, not an empty one: zero cards has its own state
+      return this.cardMode && this.cardItems.length > 0 && this.cardIndex >= this.cardItems.length && !this.cardLoading
     },
     // Where the open slip sits in the stack: its position and the length of
     // the stack loaded so far ("15+" while more can load).
@@ -818,6 +824,41 @@ function rootComponent() { return {
         n: n,
         count: n ? n + ' ' + (this.filterSelected == 'starred' ? 'starred' : 'unread') : '',
       }
+    },
+    // What an empty stack says, and the one way on from it. Null while the
+    // stack has items, is loading, is a search (the result count says it), or
+    // there are no feeds at all (the first-run hint covers that).
+    stackEmpty: function() {
+      if (this.items.length || this.loading.items || this.itemSearch || !this.feeds.length) return null
+      var self = this
+      if (this.feedSelected === null) {
+        return {
+          title: 'Pick a feed or folder to read.',
+          reader: 'Pick a feed or folder',
+          action: {label: 'Show everything', run: function() { self.feedSelected = '' }},
+        }
+      }
+      // a feed or folder by name; the All views are "your feeds"
+      var cur = this.current
+      var where = cur.type == 'feed' ? cur.feed.title : cur.type == 'folder' ? cur.folder.title : 'your feeds'
+      where = where || 'this view'
+      if (this.filterSelected == 'unread') {
+        return {
+          title: 'Nothing unread in ' + where + '.',
+          detail: 'New articles land here when your feeds next refresh.',
+          reader: 'All caught up',
+          action: {label: 'Show all articles', run: function() { self.filterSelected = '' }},
+        }
+      }
+      if (this.filterSelected == 'starred') {
+        return {
+          title: 'Nothing starred in ' + where + '.',
+          detail: 'Star an article (s) to keep it here and offline.',
+          reader: 'Nothing starred yet',
+          action: {label: 'Show unread', run: function() { self.filterSelected = 'unread' }},
+        }
+      }
+      return {title: 'No articles in ' + where + ' yet.', reader: 'No articles yet'}
     },
     // Unique codes for every feed and folder: two letters where they're free,
     // a third (or a digit) to settle a clash. The view codes are reserved, and
@@ -858,12 +899,21 @@ function rootComponent() { return {
       if (this.cardUndo) return this.cardUndoLabel
       return this.toast ? this.toast.text : ''
     },
+    // the reader's chosen font, shared by the open slip and the triage card
+    readingFontClass: function() {
+      return {'font-serif': this.theme.font == 'serif', 'font-monospace': this.theme.font == 'monospace'}
+    },
     cardExcerpt: function() {
       if (!this.currentCard || !this.currentCard.content) return ''
-      var tmp = document.createElement('div')
-      tmp.textContent = ''
-      tmp.insertAdjacentHTML('afterbegin', this.currentCard.content)
-      var text = tmp.textContent || tmp.innerText || ''
+      // Parse inertly (no image loads), drop code and scripts, and keep the
+      // breaks between blocks so headings and paragraphs don't run together.
+      var doc = new DOMParser().parseFromString(this.currentCard.content, 'text/html')
+      doc.querySelectorAll('pre, script, style, noscript').forEach(function(el) { el.remove() })
+      doc.querySelectorAll('br').forEach(function(el) { el.replaceWith('\n') })
+      doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote, div, figcaption, tr').forEach(function(el) {
+        el.append('\n\n')
+      })
+      var text = (doc.body.textContent || '').replace(/[ \t]*\n[ \t]*/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
       // the wide desk card has room to decide on more than a phone's worth
       var max = window.matchMedia('(min-width: 768px)').matches ? 1200 : 600
       return text.length > max ? text.substring(0, max) + '…' : text
@@ -878,6 +928,11 @@ function rootComponent() { return {
       } catch (e) {
         return ''
       }
+    },
+    // the folder being triaged, for the zero state's sentence
+    cardScopeName: function() {
+      var f = this.cardFolder && this.folders.find(function(x) { return String(x.id) === String(vm.cardFolder) })
+      return f ? f.title : 'your feeds'
     },
     cardUndoLabel: function() {
       if (!this.cardUndo) return ''
@@ -1948,19 +2003,25 @@ function rootComponent() { return {
       this.filterSelected = this.previousFilter
     },
     cardSwipeLeft: function() {
+      if (!this.instapaperUsername) return this.cardSkip()
       var item = this.currentCard
       if (!item) return
       this.flushCardAction()
-      var index = this.cardIndex
-      if (this.instapaperUsername) {
-        this.applyCardRead(item)
-        item.instapaper_saved = true
-        this.cardStats.instapaper += 1
-        this.scheduleCardUndo(item, 'instapaper', index)
-      } else {
-        this.cardStats.kept += 1
-        this.scheduleCardUndo(item, 'kept', index)
-      }
+      this.applyCardRead(item)
+      item.instapaper_saved = true
+      this.cardStats.instapaper += 1
+      this.scheduleCardUndo(item, 'instapaper', this.cardIndex)
+      this.cardIndex += 1
+    },
+    // "Not now": pass the card by and leave it unread. It is the left swipe
+    // without Instapaper; with Instapaper the left swipe saves, so this is
+    // the n key and the "Not now" button.
+    cardSkip: function() {
+      var item = this.currentCard
+      if (!item) return
+      this.flushCardAction()
+      this.cardStats.kept += 1
+      this.scheduleCardUndo(item, 'kept', this.cardIndex)
       this.cardIndex += 1
     },
     cardSwipeRight: function() {
