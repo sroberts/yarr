@@ -1,3 +1,7 @@
+> This file is upstream yarr's changelog, kept for history. Release notes for
+> this fork's `vX.Ys` versions are on the
+> [releases page](https://github.com/sroberts/yarr/releases).
+
 # upcoming
 
 - (new) save to Instapaper: save articles to Instapaper via toolbar button or `Shift+I` shortcut

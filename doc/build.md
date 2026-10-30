@@ -9,7 +9,7 @@ Prerequisies:
 
 Get the source code:
 
-    git clone https://github.com/nkanaev/yarr.git
+    git clone https://github.com/sroberts/yarr.git
 
 Compile:
 

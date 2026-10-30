@@ -9,6 +9,9 @@ on:
     - cron: '17 7 * * *'  # 07:17 UTC daily — off the top of the hour
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   coverage:
     runs-on: ubuntu-latest

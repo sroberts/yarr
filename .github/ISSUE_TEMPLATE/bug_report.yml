@@ -1,0 +1,55 @@
+name: Bug report
+description: Something in this fork doesn't work the way it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please search open issues first.
+        Security problems go through [private reporting](https://github.com/sroberts/yarr/security/advisories/new), not here.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The release tag (e.g. v2.49s), or `yarr -version`.
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: How do you run yarr?
+      options:
+        - macOS app
+        - Windows app
+        - Linux binary
+        - Docker / Once image
+        - Self-hosted binary behind a proxy
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and device
+      description: For UI problems, e.g. "Safari on iPhone (PWA)" or "Firefox 140 on Linux".
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      render: shell

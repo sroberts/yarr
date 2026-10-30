@@ -2,10 +2,12 @@
 
 <!-- One paragraph: what changed and why. -->
 
+Closes #
+
 ## Test plan
 
 - [ ] Unit tests cover the change
-- [ ] Lint and type-check pass
+- [ ] `gofmt`, `go vet` and `make test` pass (CI also runs golangci-lint and e2e)
 - [ ] Manual smoke check (if UI / behavior changed)
 - [ ] Docs updated (if a public surface changed)
 - [ ] No unrelated formatting churn in the diff

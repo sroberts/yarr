@@ -1,0 +1,37 @@
+version: 2
+updates:
+  # Go modules. yarr vendors its dependencies, so Dependabot re-vendors on
+  # each update and the vendor-drift check keeps passing.
+  - package-ecosystem: "gomod"
+    directory: "/"
+    vendor: true
+    schedule:
+      interval: "weekly"
+    groups:
+      go-minor-and-patch:
+        update-types: ["minor", "patch"]
+    commit-message:
+      prefix: "deps"
+
+  # The Playwright e2e harness.
+  - package-ecosystem: "npm"
+    directory: "/test/e2e"
+    schedule:
+      interval: "monthly"
+    groups:
+      e2e:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps(e2e)"
+
+  # Workflow actions, including the SHA pins (it updates the pin and the
+  # version comment together).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
