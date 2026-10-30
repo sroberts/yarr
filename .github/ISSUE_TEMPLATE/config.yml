@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/sroberts/yarr/security/advisories/new
+    about: Please report security issues privately.
+  - name: Problems that also happen in upstream yarr
+    url: https://github.com/nkanaev/yarr/issues
+    about: If it isn't specific to this fork, upstream may want to know too.
