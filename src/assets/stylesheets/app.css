@@ -235,7 +235,7 @@ select.form-control:not([multiple]):not([size]) {
 
 .settings-dropdown .dropdown-menu {
   padding: 0;
-  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
   overflow: hidden;
   max-height: calc(100vh - 3rem);
   overflow-y: auto;
@@ -999,7 +999,7 @@ a,
   top: 0;
   right: .85rem;
   width: 14px;
-  height: 7px;
+  height: 5px;
   border-radius: 0 0 2px 2px;
   background: var(--accent);
   pointer-events: none;
@@ -1078,6 +1078,50 @@ a,
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* a menu item's shortcut, quiet at its right edge */
+.menu-kbd {
+  margin-left: auto;
+  padding-left: 1.25rem;
+  background: none;
+  color: var(--text-tertiary);
+  font-size: .75rem;
+}
+.dropdown-item:has(.menu-kbd) { display: flex; align-items: center; }
+
+/* menus float a step above whatever they open over, in both themes */
+.dropdown-menu {
+  border: 1px solid var(--border-strong);
+}
+
+/* the shortcut sheet's group headings */
+.shortcut-table .shortcut-group {
+  padding-top: 1rem;
+  font-size: .8rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-secondary);
+}
+.shortcut-table tr:first-child .shortcut-group { padding-top: .25rem; }
+
+/* the triage legend's two verbs, drawn as the legend but pressable */
+.card-legend-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 .4rem;
+  margin: 0 -.4rem;
+  border-radius: var(--radius);
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+}
+@media (hover: hover) { .card-legend-btn:hover { background: var(--surface-hover); color: var(--text-primary); } }
+@media (pointer: coarse) { .card-legend-btn { min-height: 44px; } }
+@media (max-width: 359px) {
+  /* 320px: the verbs keep one line; Listen stays in the reader */
+  .card-view-legend .card-listen-btn { display: none; }
 }
 
 /* the menu's version line is a caption, not an item */
@@ -2184,7 +2228,7 @@ body[data-motion="reduce"] *::after {
 }
 .segmented > * {
   flex: 1;
-  min-height: 44px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2193,6 +2237,8 @@ body[data-motion="reduce"] *::after {
   border-left: 1px solid var(--border-subtle);
 }
 .segmented > *:first-child { border-left: 0; }
+/* full 44px targets where a finger presses them; a desk needs less weight */
+@media (pointer: coarse) { .segmented > * { min-height: 44px; } }
 .segmented > button {
   background: transparent;
   color: var(--text-primary);

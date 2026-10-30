@@ -304,11 +304,18 @@ vueApp.component('dropdown', {
   },
   methods: {
     toggle: function(e) {
-      this.open ? this.hide() : this.show()
+      this.open ? this.hide() : this.show(e)
     },
     show: function(e) {
       this.open = true
       var menu = this.$refs.menu
+      // opening from the keyboard (a click with no pointer detail) puts focus
+      // on the first item; arrows, Home and End move between them
+      var fromKeyboard = e && e.detail === 0
+      this.$nextTick(function() {
+        var items = this.menuItems()
+        if (fromKeyboard && items.length) items[0].focus()
+      }.bind(this))
       var drop = this.$props.drop
 
       // Feed-row menus sit inside an overflow:auto scroll container that would
@@ -364,19 +371,35 @@ vueApp.component('dropdown', {
       if (dropdown == null || dropdown != this.$el) return this.hide()
       if (e.target.closest('.dropdown-item') != null) return this.hide()
     },
+    menuItems: function() {
+      if (!this.$refs.menu) return []
+      return Array.prototype.filter.call(this.$refs.menu.querySelectorAll('.dropdown-item'), function(el) {
+        return !el.disabled && !el.classList.contains('disabled')
+      })
+    },
     keyHandler: function(e) {
-      if (e.key === 'Escape') { this.hide(); this.$refs.btn.focus() }
+      if (e.key === 'Escape') { this.hide(); this.$refs.btn.focus(); return }
+      var keys = {ArrowDown: 1, ArrowUp: -1, Home: 'first', End: 'last'}
+      if (!(e.key in keys)) return
+      var items = this.menuItems()
+      if (!items.length) return
+      e.preventDefault()
+      e.stopPropagation()
+      var i = items.indexOf(document.activeElement)
+      var k = keys[e.key]
+      var next = k === 'first' ? 0 : k === 'last' ? items.length - 1 : (i < 0 ? (k > 0 ? 0 : items.length - 1) : (i + k + items.length) % items.length)
+      items[next].focus()
     }
   },
 })
 
 vueApp.component('modal', {
-  props: ['open'],
+  props: ['open', 'label'],
   emits: ['hide'],
   template: `
     <div class="modal custom-modal" tabindex="-1" v-if="$props.open">
       <div class="modal-dialog">
-        <div class="modal-content" ref="content" tabindex="-1">
+        <div class="modal-content" ref="content" tabindex="-1" role="dialog" aria-modal="true" :aria-label="$props.label">
           <div class="modal-body">
             <slot v-if="$props.open"></slot>
           </div>
@@ -416,6 +439,16 @@ vueApp.component('modal', {
     },
     handleKey: function(e) {
       if (e.key === 'Escape') this.$emit('hide')
+      // keep Tab inside the dialog: it is modal, so the page behind is inert
+      if (e.key === 'Tab' && this.$refs.content) {
+        var f = Array.prototype.filter.call(
+          this.$refs.content.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+          function(el) { return !el.disabled && el.getClientRects().length })
+        if (!f.length) return
+        var first = f[0], last = f[f.length - 1], at = document.activeElement
+        if (e.shiftKey && (at === first || at === this.$refs.content)) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus() }
+      }
     },
   },
 })
@@ -593,6 +626,7 @@ function rootComponent() { return {
       'cardUndo': null,
       'cardExpanded': false,
       'instapaperSaved': false,
+      'feedNewError': '',
       'isMac': /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
       'toast': null,
       'linkCopied': false,
@@ -679,7 +713,7 @@ function rootComponent() { return {
         }})
       })
       // An address ("fb04", "FB·04", or just "4") jumps to that slip in the
-      // stack; a bare code ("fb") to that feed. Both go to the top.
+      // stack, listed first. A bare code ("fb") already fuzzy-matches its feed.
       var jumps = []
       var key = q.toUpperCase().replace(/[\s·.\-]/g, '')
       if (key) {
@@ -689,13 +723,6 @@ function rootComponent() { return {
           if (addr.replace('·', '') === key || (/^\d+$/.test(key) && +key === i + 1)) {
             jumps.push({group: 'Go to', label: addr + '  ' + (item.title || 'untitled'), run: function() {
               vm.itemSelected = item.id
-            }})
-          }
-        })
-        this.feeds.forEach(function(f) {
-          if (self.feedCodes.feeds[f.id] === key) {
-            jumps.push({group: 'Go to', label: key + '  ' + (f.title || f.feed_link), run: function() {
-              vm.feedSelected = 'feed:' + f.id; vm.itemSelected = null
             }})
           }
         })
@@ -807,6 +834,10 @@ function rootComponent() { return {
       }
       var feeds = allocate(this.feeds)
       return {feeds: feeds, folders: allocate(this.folders)}
+    },
+    // what the sidebar counts count, for their accessible names
+    countNoun: function() {
+      return this.filterSelected == 'starred' ? 'starred' : 'unread'
     },
     // what a screen reader hears as each triage card arrives
     cardAnnouncement: function() {
@@ -1677,6 +1708,7 @@ function rootComponent() { return {
       })
     },
     createFeed: function(event) {
+      this.feedNewError = ''
       var form = event.target
       var data = {
         url: form.querySelector('input[name=url]').value,
@@ -1696,7 +1728,7 @@ function rootComponent() { return {
           vm.feedNewChoice = result.choice
           vm.feedNewChoiceSelected = result.choice[0].url
         } else {
-          alert('No feeds found at the given url.')
+          vm.feedNewError = "No feed found at that address. Check the URL, or try the site's home page."
         }
         vm.loading.newfeed = false
       })
@@ -2040,6 +2072,12 @@ function rootComponent() { return {
     },
     showSettings: function(settings) {
       this.settings = settings
+      this.feedNewError = ''
+      // switching panels reuses the open dialog: start each one at its top
+      this.$nextTick(function() {
+        var body = document.querySelector('.custom-modal .modal-body')
+        if (body) body.scrollTop = 0
+      })
 
       if (settings === 'create') {
         vm.feedNewChoice = []

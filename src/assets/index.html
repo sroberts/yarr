@@ -109,6 +109,7 @@
                     <button class="dropdown-item" @click="openPalette()">
                         <span class="icon mr-1">{% inline "search.svg" %}</span>
                         Command Palette
+                        <kbd class="menu-kbd">{{ isMac ? '⌘' : 'Ctrl' }} K</kbd>
                     </button>
                     <button class="dropdown-item" @click="showSettings('settings')">
                         <span class="icon mr-1">{% inline "sliders.svg" %}</span>
@@ -117,6 +118,7 @@
                     <button class="dropdown-item" @click="showSettings('shortcuts')">
                         <span class="icon mr-1">{% inline "help-circle.svg" %}</span>
                         Shortcuts
+                        <kbd class="menu-kbd">?</kbd>
                     </button>
                     <!-- a caption, not an item: nothing to press -->
                     <div class="dropdown-divider" v-if="version"></div>
@@ -178,8 +180,12 @@
                 <div class="card-view-action" id="card-action-indicator"></div>
                 <!-- swipe hints -->
                 <div v-if="currentCard && !cardDone" class="card-view-hints card-view-legend px-4 pb-3 d-flex align-items-center justify-content-between small">
-                    <span class="d-inline-flex align-items-center" v-if="instapaperUsername"><span class="icon mr-1">{% inline "chevron-left.svg" %}</span>instapaper</span>
-                    <span class="d-inline-flex align-items-center" v-else><span class="icon mr-1">{% inline "chevron-left.svg" %}</span>keep unread</span>
+                    <!-- the legend ends are the verbs themselves: a mouse, or a
+                         screen reader that keeps the arrow keys, can triage too -->
+                    <button type="button" class="card-legend-btn" @click="cardSwipeLeft()" aria-keyshortcuts="ArrowLeft"
+                            :title="instapaperUsername ? 'Save to Instapaper and go to the next card (←)' : 'Keep unread and go to the next card (←)'">
+                        <span class="icon mr-1">{% inline "chevron-left.svg" %}</span>{{ instapaperUsername ? 'Instapaper' : 'Keep unread' }}
+                    </button>
                     <div class="d-flex align-items-center">
                         <!-- star is the verb swipes can't carry: left and right
                              are taken, and vertical drags scroll the excerpt -->
@@ -201,7 +207,10 @@
                             <span class="icon" v-else>{% inline "pause.svg" %}</span>
                         </button>
                     </div>
-                    <span class="d-inline-flex align-items-center">mark read<span class="icon ml-1">{% inline "chevron-right.svg" %}</span></span>
+                    <button type="button" class="card-legend-btn" @click="cardSwipeRight()" aria-keyshortcuts="ArrowRight"
+                            title="Mark read and go to the next card (→)">
+                        Mark read<span class="icon ml-1">{% inline "chevron-right.svg" %}</span>
+                    </button>
                 </div>
                 <!-- stats screen -->
                 <div v-if="cardDone" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center">
@@ -254,7 +263,8 @@
                     <label class="selectgroup mt-1"
                            :class="{'d-none': mustHideFolder(folder)}"
                            v-if="folder.id">
-                        <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id">
+                        <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id"
+                               :aria-label="folder.title + (filteredFolderStats[folder.id] ? ', ' + filteredFolderStats[folder.id] + ' ' + countNoun : '')">
                         <div class="selectgroup-label d-flex align-items-center w-100" v-if="folder.id"
                              @contextmenu.prevent="openFolderContextMenu(folder, $event)">
                             <span class="icon mr-2"
@@ -282,7 +292,8 @@
                         <label class="selectgroup"
                               :class="{'d-none': mustHideFeed(feed)}"
                                v-for="feed in folder.feeds">
-                            <input type="radio" name="feed" :value="'feed:'+feed.id" v-model="feedSelected">
+                            <input type="radio" name="feed" :value="'feed:'+feed.id" v-model="feedSelected"
+                                   :aria-label="feed.title + (filteredFeedStats[feed.id] ? ', ' + filteredFeedStats[feed.id] + ' ' + countNoun : '') + (feed_errors[feed.id] ? ', has an error' : '')">
                             <div class="selectgroup-label d-flex align-items-center w-100"
                                  @contextmenu.prevent="openFeedContextMenu(feed, $event)">
                                 <span class="icon mr-2" v-if="!feed.has_icon">{% inline "rss.svg" %}</span>
@@ -405,15 +416,14 @@
                 </div>
                 <label v-for="(item, index) in items" :key="item.id"
                        class="selectgroup">
-                    <input type="radio" name="item" :value="item.id" v-model="itemSelected">
+                    <input type="radio" name="item" :value="item.id" v-model="itemSelected"
+                           :aria-label="(item.title || 'untitled') + ', ' + ((feedsById[item.feed_id] || {}).title || '') + (item.status == 'unread' ? ', unread' : item.status == 'starred' ? ', starred' : '') + ', ' + slipAddress(item, index)">
                     <div class="selectgroup-label d-flex flex-column">
                         <div class="item-meta d-flex align-items-center">
                             <transition name="indicator">
                                 <span class="icon icon-small mr-1" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
                                 <span class="icon icon-small mr-1 marker" v-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
                             </transition>
-                            <span class="sr-only" v-if="item.status == 'unread'">Unread,</span>
-                            <span class="sr-only" v-if="item.status == 'starred'">Starred,</span>
                             <span class="slip-addr" :class="{'is-unread': item.status == 'unread'}">{{ slipAddress(item, index) }}</span>
                             <small class="flex-fill text-truncate mr-1">
                                 {{ (feedsById[item.feed_id] || {}).title }}
@@ -428,7 +438,7 @@
                          still match; decorative (the star icon carries the state). -->
                     <span class="slip-tab" aria-hidden="true" v-if="item.status == 'starred'"></span>
                 </label>
-                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length"></button>
+                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length" aria-label="Loading more articles"></button>
             </div>
         </div>
         <!-- item show -->
@@ -465,6 +475,7 @@
                 <button class="toolbar-item"
                         @click="toggleItemStarred(itemSelectedDetails)"
                         title="Mark Starred"
+                        aria-keyshortcuts="s"
                         aria-label="Star article"
                         :aria-pressed="itemSelectedDetails.status=='starred' ? 'true' : 'false'">
                     <span class="icon marker" v-if="itemSelectedDetails.status=='starred'" >{% inline "star-full.svg" %}</span>
@@ -474,6 +485,7 @@
                      "Mark Unread" contradicted the icon on an unread item. -->
                 <button class="toolbar-item"
                         :title="itemSelectedDetails.status=='unread' ? 'Mark Read' : 'Mark Unread'"
+                        aria-keyshortcuts="r"
                         aria-label="Mark read"
                         :aria-pressed="itemSelectedDetails.status!='unread' ? 'true' : 'false'"
                         @click="toggleItemRead(itemSelectedDetails)">
@@ -504,6 +516,7 @@
                         :disabled="!itemSelectedDetails.link"
                         @click="toggleReadability()"
                         title="Read Here"
+                        aria-keyshortcuts="i"
                         aria-label="Read here"
                         :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
@@ -511,6 +524,7 @@
                 <button class="toolbar-item d-none d-md-inline-flex"
                         v-if="ttsSupported"
                         data-testid="reader-listen"
+                        aria-keyshortcuts="p"
                         :class="{active: ttsPlaying}"
                         @click="toggleListen()"
                         :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'"
@@ -526,6 +540,7 @@
                         @click="saveToInstapaper(itemSelectedDetails)"
                         title="Save to Instapaper"
                         aria-label="Save to Instapaper"
+                        aria-keyshortcuts="Shift+I"
                         :aria-pressed="itemSelectedDetails.instapaper_saved ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.instapaper}">
                         <template v-if="itemSelectedDetails.instapaper_saved">{% inline "check.svg" %}</template>
@@ -537,6 +552,7 @@
                         :disabled="!itemSelectedDetails.link"
                         @click="copyItemLink(itemSelectedDetails)"
                         :title="linkCopied ? 'Link Copied' : 'Copy Link'"
+                        aria-keyshortcuts="c"
                         :aria-label="linkCopied ? 'Link copied to clipboard' : 'Copy article link'">
                     <span class="icon">
                         <template v-if="linkCopied">{% inline "check.svg" %}</template>
@@ -551,7 +567,7 @@
                    :class="{disabled: !itemSelectedDetails.link}"
                    :href="itemSelectedDetails.link || null"
                    :aria-disabled="!itemSelectedDetails.link"
-                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
+                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab" aria-keyshortcuts="o">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <!-- Phone overflow: nine 44px controls need 412px plus padding,
@@ -611,13 +627,13 @@
                      and the reader-nav bar under the article cover them, and
                      keeping them here overflowed the toolbar past the viewport
                      edge (unreachable). -->
-                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" aria-label="Previous article" :disabled="!items.length || itemSelected == items[0].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" aria-label="Previous article" aria-keyshortcuts="k" :disabled="!items.length || itemSelected == items[0].id">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" aria-label="Next article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" aria-label="Next article" aria-keyshortcuts="j" :disabled="!items.length || itemSelected == items[items.length - 1].id">
                     <span class="icon">{% inline "chevron-right.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex" @click="itemSelected=null" title="Close Article" aria-label="Close article">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="itemSelected=null" title="Close Article" aria-label="Close article" aria-keyshortcuts="q">
                     <span class="icon">{% inline "x.svg" %}</span>
                 </button>
             </div>
@@ -627,7 +643,7 @@
                  tabindex="0"
                  role="region"
                  aria-label="Article content"
-                 class="content px-4 pt-3 pb-5 border-top overflow-auto scroll-touch"
+                 class="content flex-grow-1 px-4 pt-3 pb-5 border-top overflow-auto scroll-touch"
                  :class="{'font-serif': theme.font == 'serif', 'font-monospace': theme.font == 'monospace'}"
                  :style="{'font-size': theme.size + 'rem'}">
                 <div class="content-wrapper" :key="itemSelected">
@@ -672,7 +688,7 @@
                 </button>
             </nav>
         </div>
-        <modal :open="!!settings" @hide="settings = ''">
+        <modal :open="!!settings" @hide="settings = ''" :label="({settings: 'Settings', shortcuts: 'Keyboard shortcuts', create: 'New feed'})[settings] || 'Dialog'">
             <button class="btn btn-link outline-none float-right p-2 mr-n2 mt-n2" style="line-height: 1" aria-label="Close" @click="settings = ''">
                 <span class="icon">{% inline "x.svg" %}</span>
             </button>
@@ -747,7 +763,7 @@
                         </select>
                         <label class="d-flex align-items-center small text-muted mt-2 mb-0">
                             <input type="checkbox" class="mr-1" v-model="filterDraft.applyNow">
-                            <span v-if="filterDraft.action == 'mute'">Also delete matching unread items now</span>
+                            <span v-if="filterDraft.action == 'mute'">Also delete matching unread items now (can't be undone)</span>
                             <span v-else>Also apply to current unread items</span>
                         </label>
                         <button class="btn btn-default mt-2" type="submit" :disabled="!filterDraft.keyword.trim()">Add rule</button>
@@ -817,13 +833,15 @@
                             </div>
                         </label>
                     </div>
+                    <p class="text-danger small mt-3 mb-0" role="alert" v-if="feedNewError">{{ feedNewError }}</p>
                     <button class="btn btn-block btn-default mt-3" :class="{loading: loading.newfeed}" :disabled="loading.newfeed" type="submit">Add</button>
                 </form>
             </div>
             <div v-else-if="settings=='shortcuts'">
                 <p class="cursor-default" role="heading" aria-level="2"><b>Keyboard Shortcuts</b></p>
 
-                <table class="table table-borderless table-sm table-compact m-0">
+                <table class="table table-borderless table-sm table-compact m-0 shortcut-table">
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Views</th></tr>
                     <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td>
                                                             <td>show unread / starred / all feeds</td></tr>
                     <tr><td><kbd>4</kbd></td>               <td>triage unread, one card at a time</td></tr>
@@ -831,12 +849,12 @@
                     <tr><td><kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
                     <tr><td><kbd>?</kbd></td>               <td>show keyboard shortcuts</td></tr>
 
-                    <tr><td colspan=2>&nbsp;</td></tr>
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Moving around</th></tr>
                     <tr><td><kbd>j</kbd> <kbd>k</kbd></td>  <td>next / prev article</td></tr>
                     <tr><td><kbd>l</kbd> <kbd>h</kbd></td>  <td>next / prev feed</td></tr>
                     <tr><td><kbd>q</kbd></td>               <td>close article</td></tr>
 
-                    <tr><td colspan=2>&nbsp;</td></tr>
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Articles</th></tr>
                     <tr><td><kbd>R</kbd></td>               <td>mark all read</td></tr>
                     <tr><td><kbd>r</kbd></td>               <td>mark read / unread</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>mark starred / unstarred</td></tr>
@@ -848,8 +866,7 @@
                     <tr><td><kbd>f</kbd> <kbd>b</kbd></td>  <td>scroll content forward / backward</td>
                     </tr>
 
-                    <tr><td colspan=2>&nbsp;</td></tr>
-                    <tr><td colspan=2 class="text-muted">Triage (card mode)</td></tr>
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Triage (card mode)</th></tr>
                     <tr><td><kbd>←</kbd></td>               <td>{{ instapaperUsername ? 'save to Instapaper and mark read' : 'keep unread' }}</td></tr>
                     <tr><td><kbd>→</kbd></td>               <td>mark read</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>star</td></tr>
@@ -869,21 +886,30 @@
         </transition>
         <!-- command palette (Cmd/Ctrl+K): jump to a feed/folder or run a command -->
         <div class="modal custom-modal command-palette" v-if="paletteOpen" @click="closePalette()">
-            <div class="command-palette-dialog" role="dialog" aria-label="Command palette" @click.stop>
+            <div class="command-palette-dialog" role="dialog" aria-modal="true" aria-label="Command palette" @click.stop>
                 <input ref="paletteInput"
                        class="command-palette-input"
                        type="text"
                        v-model="paletteQuery"
                        placeholder="Jump to a feed or run a command…"
                        aria-label="Jump to a feed or run a command"
+                       role="combobox"
+                       aria-expanded="true"
+                       aria-autocomplete="list"
+                       aria-controls="palette-results"
+                       :aria-activedescendant="paletteResults.length ? 'palette-row-' + paletteIndex : null"
+                       @keydown.tab.prevent
                        @keydown.down.prevent="paletteMove(1)"
                        @keydown.up.prevent="paletteMove(-1)"
                        @keydown.enter.prevent="paletteExecute(paletteIndex)"
                        @keydown.esc.prevent="closePalette()">
-                <div class="command-palette-results">
+                <div class="command-palette-results" id="palette-results" role="listbox" aria-label="Results">
                     <template v-for="(r, i) in paletteResults" :key="i">
-                        <div class="command-palette-group" v-if="i === 0 || paletteResults[i-1].group !== r.group">{{ r.group }}</div>
+                        <div class="command-palette-group" role="presentation" v-if="i === 0 || paletteResults[i-1].group !== r.group">{{ r.group }}</div>
                         <div class="command-palette-row"
+                             role="option"
+                             :id="'palette-row-' + i"
+                             :aria-selected="i === paletteIndex ? 'true' : 'false'"
                              :class="{selected: i === paletteIndex}"
                              @click="paletteExecute(i)"
                              @mousemove="paletteIndex = i">
@@ -897,7 +923,7 @@
         </div>
         <!-- Themed input prompt (rename / change link / new folder) — replaces the
              OS-native prompt() so these flows stay inside the app's theme. -->
-        <modal :open="!!promptModal" @hide="promptModal = null">
+        <modal :open="!!promptModal" @hide="promptModal = null" :label="promptModal ? promptModal.title : ''">
             <form @submit.prevent="confirmPrompt()">
                 <p class="cursor-default mb-2" role="heading" aria-level="2"><b>{{ promptModal.title }}</b></p>
                 <input ref="promptInput"

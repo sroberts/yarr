@@ -1,4 +1,4 @@
-var CACHE_NAME = 'yarr-v14';
+var CACHE_NAME = 'yarr-v15';
 var STATIC_ASSETS = [
   './static/stylesheets/base.css',
   './static/stylesheets/app.css',

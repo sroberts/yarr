@@ -292,14 +292,17 @@ Unread, Starred, All, Triage as icon buttons at the head of the feed sidebar (na
 - **Toolbar icon:** transparent, 3px corner, `0.25rem 0.5rem`; hover grey under a real pointer; disabled = graphite at 0.7 opacity.
 - **Default:** slip white, strong edge, 4px corner; pressed = hover grey.
 - **Star (triage):** the one triage verb without a gesture, so it is a labelled button drawn in the filing colour (1px filing border, filing text, slip white ground).
-- **Segmented toggle (settings):** a strong-edge track of equal 44px segments with subtle dividers; the active segment inverts to ink.
+- **Segmented toggle (settings):** a strong-edge track of equal segments with subtle dividers, 36px at a desk and 44px on touch; the active segment inverts to ink.
+
+### Dialogs and Menus
+Settings, the shortcut sheet, prompts and the palette are real dialogs: labelled, Tab stays inside, and page shortcuts pause while one is open (? still swaps Settings for the sheet). Menus open onto their first item from the keyboard and move with the arrows, Home and End; they carry a strong edge and a soft shadow in both themes, with shortcut keys in pencil at the right. The shortcut sheet groups its keys under small headings: Views, Moving around, Articles, Triage.
 
 ### Inputs / Fields
 - **Search:** slip white, borderless, 3px corner, leading icon, its own clear button; focus fills hover grey and keyboard focus adds the ring.
 - **Form fields:** slip white; focus turns the border filing-coloured. Placeholders are pencil at full opacity.
 
 ### Triage Card
-One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain (hidden for IP addresses and LAN names), then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". A card with no body says "No preview in the feed" and offers the original instead of a read-here hint; tapping it opens the original. Triage starts in the folder being read, and its header keeps the view filters beside the wordmark as in the three-column layout. The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s. On phones the card sits low, near the thumb, with the folder picker under the legend at the bottom edge. Each new card is announced to screen readers ("Card 3 of 12: title").
+One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain (hidden for IP addresses and LAN names), then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". A card with no body says "No preview in the feed" and offers the original instead of a read-here hint; tapping it opens the original. Triage starts in the folder being read, and its header keeps the view filters beside the wordmark as in the three-column layout. The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s. On phones the card sits low, near the thumb, with the folder picker under the legend at the bottom edge. Each new card is announced to screen readers ("Card 3 of 12: title"). The legend ends ("‹ Keep unread" or "‹ Instapaper", "Mark read ›") are buttons drawn as legend text, so a mouse or a screen reader can triage at the desk; they never wrap, and Listen drops out below 360px.
 
 ### Toasts
 An always-dark pill (4px corner, toast shadow), bottom centre in the thumb zone, auto-dismissing; the undo variant carries a lightened filing-colour action.

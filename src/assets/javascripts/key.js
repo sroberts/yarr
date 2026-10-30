@@ -180,6 +180,15 @@ document.addEventListener('keydown',function(event) {
   if (isTextBox(event.target) || event.metaKey || event.ctrlKey || event.altKey) {
     return
   }
+  // A dialog or the palette is modal: nothing acts on the page behind it.
+  // ? still swaps an open settings panel for the shortcut sheet.
+  if (vm.settings || vm.promptModal || vm.paletteOpen) {
+    if (event.key === '?' && vm.settings) {
+      event.preventDefault()
+      vm.showSettings('shortcuts')
+    }
+    return
+  }
   // In triage card mode the list/reader shortcuts don't apply; use the card map.
   if (vm.cardMode) {
     var triageFunction = triageBindings[event.key]
