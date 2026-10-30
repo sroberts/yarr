@@ -1,7 +1,17 @@
 # yarr
 
+[![Test](https://github.com/sroberts/yarr/actions/workflows/test.yml/badge.svg)](https://github.com/sroberts/yarr/actions/workflows/test.yml)
+[![Release](https://img.shields.io/github/v/release/sroberts/yarr)](https://github.com/sroberts/yarr/releases/latest)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](license)
+
 **yarr** (yet another rss reader) is a web-based feed aggregator which can be used both
 as a desktop application and a personal self-hosted server.
+
+> This is Scott's fork of [nkanaev/yarr](https://github.com/nkanaev/yarr). On top of
+> upstream it adds saving to Instapaper, keyboard and swipe triage, a redesigned
+> reader, offline reading, an [MCP server](doc/mcp.md), and images for
+> [Basecamp Once](#deploying-with-once). Releases are tagged `vX.Ys`. Report problems
+> with this fork [here](https://github.com/sroberts/yarr/issues/new/choose).
 
 The app is a single binary with an embedded database (SQLite).
 
@@ -10,7 +20,7 @@ The app is a single binary with an embedded database (SQLite).
 ## usage
 
 The latest prebuilt binaries for Linux/MacOS/Windows are available
-[here](https://github.com/nkanaev/yarr/releases/latest).
+[here](https://github.com/sroberts/yarr/releases/latest).
 The archives follow the naming convention `yarr_{OS}_{ARCH}[_gui].zip`, where:
 
 * `OS` is the target operating system
@@ -172,6 +182,16 @@ See more:
 * [Building from source code](doc/build.md)
 * [Fever API support](doc/fever.md)
 * [MCP server](doc/mcp.md)
+
+## contributing
+
+Bug reports and focused pull requests are welcome; see
+[CONTRIBUTING.md](CONTRIBUTING.md) for setup, tests and what gets a PR
+rejected. Security problems: [SECURITY.md](SECURITY.md).
+
+## license
+
+[MIT](license), the same as upstream yarr.
 
 ## credits
 
