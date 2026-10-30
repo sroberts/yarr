@@ -304,11 +304,18 @@ vueApp.component('dropdown', {
   },
   methods: {
     toggle: function(e) {
-      this.open ? this.hide() : this.show()
+      this.open ? this.hide() : this.show(e)
     },
     show: function(e) {
       this.open = true
       var menu = this.$refs.menu
+      // opening from the keyboard (a click with no pointer detail) puts focus
+      // on the first item; arrows, Home and End move between them
+      var fromKeyboard = e && e.detail === 0
+      this.$nextTick(function() {
+        var items = this.menuItems()
+        if (fromKeyboard && items.length) items[0].focus()
+      }.bind(this))
       var drop = this.$props.drop
 
       // Feed-row menus sit inside an overflow:auto scroll container that would
@@ -364,19 +371,42 @@ vueApp.component('dropdown', {
       if (dropdown == null || dropdown != this.$el) return this.hide()
       if (e.target.closest('.dropdown-item') != null) return this.hide()
     },
+    menuItems: function() {
+      if (!this.$refs.menu) return []
+      return Array.prototype.filter.call(this.$refs.menu.querySelectorAll('.dropdown-item'), function(el) {
+        return !el.disabled && !el.classList.contains('disabled')
+      })
+    },
     keyHandler: function(e) {
-      if (e.key === 'Escape') { this.hide(); this.$refs.btn.focus() }
+      if (e.key === 'Escape') { this.hide(); this.$refs.btn.focus(); return }
+      // Tabbing out of the menu closes it, like clicking elsewhere does
+      if (e.key === 'Tab') {
+        setTimeout(function() {
+          if (this.open && !this.$el.contains(document.activeElement)) this.hide()
+        }.bind(this))
+        return
+      }
+      var keys = {ArrowDown: 1, ArrowUp: -1, Home: 'first', End: 'last'}
+      if (!(e.key in keys)) return
+      var items = this.menuItems()
+      if (!items.length) return
+      e.preventDefault()
+      e.stopPropagation()
+      var i = items.indexOf(document.activeElement)
+      var k = keys[e.key]
+      var next = k === 'first' ? 0 : k === 'last' ? items.length - 1 : (i < 0 ? (k > 0 ? 0 : items.length - 1) : (i + k + items.length) % items.length)
+      items[next].focus()
     }
   },
 })
 
 vueApp.component('modal', {
-  props: ['open'],
+  props: ['open', 'label'],
   emits: ['hide'],
   template: `
     <div class="modal custom-modal" tabindex="-1" v-if="$props.open">
       <div class="modal-dialog">
-        <div class="modal-content" ref="content" tabindex="-1">
+        <div class="modal-content" ref="content" tabindex="-1" role="dialog" aria-modal="true" :aria-label="$props.label">
           <div class="modal-body">
             <slot v-if="$props.open"></slot>
           </div>
@@ -416,6 +446,16 @@ vueApp.component('modal', {
     },
     handleKey: function(e) {
       if (e.key === 'Escape') this.$emit('hide')
+      // keep Tab inside the dialog: it is modal, so the page behind is inert
+      if (e.key === 'Tab' && this.$refs.content) {
+        var f = Array.prototype.filter.call(
+          this.$refs.content.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
+          function(el) { return !el.disabled && el.getClientRects().length })
+        if (!f.length) return
+        var first = f[0], last = f[f.length - 1], at = document.activeElement
+        if (e.shiftKey && (at === first || at === this.$refs.content)) { e.preventDefault(); last.focus() }
+        else if (!e.shiftKey && at === last) { e.preventDefault(); first.focus() }
+      }
     },
   },
 })
@@ -592,6 +632,9 @@ function rootComponent() { return {
       'cardLoading': false,
       'cardUndo': null,
       'cardExpanded': false,
+      'instapaperSaved': false,
+      'feedNewError': '',
+      'isMac': /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
       'toast': null,
       'linkCopied': false,
       'itemOffline': false,
@@ -599,14 +642,14 @@ function rootComponent() { return {
       'cardFolder': '',
       'previousFilter': '',
       'refreshRateOptions': [
-        { title: "0", value: 0 },
-        { title: "10m", value: 10 },
-        { title: "30m", value: 30 },
-        { title: "1h", value: 60 },
-        { title: "2h", value: 120 },
-        { title: "4h", value: 240 },
-        { title: "12h", value: 720 },
-        { title: "24h", value: 1440 },
+        { title: "Off", value: 0 },
+        { title: "10 min", value: 10 },
+        { title: "30 min", value: 30 },
+        { title: "1 hour", value: 60 },
+        { title: "2 hours", value: 120 },
+        { title: "4 hours", value: 240 },
+        { title: "12 hours", value: 720 },
+        { title: "24 hours", value: 1440 },
       ],
     }
   },
@@ -676,6 +719,21 @@ function rootComponent() { return {
           vm.feedSelected = 'folder:' + fo.id; vm.itemSelected = null
         }})
       })
+      // An address ("fb04", "FB·04", or just "4") jumps to that slip in the
+      // stack, listed first. A bare code ("fb") already fuzzy-matches its feed.
+      var jumps = []
+      var key = q.toUpperCase().replace(/[\s·.\-]/g, '')
+      if (key) {
+        var self = this
+        this.items.forEach(function(item, i) {
+          var addr = self.slipAddress(item, i)
+          if (addr.replace('·', '') === key || (/^\d+$/.test(key) && +key === i + 1)) {
+            jumps.push({group: 'Go to', label: addr + '  ' + (item.title || 'untitled'), run: function() {
+              vm.itemSelected = item.id
+            }})
+          }
+        })
+      }
       var results
       if (!q) {
         results = all
@@ -690,7 +748,7 @@ function rootComponent() { return {
           var box = document.getElementById('searchbar'); if (box) box.focus()
         }})
       }
-      return results.slice(0, 50)
+      return jumps.concat(results).slice(0, 50)
     },
     itemSelectedContent: function() {
       if (!this.itemSelected) return ''
@@ -698,7 +756,8 @@ function rootComponent() { return {
       if (this.itemSelectedReadability)
         return this.itemSelectedReadability
 
-      return this.itemSelectedDetails.content || ''
+      // itemSelected leads the fetch of its details; render nothing until they land
+      return (this.itemSelectedDetails && this.itemSelectedDetails.content) || ''
     },
     contentImages: function() {
       if (!this.itemSelectedDetails) return []
@@ -714,7 +773,7 @@ function rootComponent() { return {
     },
     refreshRateTitle: function () {
       const entry = this.refreshRateOptions.find(o => o.value === this.refreshRate)
-      return entry ? entry.title : '0'
+      return entry ? entry.title : 'Off'
     },
     cardMode: function() {
       return this.filterSelected === 'triage'
@@ -741,22 +800,63 @@ function rootComponent() { return {
     stackHeading: function() {
       if (this.feedSelected === null || !this.feeds.length) return null
       var cur = this.current, title, n
+      var code
       if (cur.type == 'feed') {
-        title = cur.feed.title; n = this.filteredFeedStats[cur.feed.id]
+        title = cur.feed.title; n = this.filteredFeedStats[cur.feed.id]; code = this.feedCodes.feeds[cur.feed.id]
       } else if (cur.type == 'folder') {
-        title = cur.folder.title; n = this.filteredFolderStats[cur.folder.id]
+        title = cur.folder.title; n = this.filteredFolderStats[cur.folder.id]; code = this.feedCodes.folders[cur.folder.id]
       } else {
         title = {unread: 'All Unread', starred: 'All Starred'}[this.filterSelected] || 'All Feeds'
+        code = {unread: 'AU', starred: 'AS'}[this.filterSelected] || 'AF'
         n = this.filteredTotalStats
       }
       if (!title) return null
       n = n || 0
       return {
-        code: this.feedCode({title: title}),
+        code: code || '··',
         title: title,
         n: n,
         count: n ? n + ' ' + (this.filterSelected == 'starred' ? 'starred' : 'unread') : '',
       }
+    },
+    // Unique codes for every feed and folder: two letters where they're free,
+    // a third (or a digit) to settle a clash. The view codes are reserved, and
+    // allocation runs in id order so a code only moves when its rival is new.
+    feedCodes: function() {
+      var used = {AU: true, AS: true, AF: true}
+      var self = this
+      function allocate(list) {
+        var out = {}
+        list.slice().sort(function(a, b) { return a.id - b.id }).forEach(function(x) {
+          var base = self.feedCode(x)
+          var rest = ((x.title || '').toUpperCase().match(/[\p{L}\p{N}]/gu) || []).slice(1)
+          var candidates = [base]
+          rest.forEach(function(ch) { candidates.push(base + ch) })
+          for (var d = 2; d <= 99; d++) candidates.push(base + d)
+          var code = candidates.find(function(c) { return !used[c] })
+          used[code] = true
+          out[x.id] = code
+        })
+        return out
+      }
+      var feeds = allocate(this.feeds)
+      return {feeds: feeds, folders: allocate(this.folders)}
+    },
+    // what the sidebar counts count, for their accessible names
+    countNoun: function() {
+      return this.filterSelected == 'starred' ? 'starred' : 'unread'
+    },
+    // what a screen reader hears as each triage card arrives
+    cardAnnouncement: function() {
+      if (this.cardDone) return 'All caught up'
+      if (!this.currentCard) return ''
+      return 'Card ' + (this.cardIndex + 1) + ' of ' + this.cardItems.length + ': ' + (this.currentCard.title || 'untitled')
+    },
+    // the persistent live region's text: whichever toast is showing
+    liveStatus: function() {
+      if (this.feedUndo) return this.feedUndo.label + '. Press u to undo.'
+      if (this.cardUndo) return this.cardUndoLabel
+      return this.toast ? this.toast.text : ''
     },
     cardExcerpt: function() {
       if (!this.currentCard || !this.currentCard.content) return ''
@@ -905,6 +1005,12 @@ function rootComponent() { return {
         this.itemSelectedDetails = null
         return
       }
+      // keep the open slip in sight in the stack (prev/next, palette jumps)
+      this.$nextTick(function() {
+        var input = document.querySelector('#item-list-scroll input[value="' + newVal + '"]')
+        var label = input && input.closest('label')
+        if (label && label.scrollIntoView) label.scrollIntoView({block: 'nearest'})
+      })
       if (this.$refs.content) this.$refs.content.scrollTop = 0
 
       api.items.get(newVal).then(function(item) {
@@ -1102,20 +1208,20 @@ function rootComponent() { return {
     },
     // Feed row actions menu — opened by right-click OR the row's ⋯ button.
     // Positioned fixed (clamped to the viewport) so the overflow:auto feed list
-    // can't clip it; closes on any click, scroll, resize, or Escape. Opening it
-    // also selects the row, so the menu and the command palette act on the same
-    // feed. `event` is a mouse or keyboard event; keyboard activation has no
-    // cursor, so we fall back to the trigger element's box.
+    // can't clip it; closes on any click, scroll, resize, or Escape.
+    // `event` is a mouse or keyboard event; keyboard activation has no
+    // cursor, so we fall back to the trigger element's box. Opening it leaves the
+    // selection alone (on a phone, selecting navigates into the feed); the row
+    // whose menu is open is marked instead.
     openFeedContextMenu: function(feed, event) {
-      this.openContextMenu({feed: feed}, 'feed:' + feed.id, event)
+      this.openContextMenu({feed: feed}, event)
     },
     // Folder rows share the same menu; `feedContextMenu.folder` is set instead
     // of `.feed`, and the template switches on which one is present.
     openFolderContextMenu: function(folder, event) {
-      this.openContextMenu({folder: folder}, 'folder:' + folder.id, event)
+      this.openContextMenu({folder: folder}, event)
     },
-    openContextMenu: function(target, selection, event) {
-      this.feedSelected = selection
+    openContextMenu: function(target, event) {
       // remember the trigger so focus can return to it when the menu closes
       this._ctxTrigger = (event && event.currentTarget) || null
       var x = event && event.clientX, y = event && event.clientY
@@ -1361,7 +1467,7 @@ function rootComponent() { return {
     slipAddress: function(item, index) {
       if (!item) return ''
       var n = index + 1
-      return this.feedCode(this.feedsById[item.feed_id]) + '·' + (n < 10 ? '0' + n : n)
+      return (this.feedCodes.feeds[item.feed_id] || '··') + '·' + (n < 10 ? '0' + n : n)
     },
     showToast: function(text, ms) {
       var self = this
@@ -1373,6 +1479,9 @@ function rootComponent() { return {
     // scoped to the current selection. The server scopes bulk mark-read by feed
     // or folder only, so that is all the query carries.
     markItemsRead: function() {
+      // a search narrows the list but not the server's scope, so don't let
+      // "all" quietly mean far more than the results on screen
+      if (this.itemSearch) return this.showToast('Clear the search to mark all read')
       var cur = this.current
       if (cur.type == 'feed' && cur.feed.id) return this.markFeedRead(cur.feed)
       if (cur.type == 'folder' && cur.folder.id) return this.markFolderRead(cur.folder)
@@ -1479,15 +1588,24 @@ function rootComponent() { return {
       this.promptModal = null
       if (val) m.onConfirm(val)
     },
-    // Show a reversible-action toast. `onCommit` fires when the ~5s window closes
-    // (or is superseded); `onUndo` fires if the user hits Undo instead. Starting a
-    // new undo commits any pending one first, so a deferred server write is never
-    // dropped when actions are chained.
-    showFeedUndo: function(label, onUndo, onCommit) {
+    // Show a reversible-action toast. `onCommit` fires when the window closes
+    // (6s, or `ms` — deletes get longer) or is superseded; `onUndo` fires if the
+    // user hits Undo or presses u instead. Starting a new undo commits any
+    // pending one first, so a deferred server write is never dropped when
+    // actions are chained. Hovering or focusing the toast holds the window open.
+    showFeedUndo: function(label, onUndo, onCommit, ms) {
       if (this.feedUndo) this.runFeedUndoCommit()
-      var self = this
-      var timer = setTimeout(function() { self.runFeedUndoCommit() }, 5000)
-      this.feedUndo = {label: label, onUndo: onUndo, onCommit: onCommit, timer: timer}
+      this.feedUndo = {label: label, onUndo: onUndo, onCommit: onCommit, ms: ms || 6000, timer: null}
+      this.resumeFeedUndo()
+    },
+    pauseFeedUndo: function() {
+      if (this.feedUndo) clearTimeout(this.feedUndo.timer)
+    },
+    resumeFeedUndo: function() {
+      var u = this.feedUndo, self = this
+      if (!u) return
+      clearTimeout(u.timer)
+      u.timer = setTimeout(function() { if (self.feedUndo === u) self.runFeedUndoCommit() }, u.ms)
     },
     runFeedUndoCommit: function() {
       var u = this.feedUndo
@@ -1572,7 +1690,7 @@ function rootComponent() { return {
           vm.refreshStats()
           vm.refreshFeeds()
         })
-      })
+      }, 10000)
     },
     updateFeedLink: function(feed) {
       this.askPrompt({title: 'Change feed link', value: feed.feed_link, confirmLabel: 'Change', onConfirm: function(newLink) {
@@ -1603,9 +1721,10 @@ function rootComponent() { return {
           vm.refreshStats()
           vm.refreshFeeds()
         })
-      })
+      }, 10000)
     },
     createFeed: function(event) {
+      this.feedNewError = ''
       var form = event.target
       var data = {
         url: form.querySelector('input[name=url]').value,
@@ -1625,7 +1744,7 @@ function rootComponent() { return {
           vm.feedNewChoice = result.choice
           vm.feedNewChoiceSelected = result.choice[0].url
         } else {
-          alert('No feeds found at the given url.')
+          vm.feedNewError = "No feed found at that address. Check the URL, or try the site's home page."
         }
         vm.loading.newfeed = false
       })
@@ -1780,7 +1899,11 @@ function rootComponent() { return {
       if (key === 'instapaper_password') this.instapaperPassword = value
       var update = {}
       update[key] = value
-      api.settings.update(update)
+      api.settings.update(update).then(function() {
+        vm.instapaperSaved = true
+        clearTimeout(vm._instapaperSavedTimer)
+        vm._instapaperSavedTimer = setTimeout(function() { vm.instapaperSaved = false }, 2500)
+      })
     },
     enterCardMode: function() {
       this.cardItems = []
@@ -1816,8 +1939,8 @@ function rootComponent() { return {
       }).catch(function() {
         vm.cardLoading = false
         if (vm.cardItems.length === 0) {
-          alert('Failed to load items.')
-          vm.filterSelected = ''
+          vm.exitCardMode()
+          vm.showToast("Couldn't load unread items. Check the connection and try again.", 4000)
         }
       })
     },
@@ -1965,6 +2088,12 @@ function rootComponent() { return {
     },
     showSettings: function(settings) {
       this.settings = settings
+      this.feedNewError = ''
+      // switching panels reuses the open dialog: start each one at its top
+      this.$nextTick(function() {
+        var body = document.querySelector('.custom-modal .modal-body')
+        if (body) body.scrollTop = 0
+      })
 
       if (settings === 'create') {
         vm.feedNewChoice = []
@@ -2123,11 +2252,15 @@ if ('serviceWorker' in navigator) {
 (function() {
   var banner = document.createElement('div')
   banner.className = 'offline-banner'
-  banner.textContent = 'You\u2019re offline'
+  banner.setAttribute('role', 'status')
   document.body.appendChild(banner)
 
+  // Online, the banner is parked off-screen and empty, so screen readers find
+  // nothing; going offline fills the live region, which announces it.
   function update() {
-    banner.classList.toggle('visible', !navigator.onLine)
+    var offline = !navigator.onLine
+    banner.classList.toggle('visible', offline)
+    banner.textContent = offline ? 'You\u2019re offline' : ''
   }
   window.addEventListener('online', update)
   window.addEventListener('offline', update)

@@ -235,7 +235,7 @@ select.form-control:not([multiple]):not([size]) {
 
 .settings-dropdown .dropdown-menu {
   padding: 0;
-  box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.07);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
   overflow: hidden;
   max-height: calc(100vh - 3rem);
   overflow-y: auto;
@@ -377,6 +377,10 @@ select.form-control:not([multiple]):not([size]) {
 
 .selectgroup-label:hover {
   cursor: pointer;
+}
+/* the row whose actions menu is open */
+.selectgroup-label.ctx-open {
+  background-color: var(--surface-hover);
 }
 
 .toolbar-search:focus {
@@ -573,8 +577,10 @@ select.form-control:not([multiple]):not([size]) {
   left: -999px;
 }
 
+/* The scrim dims the page rather than blacking it out: enough to set the
+   dialog apart, light enough that you still know where you are. */
 .custom-modal {
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(20, 22, 24, 0.45);
   overflow-y: auto;
   display: block !important;
 }
@@ -651,9 +657,11 @@ select.form-control:not([multiple]):not([size]) {
   color: var(--text-secondary);
 }
 
+/* selection is an ink outline, as in the stack and sidebar, never a fill */
 .command-palette-row.selected {
-  background-color: var(--ink-select);
-  color: var(--on-ink-select);
+  background-color: var(--surface-base);
+  color: var(--text-primary);
+  box-shadow: inset 0 0 0 2px var(--ink-select);
 }
 
 .command-palette-row .cmd-label {
@@ -669,12 +677,13 @@ select.form-control:not([multiple]):not([size]) {
   padding: 0.05rem 0.35rem;
   border: 1px solid var(--border-subtle);
   border-radius: 3px;
+  /* drop the base kbd's dark key: pencil on near-black read at 2.6:1 */
+  background: transparent;
   color: var(--text-tertiary);
 }
 
 .command-palette-row.selected .cmd-hint {
-  color: var(--on-ink-select);
-  border-color: var(--on-ink-select);
+  color: var(--text-primary);
 }
 
 .command-palette-empty {
@@ -996,7 +1005,7 @@ a,
   top: 0;
   right: .85rem;
   width: 14px;
-  height: 7px;
+  height: 5px;
   border-radius: 0 0 2px 2px;
   background: var(--accent);
   pointer-events: none;
@@ -1049,6 +1058,86 @@ a,
   .stack-heading-action { min-height: 2.75rem; }
 }
 
+/* phones: the stack heading's actions crowd out the count first */
+@media (max-width: 359px) {
+  .stack-heading-count { display: none; }
+}
+
+/* a labelled toolbar control (the phone's "Feeds" way back) */
+.toolbar-item-labelled {
+  align-items: center;
+  gap: .15rem;
+  width: auto !important;
+  padding-right: .6rem;
+  font-size: .85rem;
+  color: var(--text-secondary);
+}
+
+/* visible to screen readers only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* a menu item's shortcut, quiet at its right edge */
+.menu-kbd {
+  margin-left: auto;
+  padding-left: 1.25rem;
+  background: none;
+  color: var(--text-tertiary);
+  font-size: .75rem;
+}
+.dropdown-item:has(.menu-kbd) { display: flex; align-items: center; }
+
+/* menus float a step above whatever they open over, in both themes */
+.dropdown-menu {
+  border: 1px solid var(--border-strong);
+}
+
+/* the shortcut sheet's group headings */
+.shortcut-table .shortcut-group {
+  padding-top: 1rem;
+  font-size: .8rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-secondary);
+}
+.shortcut-table tr:first-child .shortcut-group { padding-top: .25rem; }
+
+/* the triage legend's two verbs, drawn as the legend but pressable */
+.card-legend-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 .4rem;
+  margin: 0 -.4rem;
+  border-radius: var(--radius);
+  color: inherit;
+  font: inherit;
+  white-space: nowrap;
+}
+@media (hover: hover) { .card-legend-btn:hover { background: var(--surface-hover); color: var(--text-primary); } }
+@media (pointer: coarse) { .card-legend-btn { min-height: 44px; } }
+@media (max-width: 359px) {
+  /* 320px: the verbs keep one line; Listen stays in the reader */
+  .card-view-legend .card-listen-btn { display: none; }
+}
+
+/* the menu's version line is a caption, not an item */
+.dropdown-caption {
+  padding: .25rem 1rem .35rem;
+  font-size: .75rem;
+  color: var(--text-tertiary);
+  cursor: default;
+}
+
 /* keeper (filed) state is always the filing colour, wherever it shows */
 .marker { color: var(--accent); }
 
@@ -1083,8 +1172,18 @@ a,
   border-radius: var(--radius);
   box-shadow: var(--slip-shadow);
 }
+/* On a phone the slip is the screen: no box margin, border or shadow eating
+   the measure, so a line holds ~45 characters instead of ~32. */
 @media (max-width: 767.98px) {
-  #col-item .content-wrapper { padding: 1.25rem 1.1rem 1.75rem; margin-top: .5rem; }
+  #col-item,
+  #col-item .content { background-color: var(--surface-base); }
+  #col-item .content-wrapper {
+    margin: 0 auto;
+    padding: 1.25rem 1.1rem 1.75rem;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }
 .content-title { font-family: var(--font-sans); }
 
@@ -1097,9 +1196,15 @@ a,
   font-variant-numeric: tabular-nums;
 }
 .content-byline .byline-feed {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
   color: var(--text-secondary);
   font-weight: 600;
+  cursor: pointer;
 }
+.content-byline .byline-feed:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 /* ── The feed column ───────────────────────────────────
    Three columns from tablet width up: feeds and folders in a sidebar, the
@@ -1579,8 +1684,10 @@ a,
   color: var(--text-primary);
 }
 
-.card-stat-instapaper {
-  color: var(--instapaper);
+.card-done-title {
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -.01em;
 }
 
 .triage-card.swiping {
@@ -1615,6 +1722,21 @@ a,
 #app.card-mode #col-item,
 #app.card-mode .drag {
   display: none !important;
+}
+@media (max-width: 767px) {
+  /* phones: the card sits low, near the thumb, with its verbs under it, and
+     the folder picker drops to the bottom edge instead of the far top */
+  #app.card-mode .card-view-area {
+    justify-content: flex-end !important;
+    padding-bottom: .75rem;
+  }
+  #app.card-mode .card-folder-bar {
+    order: 1;
+    padding-top: 0 !important;
+  }
+  #app.card-mode .card-view-legend {
+    padding-bottom: .25rem !important;
+  }
 }
 @media (min-width: 768px) {
   /* card, action line and legend sit together in the middle of the window,
@@ -1960,6 +2082,16 @@ body[data-motion="reduce"] *::after {
      matching the swipe undo button. */
   color: color-mix(in srgb, var(--accent) 65%, white);
 }
+/* the keyboard route to Undo, quiet beside the word */
+.toast-kbd {
+  margin-left: .4rem;
+  padding: 0 .3rem;
+  border: 1px solid rgba(255, 255, 255, .35);
+  border-radius: 3px;
+  background: none;
+  color: rgba(255, 255, 255, .8);
+  font: 600 .7rem/1.4 var(--font-sans);
+}
 .app-toast-btn:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
@@ -2037,14 +2169,15 @@ body[data-motion="reduce"] *::after {
 .settings-panel .settings-group { margin-bottom: 2rem; }
 .settings-panel .settings-group:last-child { margin-bottom: .5rem; }
 .settings-panel .settings-title {
-  font-size: .9rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--text-primary);
   padding-bottom: .35rem;
   margin-bottom: .9rem;
   border-bottom: 1px solid var(--border-subtle);
 }
 .settings-panel .settings-section { margin-bottom: 1rem; }
+.settings-panel .settings-saved { min-height: 1.2em; color: var(--text-secondary); }
 .settings-panel .settings-section:last-child { margin-bottom: 0; }
 
 /* On phones let the modal use more width so controls aren't cramped (#86). */
@@ -2129,7 +2262,7 @@ body[data-motion="reduce"] *::after {
 }
 .segmented > * {
   flex: 1;
-  min-height: 44px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2138,6 +2271,8 @@ body[data-motion="reduce"] *::after {
   border-left: 1px solid var(--border-subtle);
 }
 .segmented > *:first-child { border-left: 0; }
+/* full 44px targets where a finger presses them; a desk needs less weight */
+@media (pointer: coarse) { .segmented > * { min-height: 44px; } }
 .segmented > button {
   background: transparent;
   color: var(--text-primary);
@@ -2150,3 +2285,26 @@ body[data-motion="reduce"] *::after {
 .segmented > button:disabled:hover { background: transparent; }
 .segmented > button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
 .segmented-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* Below desk width the reader replaces the list, so it needs a way back;
+   at three columns the list is beside it. */
+@media (min-width: 992px) {
+  .reader-back { display: none !important; }
+}
+
+/* Skip link: off-screen until a keyboard user tabs to it. */
+.skip-link {
+  position: fixed;
+  top: .5rem;
+  left: .5rem;
+  z-index: 1200;
+  padding: .5rem .75rem;
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+  transform: translateY(-200%);
+}
+.skip-link:focus { transform: none; }
+
+#col-item-list:focus { outline: none; }

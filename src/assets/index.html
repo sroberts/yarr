@@ -45,6 +45,7 @@
     <!-- #app is the Vue mount container; Vue 3 ignores :class here, so the
          responsive layout classes (feed-selected/item-selected/card-mode) are
          applied imperatively by the appLayoutClasses watcher in app.js. -->
+    <a class="skip-link" href="#col-item-list">Skip to articles</a>
     <div id="app" class="d-flex" v-cloak>
         <!-- feed list -->
         <div id="col-feed-list" role="navigation" aria-label="Feeds" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
@@ -101,7 +102,6 @@
                         <span class="icon mr-1">{% inline "plus.svg" %}</span>
                         New Feed
                     </button>
-                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="fetchAllFeeds()">
                         <span class="icon mr-1">{% inline "rotate-cw.svg" %}</span>
                         Refresh Feeds
@@ -110,21 +110,20 @@
                     <button class="dropdown-item" @click="openPalette()">
                         <span class="icon mr-1">{% inline "search.svg" %}</span>
                         Command Palette
+                        <kbd class="menu-kbd">{{ isMac ? '⌘' : 'Ctrl' }} K</kbd>
                     </button>
-
-                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="showSettings('settings')">
                         <span class="icon mr-1">{% inline "sliders.svg" %}</span>
                         Settings
                     </button>
-                    <div class="dropdown-divider"></div>
                     <button class="dropdown-item" @click="showSettings('shortcuts')">
                         <span class="icon mr-1">{% inline "help-circle.svg" %}</span>
                         Shortcuts
+                        <kbd class="menu-kbd">?</kbd>
                     </button>
-                    <div class="dropdown-item text-muted small cursor-default" v-if="version">
-                        Version {{ version }}
-                    </div>
+                    <!-- a caption, not an item: nothing to press -->
+                    <div class="dropdown-divider" v-if="version"></div>
+                    <div class="dropdown-caption" v-if="version">Version {{ version }}</div>
                     <div class="dropdown-divider" v-if="authenticated"></div>
                     <button class="dropdown-item" v-if="authenticated" @click="logout()">
                         <span class="icon mr-1">{% inline "log-out.svg" %}</span>
@@ -135,7 +134,7 @@
             <!-- card triage mode -->
             <div id="card-view" class="d-flex flex-column flex-grow-1 border-top" v-if="cardMode">
                 <!-- folder filter -->
-                <div class="card-view-hints px-4 pt-2 pb-0 d-flex justify-content-center">
+                <div class="card-view-hints card-folder-bar px-4 pt-2 pb-0 d-flex justify-content-center">
                     <span class="card-folder-pick text-muted small">
                         <select class="card-folder-select"
                                 aria-label="Folder to triage"
@@ -150,6 +149,8 @@
                 <div v-if="cardLoading && cardItems.length === 0" class="flex-grow-1 d-flex align-items-center justify-content-center">
                     <span class="text-muted">Loading unread items...</span>
                 </div>
+                <!-- announces each new card; persistent so screen readers hear changes -->
+                <div class="sr-only" aria-live="polite">{{ cardAnnouncement }}</div>
                 <!-- card -->
                 <div v-if="currentCard && !cardDone" class="card-view-area flex-grow-1 d-flex flex-column align-items-center justify-content-center" id="card-swipe-area">
                     <!-- Tap / Enter opens the article here in the card: the content is
@@ -180,8 +181,12 @@
                 <div class="card-view-action" id="card-action-indicator"></div>
                 <!-- swipe hints -->
                 <div v-if="currentCard && !cardDone" class="card-view-hints card-view-legend px-4 pb-3 d-flex align-items-center justify-content-between small">
-                    <span class="d-inline-flex align-items-center" v-if="instapaperUsername"><span class="icon mr-1">{% inline "chevron-left.svg" %}</span>instapaper</span>
-                    <span class="d-inline-flex align-items-center" v-else><span class="icon mr-1">{% inline "chevron-left.svg" %}</span>keep unread</span>
+                    <!-- the legend ends are the verbs themselves: a mouse, or a
+                         screen reader that keeps the arrow keys, can triage too -->
+                    <button type="button" class="card-legend-btn" @click="cardSwipeLeft()" aria-keyshortcuts="ArrowLeft"
+                            :title="instapaperUsername ? 'Save to Instapaper and go to the next card (←)' : 'Keep unread and go to the next card (←)'">
+                        <span class="icon mr-1">{% inline "chevron-left.svg" %}</span>{{ instapaperUsername ? 'Instapaper' : 'Keep unread' }}
+                    </button>
                     <div class="d-flex align-items-center">
                         <!-- star is the verb swipes can't carry: left and right
                              are taken, and vertical drags scroll the excerpt -->
@@ -203,22 +208,25 @@
                             <span class="icon" v-else>{% inline "pause.svg" %}</span>
                         </button>
                     </div>
-                    <span class="d-inline-flex align-items-center">mark read<span class="icon ml-1">{% inline "chevron-right.svg" %}</span></span>
+                    <button type="button" class="card-legend-btn" @click="cardSwipeRight()" aria-keyshortcuts="ArrowRight"
+                            title="Mark read and go to the next card (→)">
+                        Mark read<span class="icon ml-1">{% inline "chevron-right.svg" %}</span>
+                    </button>
                 </div>
                 <!-- stats screen -->
                 <div v-if="cardDone" class="flex-grow-1 d-flex flex-column align-items-center justify-content-center">
-                    <h4 class="mb-4">All caught up</h4>
+                    <h2 class="card-done-title mb-4">All caught up</h2>
                     <div class="d-flex mb-4" style="gap: 2rem;">
                         <div class="text-center">
                             <div class="card-stat-number card-stat-read">{{ cardStats.read }}</div>
                             <div class="text-muted small">marked read</div>
                         </div>
                         <div class="text-center" v-if="instapaperUsername">
-                            <div class="card-stat-number card-stat-instapaper">{{ cardStats.instapaper }}</div>
+                            <div class="card-stat-number">{{ cardStats.instapaper }}</div>
                             <div class="text-muted small">instapaper</div>
                         </div>
                         <div class="text-center" v-else>
-                            <div class="card-stat-number card-stat-instapaper">{{ cardStats.kept }}</div>
+                            <div class="card-stat-number">{{ cardStats.kept }}</div>
                             <div class="text-muted small">kept unread</div>
                         </div>
                         <div class="text-center" v-if="cardStats.starred">
@@ -235,7 +243,7 @@
                 </div>
                 <!-- undo last swipe -->
                 <transition name="undo">
-                    <div class="card-undo-toast" v-if="cardUndo" role="status" aria-live="polite">
+                    <div class="card-undo-toast" v-if="cardUndo">
                         <span class="card-undo-label">{{ cardUndoLabel }}</span>
                         <button type="button" class="card-undo-btn" @click="undoCardAction()">Undo</button>
                     </div>
@@ -256,8 +264,10 @@
                     <label class="selectgroup mt-1"
                            :class="{'d-none': mustHideFolder(folder)}"
                            v-if="folder.id">
-                        <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id">
+                        <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id"
+                               :aria-label="folder.title + (filteredFolderStats[folder.id] ? ', ' + filteredFolderStats[folder.id] + ' ' + countNoun : '')">
                         <div class="selectgroup-label d-flex align-items-center w-100" v-if="folder.id"
+                             :class="{'ctx-open': feedContextMenu && feedContextMenu.folder === folder}"
                              @contextmenu.prevent="openFolderContextMenu(folder, $event)">
                             <span class="icon mr-2"
                                   role="button"
@@ -284,8 +294,10 @@
                         <label class="selectgroup"
                               :class="{'d-none': mustHideFeed(feed)}"
                                v-for="feed in folder.feeds">
-                            <input type="radio" name="feed" :value="'feed:'+feed.id" v-model="feedSelected">
+                            <input type="radio" name="feed" :value="'feed:'+feed.id" v-model="feedSelected"
+                                   :aria-label="feed.title + (filteredFeedStats[feed.id] ? ', ' + filteredFeedStats[feed.id] + ' ' + countNoun : '') + (feed_errors[feed.id] ? ', has an error' : '')">
                             <div class="selectgroup-label d-flex align-items-center w-100"
+                                 :class="{'ctx-open': feedContextMenu && feedContextMenu.feed === feed}"
                                  @contextmenu.prevent="openFeedContextMenu(feed, $event)">
                                 <span class="icon mr-2" v-if="!feed.has_icon">{% inline "rss.svg" %}</span>
                                 <span class="icon mr-2" v-else><img :src="'./api/feeds/'+feed.id+'/icon'" alt="" loading="lazy"></span>
@@ -312,7 +324,7 @@
                 <div class="empty-hint" v-if="feeds.length === 0">
                     <p class="mb-2">No feeds yet.</p>
                     <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
-                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
+                    <p class="text-muted small mb-0">Or import an OPML file under <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> → Settings.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
                 </div>
             </div>
             <div class="p-2 toolbar d-flex align-items-center border-top flex-shrink-0" v-if="loading.feeds">
@@ -321,13 +333,14 @@
             </div>
         </div>
         <!-- item list -->
-        <div id="col-item-list" role="region" aria-label="Articles" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: itemListWidth+'px'}">
+        <div id="col-item-list" role="region" aria-label="Articles" tabindex="-1" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: itemListWidth+'px'}">
             <drag :width="itemListWidth" @resize="resizeItemList"></drag>
             <div class="px-2 toolbar d-flex align-items-center">
-                <button class="toolbar-item mr-2 d-block d-md-none"
+                <button class="toolbar-item toolbar-item-labelled mr-2 d-inline-flex d-md-none"
                         @click="feedSelected = null"
                         title="Show Feeds">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
+                    Feeds
                 </button>
                 <div class="input-icon flex-grow-1">
                     <span class="icon">{% inline "search.svg" %}</span>
@@ -369,8 +382,19 @@
                 <span class="slip-addr is-unread" aria-hidden="true">{{ stackHeading.code }}</span>
                 <h2 class="stack-heading-title text-truncate">{{ stackHeading.title }}</h2>
                 <span class="stack-heading-count" v-if="stackHeading.count">· {{ stackHeading.count }}</span>
-                <button type="button" class="stack-heading-action"
+                <!-- phones reach triage from here, in the thumb's path, instead of
+                     via the feed list's top-row icon -->
+                <button type="button" class="stack-heading-action d-md-none"
                         v-if="filterSelected == 'unread' && stackHeading.n"
+                        @click="filterSelected = 'triage'"
+                        aria-label="Triage unread, one card at a time">
+                    <span class="icon">{% inline "cards.svg" %}</span>
+                    Triage
+                </button>
+                <!-- hidden while searching: it would act on the whole feed or
+                     folder, not on the results on screen -->
+                <button type="button" class="stack-heading-action"
+                        v-if="filterSelected == 'unread' && stackHeading.n && !itemSearch"
                         @click="markItemsRead()"
                         :aria-label="'Mark all read in ' + stackHeading.title"
                         title="Mark all read (R)">
@@ -391,18 +415,19 @@
                 <div class="empty-hint" v-if="feeds.length === 0">
                     <p class="mb-2">No feeds yet.</p>
                     <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
-                    <p class="text-muted small mb-0">Or import an OPML file from the <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> menu.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
+                    <p class="text-muted small mb-0">Or import an OPML file under <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> → Settings.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
                 </div>
                 <label v-for="(item, index) in items" :key="item.id"
                        class="selectgroup">
-                    <input type="radio" name="item" :value="item.id" v-model="itemSelected">
+                    <input type="radio" name="item" :value="item.id" v-model="itemSelected"
+                           :aria-label="(item.title || 'untitled') + ', ' + ((feedsById[item.feed_id] || {}).title || '') + (item.status == 'unread' ? ', unread' : item.status == 'starred' ? ', starred' : '') + ', ' + slipAddress(item, index)">
                     <div class="selectgroup-label d-flex flex-column">
                         <div class="item-meta d-flex align-items-center">
                             <transition name="indicator">
                                 <span class="icon icon-small mr-1" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
                                 <span class="icon icon-small mr-1 marker" v-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
                             </transition>
-                            <span class="slip-addr" :class="{'is-unread': item.status == 'unread'}" aria-hidden="true">{{ slipAddress(item, index) }}</span>
+                            <span class="slip-addr" :class="{'is-unread': item.status == 'unread'}">{{ slipAddress(item, index) }}</span>
                             <small class="flex-fill text-truncate mr-1">
                                 {{ (feedsById[item.feed_id] || {}).title }}
                             </small>
@@ -416,7 +441,7 @@
                          still match; decorative (the star icon carries the state). -->
                     <span class="slip-tab" aria-hidden="true" v-if="item.status == 'starred'"></span>
                 </label>
-                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length"></button>
+                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length" aria-label="Loading more articles"></button>
             </div>
         </div>
         <!-- item show -->
@@ -444,7 +469,7 @@
                      alone is a last-resort accessible name and is invisible on
                      touch), and the toggles carry aria-pressed so state isn't
                      conveyed by a swapped glyph alone. -->
-                <button class="toolbar-item mr-1 d-block d-md-none"
+                <button class="toolbar-item mr-1 d-block reader-back"
                         @click="itemSelected = null"
                         title="Back"
                         aria-label="Back to article list">
@@ -453,6 +478,7 @@
                 <button class="toolbar-item"
                         @click="toggleItemStarred(itemSelectedDetails)"
                         title="Mark Starred"
+                        aria-keyshortcuts="s"
                         aria-label="Star article"
                         :aria-pressed="itemSelectedDetails.status=='starred' ? 'true' : 'false'">
                     <span class="icon marker" v-if="itemSelectedDetails.status=='starred'" >{% inline "star-full.svg" %}</span>
@@ -462,6 +488,7 @@
                      "Mark Unread" contradicted the icon on an unread item. -->
                 <button class="toolbar-item"
                         :title="itemSelectedDetails.status=='unread' ? 'Mark Read' : 'Mark Unread'"
+                        aria-keyshortcuts="r"
                         aria-label="Mark read"
                         :aria-pressed="itemSelectedDetails.status!='unread' ? 'true' : 'false'"
                         @click="toggleItemRead(itemSelectedDetails)">
@@ -478,8 +505,8 @@
                     <button class="dropdown-item font-monospace" :class="{active: theme.font == 'monospace'}" @click.stop="theme.font = 'monospace'">monospace</button>
 
                     <div class="d-flex text-center">
-                        <button class="dropdown-item" style="font-size: 0.8rem" @click.stop="incrFont(-1)">A</button>
-                        <button class="dropdown-item" style="font-size: 1.2rem" @click.stop="incrFont(1)">A</button>
+                        <button class="dropdown-item" style="font-size: 0.8rem" @click.stop="incrFont(-1)" aria-label="Smaller text" title="Smaller text">A</button>
+                        <button class="dropdown-item" style="font-size: 1.2rem" @click.stop="incrFont(1)" aria-label="Larger text" title="Larger text">A</button>
                     </div>
                 </dropdown>
                 <!-- The four secondary actions below are desktop/tablet-only:
@@ -492,6 +519,7 @@
                         :disabled="!itemSelectedDetails.link"
                         @click="toggleReadability()"
                         title="Read Here"
+                        aria-keyshortcuts="i"
                         aria-label="Read here"
                         :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
@@ -499,6 +527,7 @@
                 <button class="toolbar-item d-none d-md-inline-flex"
                         v-if="ttsSupported"
                         data-testid="reader-listen"
+                        aria-keyshortcuts="p"
                         :class="{active: ttsPlaying}"
                         @click="toggleListen()"
                         :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'"
@@ -514,6 +543,7 @@
                         @click="saveToInstapaper(itemSelectedDetails)"
                         title="Save to Instapaper"
                         aria-label="Save to Instapaper"
+                        aria-keyshortcuts="Shift+I"
                         :aria-pressed="itemSelectedDetails.instapaper_saved ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.instapaper}">
                         <template v-if="itemSelectedDetails.instapaper_saved">{% inline "check.svg" %}</template>
@@ -525,6 +555,7 @@
                         :disabled="!itemSelectedDetails.link"
                         @click="copyItemLink(itemSelectedDetails)"
                         :title="linkCopied ? 'Link Copied' : 'Copy Link'"
+                        aria-keyshortcuts="c"
                         :aria-label="linkCopied ? 'Link copied to clipboard' : 'Copy article link'">
                     <span class="icon">
                         <template v-if="linkCopied">{% inline "check.svg" %}</template>
@@ -539,7 +570,7 @@
                    :class="{disabled: !itemSelectedDetails.link}"
                    :href="itemSelectedDetails.link || null"
                    :aria-disabled="!itemSelectedDetails.link"
-                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
+                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab" aria-keyshortcuts="o">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <!-- Phone overflow: nine 44px controls need 412px plus padding,
@@ -599,13 +630,13 @@
                      and the reader-nav bar under the article cover them, and
                      keeping them here overflowed the toolbar past the viewport
                      edge (unreachable). -->
-                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" aria-label="Previous article" :disabled="!items.length || itemSelected == items[0].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" aria-label="Previous article" aria-keyshortcuts="k" :disabled="!items.length || itemSelected == items[0].id">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" aria-label="Next article" :disabled="!items.length || itemSelected == items[items.length - 1].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" aria-label="Next article" aria-keyshortcuts="j" :disabled="!items.length || itemSelected == items[items.length - 1].id">
                     <span class="icon">{% inline "chevron-right.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex" @click="itemSelected=null" title="Close Article" aria-label="Close article">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="itemSelected=null" title="Close Article" aria-label="Close article" aria-keyshortcuts="q">
                     <span class="icon">{% inline "x.svg" %}</span>
                 </button>
             </div>
@@ -615,13 +646,13 @@
                  tabindex="0"
                  role="region"
                  aria-label="Article content"
-                 class="content px-4 pt-3 pb-5 border-top overflow-auto scroll-touch"
+                 class="content flex-grow-1 px-4 pt-3 pb-5 border-top overflow-auto scroll-touch"
                  :class="{'font-serif': theme.font == 'serif', 'font-monospace': theme.font == 'monospace'}"
                  :style="{'font-size': theme.size + 'rem'}">
                 <div class="content-wrapper" :key="itemSelected">
                     <h1 class="content-title"><b>{{ itemSelectedDetails.title || 'untitled' }}</b></h1>
                     <div class="content-byline">
-                        <span class="byline-feed cursor-pointer" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">{{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}</span>
+                        <button type="button" class="byline-feed" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">{{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}</button>
                         · <time :title="formatDate(itemSelectedDetails.date)">{{ shortDate(itemSelectedDetails.date) }}</time>
                         <span v-if="readingTime(itemSelectedDetails)"> · {{ readingTime(itemSelectedDetails) }} min</span>
                         <span v-if="itemOffline"> · offline copy</span>
@@ -660,7 +691,7 @@
                 </button>
             </nav>
         </div>
-        <modal :open="!!settings" @hide="settings = ''">
+        <modal :open="!!settings" @hide="settings = ''" :label="({settings: 'Settings', shortcuts: 'Keyboard shortcuts', create: 'New feed'})[settings] || 'Dialog'">
             <button class="btn btn-link outline-none float-right p-2 mr-n2 mt-n2" style="line-height: 1" aria-label="Close" @click="settings = ''">
                 <span class="icon">{% inline "x.svg" %}</span>
             </button>
@@ -670,29 +701,29 @@
                 <div class="settings-group">
                     <div class="settings-title">Appearance</div>
                     <div class="settings-section">
-                        <label class="settings-label">Theme</label>
-                        <div class="segmented">
-                            <button :aria-label="t" :aria-pressed="(theme.name == t) ? 'true' : 'false'" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t }}</button>
+                        <span class="settings-label" id="set-theme">Theme</span>
+                        <div class="segmented" role="group" aria-labelledby="set-theme">
+                            <button :aria-label="t" :aria-pressed="(theme.name == t) ? 'true' : 'false'" :class="{active: theme.name == t}" @click.stop="theme.name = t" v-for="t in ['auto', 'light', 'dark']">{{ t[0].toUpperCase() + t.slice(1) }}</button>
                         </div>
                     </div>
                     <div class="settings-section">
-                        <label class="settings-label">Filing colour</label>
-                        <div class="accent-swatches">
+                        <span class="settings-label" id="set-filing-colour">Filing colour</span>
+                        <div class="accent-swatches" role="group" aria-labelledby="set-filing-colour">
                             <button class="accent-swatch" :class="'swatch-'+a" :aria-label="({rose: 'red', slate: 'graphite'})[a] || a" :aria-pressed="(theme.accent == a) ? 'true' : 'false'" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
                                 <span class="accent-check" v-if="theme.accent == a">{% inline "check.svg" %}</span>
                             </button>
                         </div>
                     </div>
                     <div class="settings-section">
-                        <label class="settings-label">Density</label>
-                        <div class="segmented">
+                        <span class="settings-label" id="set-density">Density</span>
+                        <div class="segmented" role="group" aria-labelledby="set-density">
                             <button :aria-pressed="(theme.density == 'comfortable') ? 'true' : 'false'" :class="{active: theme.density == 'comfortable'}" @click.stop="theme.density='comfortable'">Comfortable</button>
                             <button :aria-pressed="(theme.density == 'compact') ? 'true' : 'false'" :class="{active: theme.density == 'compact'}" @click.stop="theme.density='compact'">Compact</button>
                         </div>
                     </div>
                     <div class="settings-section">
-                        <label class="settings-label">Motion</label>
-                        <div class="segmented">
+                        <span class="settings-label" id="set-motion">Motion</span>
+                        <div class="segmented" role="group" aria-labelledby="set-motion">
                             <button :aria-pressed="(theme.motion == 'system') ? 'true' : 'false'" :class="{active: theme.motion == 'system'}" @click.stop="theme.motion='system'">System</button>
                             <button :aria-pressed="(theme.motion == 'reduce') ? 'true' : 'false'" :class="{active: theme.motion == 'reduce'}" @click.stop="theme.motion='reduce'">Reduced</button>
                         </div>
@@ -702,20 +733,8 @@
                 <div class="settings-group">
                     <div class="settings-title">Reading</div>
                     <div class="settings-section">
-                        <label class="settings-label">Auto refresh</label>
-                        <div class="segmented">
-                            <button @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate" aria-label="less frequent">
-                                <span class="icon">{% inline "chevron-down.svg" %}</span>
-                            </button>
-                            <div class="segmented-value">{{ refreshRateTitle }}</div>
-                            <button @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value" aria-label="more frequent">
-                                <span class="icon">{% inline "chevron-up.svg" %}</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="settings-section">
-                        <label class="settings-label">Show first</label>
-                        <div class="segmented">
+                        <span class="settings-label" id="set-show-first">Show first</span>
+                        <div class="segmented" role="group" aria-labelledby="set-show-first">
                             <button :aria-pressed="(itemSortNewestFirst) ? 'true' : 'false'" :class="{active: itemSortNewestFirst}" @click.stop="itemSortNewestFirst=true">New</button>
                             <button :aria-pressed="(!itemSortNewestFirst) ? 'true' : 'false'" :class="{active: !itemSortNewestFirst}" @click.stop="itemSortNewestFirst=false">Old</button>
                         </div>
@@ -734,44 +753,60 @@
                     <p class="text-muted small mb-2" v-if="filters.length === 0">No filters yet.</p>
                     <form class="mt-1" @submit.prevent="createFilter()">
                         <div class="d-flex">
-                            <select class="form-control form-control-sm flex-shrink-0 mr-1" style="width:auto" v-model="filterDraft.action" aria-label="Filter action">
+                            <select class="form-control flex-shrink-0 mr-1" style="width:auto" v-model="filterDraft.action" aria-label="Filter action">
                                 <option value="read">Auto-read</option>
                                 <option value="star">Auto-star</option>
                                 <option value="mute">Mute</option>
                             </select>
-                            <input class="form-control form-control-sm flex-fill" v-model="filterDraft.keyword" placeholder="title contains…" aria-label="Keyword (case-insensitive)">
+                            <input class="form-control flex-fill" v-model="filterDraft.keyword" placeholder="title contains…" aria-label="Keyword (case-insensitive)">
                         </div>
-                        <select class="form-control form-control-sm mt-1" v-model="filterDraft.feedId" aria-label="Scope">
+                        <select class="form-control mt-1" v-model="filterDraft.feedId" aria-label="Scope">
                             <option :value="null">All feeds</option>
                             <option :value="feed.id" v-for="feed in feeds">{{ feed.title }}</option>
                         </select>
                         <label class="d-flex align-items-center small text-muted mt-2 mb-0">
                             <input type="checkbox" class="mr-1" v-model="filterDraft.applyNow">
-                            <span v-if="filterDraft.action == 'mute'">Also delete matching unread items now</span>
+                            <span v-if="filterDraft.action == 'mute'">Also delete matching unread items now (can't be undone)</span>
                             <span v-else>Also apply to current unread items</span>
                         </label>
-                        <button class="btn btn-sm btn-default mt-2" type="submit" :disabled="!filterDraft.keyword.trim()">Add rule</button>
+                        <button class="btn btn-default mt-2" type="submit" :disabled="!filterDraft.keyword.trim()">Add rule</button>
                     </form>
                 </div>
 
                 <div class="settings-group">
                     <div class="settings-title">Instapaper</div>
-                    <input type="text" class="form-control form-control-sm mb-1" aria-label="Instapaper username or email" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
-                    <input type="password" class="form-control form-control-sm" aria-label="Instapaper password" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
+                    <input type="text" class="form-control mb-1" aria-label="Instapaper username or email" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
+                    <input type="password" class="form-control" aria-label="Instapaper password" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
+                    <p class="settings-saved small mt-1 mb-0" role="status">{{ instapaperSaved ? 'Saved' : '' }}</p>
                 </div>
 
                 <div class="settings-group">
                     <div class="settings-title">Subscriptions</div>
-                    <div class="d-flex">
-                        <form id="opml-import-form" enctype="multipart/form-data" tabindex="-1" class="mr-2">
-                            <input type="file" id="opml-import" @change="importOPML" name="opml" style="opacity: 0; width: 1px; height: 0; position: absolute; z-index: -1;">
-                            <label class="btn btn-default mb-0 cursor-pointer" for="opml-import">
-                                <span class="icon mr-1">{% inline "download.svg" %}</span> Import
-                            </label>
-                        </form>
-                        <a class="btn btn-default" href="./opml/export">
-                            <span class="icon mr-1">{% inline "upload.svg" %}</span> Export
-                        </a>
+                    <div class="settings-section">
+                        <span class="settings-label" id="set-auto-refresh">Auto refresh</span>
+                        <div class="segmented" role="group" aria-labelledby="set-auto-refresh">
+                            <button @click.stop="changeRefreshRate(-1)" :disabled="!refreshRate" aria-label="less frequent">
+                                <span class="icon">{% inline "chevron-down.svg" %}</span>
+                            </button>
+                            <div class="segmented-value">{{ refreshRateTitle }}</div>
+                            <button @click.stop="changeRefreshRate(1)" :disabled="refreshRate === refreshRateOptions.at(-1).value" aria-label="more frequent">
+                                <span class="icon">{% inline "chevron-up.svg" %}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <span class="settings-label" id="set-opml">OPML</span>
+                        <div class="d-flex" role="group" aria-labelledby="set-opml">
+                            <form id="opml-import-form" enctype="multipart/form-data" tabindex="-1" class="mr-2">
+                                <input type="file" id="opml-import" @change="importOPML" name="opml" style="opacity: 0; width: 1px; height: 0; position: absolute; z-index: -1;">
+                                <label class="btn btn-default mb-0 cursor-pointer" for="opml-import">
+                                    <span class="icon mr-1">{% inline "download.svg" %}</span> Import
+                                </label>
+                            </form>
+                            <a class="btn btn-default" href="./opml/export">
+                                <span class="icon mr-1">{% inline "upload.svg" %}</span> Export
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -801,26 +836,29 @@
                             </div>
                         </label>
                     </div>
+                    <p class="text-danger small mt-3 mb-0" role="alert" v-if="feedNewError">{{ feedNewError }}</p>
                     <button class="btn btn-block btn-default mt-3" :class="{loading: loading.newfeed}" :disabled="loading.newfeed" type="submit">Add</button>
                 </form>
             </div>
             <div v-else-if="settings=='shortcuts'">
                 <p class="cursor-default" role="heading" aria-level="2"><b>Keyboard Shortcuts</b></p>
 
-                <table class="table table-borderless table-sm table-compact m-0">
+                <table class="table table-borderless table-sm table-compact m-0 shortcut-table">
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Views</th></tr>
                     <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td>
                                                             <td>show unread / starred / all feeds</td></tr>
                     <tr><td><kbd>4</kbd></td>               <td>triage unread, one card at a time</td></tr>
                     <tr><td><kbd>/</kbd></td>               <td>focus the search bar</td></tr>
-                    <tr><td><kbd>⌘</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
+                    <tr><td><kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
                     <tr><td><kbd>?</kbd></td>               <td>show keyboard shortcuts</td></tr>
+                    <tr><td><kbd>u</kbd></td>               <td>undo the last delete, move or mark all read</td></tr>
 
-                    <tr><td colspan=2>&nbsp;</td></tr>
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Moving around</th></tr>
                     <tr><td><kbd>j</kbd> <kbd>k</kbd></td>  <td>next / prev article</td></tr>
                     <tr><td><kbd>l</kbd> <kbd>h</kbd></td>  <td>next / prev feed</td></tr>
                     <tr><td><kbd>q</kbd></td>               <td>close article</td></tr>
 
-                    <tr><td colspan=2>&nbsp;</td></tr>
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Articles</th></tr>
                     <tr><td><kbd>R</kbd></td>               <td>mark all read</td></tr>
                     <tr><td><kbd>r</kbd></td>               <td>mark read / unread</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>mark starred / unstarred</td></tr>
@@ -832,8 +870,7 @@
                     <tr><td><kbd>f</kbd> <kbd>b</kbd></td>  <td>scroll content forward / backward</td>
                     </tr>
 
-                    <tr><td colspan=2>&nbsp;</td></tr>
-                    <tr><td colspan=2 class="text-muted">Triage (card mode)</td></tr>
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Triage (card mode)</th></tr>
                     <tr><td><kbd>←</kbd></td>               <td>{{ instapaperUsername ? 'save to Instapaper and mark read' : 'keep unread' }}</td></tr>
                     <tr><td><kbd>→</kbd></td>               <td>mark read</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>star</td></tr>
@@ -841,29 +878,42 @@
                     <tr><td><kbd>o</kbd></td>               <td>open original link</td></tr>
                     <tr><td><kbd>u</kbd></td>               <td>undo last swipe</td></tr>
                     <tr><td><kbd>Esc</kbd></td>             <td>back to the card, then exit triage</td></tr>
+                    <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td> <td>leave triage for unread / starred / all</td></tr>
                 </table>
             </div>
         </modal>
+        <!-- One live region that outlives the toasts: a region created together
+             with its text is missed by some screen readers. -->
+        <div class="sr-only" role="status" aria-live="polite">{{ liveStatus }}</div>
         <transition name="toast">
-            <div class="app-toast" v-if="toast" role="status" aria-live="polite">{{ toast.text }}</div>
+            <div class="app-toast" v-if="toast">{{ toast.text }}</div>
         </transition>
         <!-- command palette (Cmd/Ctrl+K): jump to a feed/folder or run a command -->
-        <div class="modal custom-modal command-palette" v-if="paletteOpen" @click="closePalette()">
-            <div class="command-palette-dialog" role="dialog" aria-label="Command palette" @click.stop>
+        <div class="modal custom-modal command-palette" v-if="paletteOpen" @click.stop="closePalette()">
+            <div class="command-palette-dialog" role="dialog" aria-modal="true" aria-label="Command palette" @click.stop>
                 <input ref="paletteInput"
                        class="command-palette-input"
                        type="text"
                        v-model="paletteQuery"
                        placeholder="Jump to a feed or run a command…"
                        aria-label="Jump to a feed or run a command"
+                       role="combobox"
+                       aria-expanded="true"
+                       aria-autocomplete="list"
+                       aria-controls="palette-results"
+                       :aria-activedescendant="paletteResults.length ? 'palette-row-' + paletteIndex : null"
+                       @keydown.tab.prevent
                        @keydown.down.prevent="paletteMove(1)"
                        @keydown.up.prevent="paletteMove(-1)"
                        @keydown.enter.prevent="paletteExecute(paletteIndex)"
-                       @keydown.esc.prevent="closePalette()">
-                <div class="command-palette-results">
+                       @keydown.esc.prevent.stop="closePalette()">
+                <div class="command-palette-results" id="palette-results" role="listbox" aria-label="Results">
                     <template v-for="(r, i) in paletteResults" :key="i">
-                        <div class="command-palette-group" v-if="i === 0 || paletteResults[i-1].group !== r.group">{{ r.group }}</div>
+                        <div class="command-palette-group" role="presentation" v-if="i === 0 || paletteResults[i-1].group !== r.group">{{ r.group }}</div>
                         <div class="command-palette-row"
+                             role="option"
+                             :id="'palette-row-' + i"
+                             :aria-selected="i === paletteIndex ? 'true' : 'false'"
                              :class="{selected: i === paletteIndex}"
                              @click="paletteExecute(i)"
                              @mousemove="paletteIndex = i">
@@ -877,7 +927,7 @@
         </div>
         <!-- Themed input prompt (rename / change link / new folder) — replaces the
              OS-native prompt() so these flows stay inside the app's theme. -->
-        <modal :open="!!promptModal" @hide="promptModal = null">
+        <modal :open="!!promptModal" @hide="promptModal = null" :label="promptModal ? promptModal.title : ''">
             <form @submit.prevent="confirmPrompt()">
                 <p class="cursor-default mb-2" role="heading" aria-level="2"><b>{{ promptModal.title }}</b></p>
                 <input ref="promptInput"
@@ -894,9 +944,11 @@
         <!-- Undo toast for reversible feed actions (delete, move, mark read). The server
              write is deferred until this window closes, so Undo is instant. -->
         <transition name="toast">
-            <div class="app-toast app-toast-undo" v-if="feedUndo" role="status" aria-live="polite">
+            <div class="app-toast app-toast-undo" v-if="feedUndo"
+                 @mouseenter="pauseFeedUndo()" @mouseleave="resumeFeedUndo()"
+                 @focusin="pauseFeedUndo()" @focusout="resumeFeedUndo()">
                 <span class="text-truncate">{{ feedUndo.label }}</span>
-                <button type="button" class="app-toast-btn" @click="runFeedUndo()">Undo</button>
+                <button type="button" class="app-toast-btn" @click="runFeedUndo()" aria-keyshortcuts="u">Undo<kbd class="toast-kbd d-none d-md-inline-flex">u</kbd></button>
             </div>
         </transition>
         <!-- Right-click a feed row for its actions. Feed management is rare

@@ -254,7 +254,7 @@ Nearly flat. Depth is a white card on a tinted ground plus a 1px edge; the shado
 ### Shadow Vocabulary
 - **Slip** (`--slip-shadow`: `0 1px 2px rgba(27,28,30,.06)` light, `0 1px 2px rgba(0,0,0,.3)` dark): every slip in the stack and the open slip.
 - **Toast** (`0 4px 16px rgba(0,0,0,.25)`): the always-dark toast and swipe-undo pill.
-- **Palette** (`0 16px 48px rgba(0,0,0,.4)`): the command palette over its dark backdrop.
+- **Palette** (`0 16px 48px rgba(0,0,0,.4)`): the command palette over its dark backdrop. Its selected row is a 2px inset ink outline, never a fill.
 
 ### Named Rules
 **The Paper Not Plastic Rule.** A resting surface never gets more than the slip shadow. Hover changes the edge (subtle to strong), not the elevation.
@@ -277,13 +277,14 @@ The signature object.
 - The reader toolbar groups actions with space and a short hairline between groups: state (star, read), reading (appearance, read here, listen), send (Instapaper, copy, open). The read toggle shows the list's unread dot while unread and a check once read. At the right, the slip's address and "n of m" in pencil beside prev/next and close.
 - Code blocks sit on raised grey with a hairline, scroll sideways with a right-edge fade while more remains.
 - Opening fades the slip in (0.18s, 4px rise).
+- On a phone the slip is the screen: slip white edge to edge, no margin, border or shadow, so the measure keeps every pixel. Below desk width the reader replaces the list, so a Back chevron leads its toolbar on phones and tablets alike. The byline's feed name is a button that opens that feed.
 
 ### Stack Heading
-The stack's own address line under the search field, at every width: the mono code (bold ink), the feed, folder or "All Unread/Starred/Feeds" name in 600 ink, and the filter's count in graphite ("FB · Feed B · 3 unread"). In the Unread view a labelled "Mark all read" text button sits at its right, so the bulk action names its scope. It is how a phone keeps its place with the sidebar off-screen.
+The stack's own address line under the search field, at every width: the mono code (bold ink), the feed, folder or "All Unread/Starred/Feeds" name in 600 ink, and the filter's count in graphite ("FB · Feed B · 3 unread"). In the Unread view a labelled "Mark all read" text button sits at its right, so the bulk action names its scope; it hides while a search is active, since the server would mark the whole scope, not the results. On phones a labelled "Triage" button sits beside it, and the stack's way back reads "‹ Feeds". It is how a phone keeps its place with the sidebar off-screen.
 
 ### Feed Sidebar
 - **Style:** the box ground, no slips: folders and feeds are plain rows (icon, name, mono counter, ⋯ actions), feeds indented under an expandable folder.
-- **State:** the selected row takes the 2px inset ink outline over slip white; with an article open on the desk it steps down to a 1px ink edge. Never a fill. Actions open from ⋯ or right-click.
+- **State:** the selected row takes the 2px inset ink outline over slip white; with an article open on the desk it steps down to a 1px ink edge. Never a fill. Actions open from ⋯ or right-click; opening them leaves the selection alone (on a phone, selecting would leave the list) and marks the row in hover grey while its menu is up.
 
 ### View Filters
 Unread, Starred, All, Triage as icon buttons at the head of the feed sidebar (names in title and aria-label). The active one is outlined in ink on slip white at 600, never filled.
@@ -292,17 +293,20 @@ Unread, Starred, All, Triage as icon buttons at the head of the feed sidebar (na
 - **Toolbar icon:** transparent, 3px corner, `0.25rem 0.5rem`; hover grey under a real pointer; disabled = graphite at 0.7 opacity.
 - **Default:** slip white, strong edge, 4px corner; pressed = hover grey.
 - **Star (triage):** the one triage verb without a gesture, so it is a labelled button drawn in the filing colour (1px filing border, filing text, slip white ground).
-- **Segmented toggle (settings):** a strong-edge track of equal 44px segments with subtle dividers; the active segment inverts to ink.
+- **Segmented toggle (settings):** a strong-edge track of equal segments with subtle dividers, 36px at a desk and 44px on touch; the active segment inverts to ink.
+
+### Dialogs and Menus
+Settings, the shortcut sheet, prompts and the palette are real dialogs: labelled, Tab stays inside, and page shortcuts pause while one is open (? still swaps Settings for the sheet). The scrim dims the page to 45% rather than blacking it out. The palette opened over a dialog closes alone on Esc and hands focus back to the dialog. Settings rows name their control groups, so a screen reader hears "Theme, group" before the choices. A "Skip to articles" link appears on the first Tab. Menus open onto their first item from the keyboard, move with the arrows, Home and End, and close when Tab leaves them; they carry a strong edge and a soft shadow in both themes, with shortcut keys in pencil at the right. The shortcut sheet groups its keys under small headings: Views, Moving around, Articles, Triage.
 
 ### Inputs / Fields
 - **Search:** slip white, borderless, 3px corner, leading icon, its own clear button; focus fills hover grey and keyboard focus adds the ring.
 - **Form fields:** slip white; focus turns the border filing-coloured. Placeholders are pencil at full opacity.
 
 ### Triage Card
-One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain (hidden for IP addresses and LAN names), then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". A card with no body says "No preview in the feed" and offers the original instead of a read-here hint; tapping it opens the original. Triage starts in the folder being read, and its header keeps the view filters beside the wordmark as in the three-column layout. The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s.
+One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with address and feed name and age, then domain (hidden for IP addresses and LAN names), then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". A card with no body says "No preview in the feed" and offers the original instead of a read-here hint; tapping it opens the original. Triage starts in the folder being read, and its header keeps the view filters beside the wordmark as in the three-column layout. The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s. On phones the card sits low, near the thumb, with the folder picker under the legend at the bottom edge. Each new card is announced to screen readers ("Card 3 of 12: title"). A focused button, link or the folder picker keeps its own Enter, Space and arrows; the letters and Esc still triage. The finished screen titles itself "All caught up" at 1.5rem/650, with every count in ink. The legend ends ("‹ Keep unread" or "‹ Instapaper", "Mark read ›") are buttons drawn as legend text, so a mouse or a screen reader can triage at the desk; they never wrap, and Listen drops out below 360px.
 
 ### Toasts
-An always-dark pill (4px corner, toast shadow), bottom centre in the thumb zone, auto-dismissing; the undo variant carries a lightened filing-colour action.
+An always-dark pill (4px corner, toast shadow), bottom centre in the thumb zone, auto-dismissing; the undo variant carries a lightened filing-colour action with its key, `u`, in an outlined key cap beside it at desk widths. Undo holds for 6s (10s for a delete), pauses while hovered or focused, and `u` reaches it from anywhere. Status text reaches screen readers through one live region; the offline banner is empty, and silent, until the connection drops.
 
 ### Accent Picker
 Seven circular swatches under "Filing colour", each previewing its own theme's value; the chosen one gets an ink ring and a check mark so the choice survives colour blindness.
@@ -311,7 +315,7 @@ Seven circular swatches under "Filing colour", each previewing its own theme's v
 
 ### Do:
 - **Do** put every article on a slip: slip white, 1px subtle edge, 4px corner, slip shadow, 6px apart on the box ground.
-- **Do** give every slip its mono address (feed initials, a middle dot, two-digit position in the current view), bold ink while unread.
+- **Do** give every slip its mono address (feed code, a middle dot, two-digit position in the current view), bold ink while unread. Feed and folder codes are unique: two initials where free, a third letter or a digit to settle a clash, allocated in id order; AU, AS and AF are reserved for the All views. The address is read by screen readers and typed into the command palette ("fb04", or a bare "4") to jump to that slip.
 - **Do** mark selection with an ink outline on the object (2px inset), leaving its surface white.
 - **Do** keep `--focus-ring` equal to `--accent` and declare accent derivations on `body`, where the `[data-accent]` value actually lands.
 - **Do** keep the accent keys `blue`, `teal`, `green`, `violet`, `rose`, `amber`, `slate`, each with a light and dark value and a matching swatch.
