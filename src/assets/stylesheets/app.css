@@ -671,6 +671,8 @@ select.form-control:not([multiple]):not([size]) {
   padding: 0.05rem 0.35rem;
   border: 1px solid var(--border-subtle);
   border-radius: 3px;
+  /* drop the base kbd's dark key: pencil on near-black read at 2.6:1 */
+  background: transparent;
   color: var(--text-tertiary);
 }
 
