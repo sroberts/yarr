@@ -15,12 +15,12 @@
     in
     {
       # `nix develop` — local dev shell with the exact toolchain `make` needs:
-      # Go 1.23 plus a C compiler for cgo (mattn/go-sqlite3).
+      # Go 1.25 plus a C compiler for cgo (mattn/go-sqlite3).
       devShells = forAllSystems (system:
         let pkgs = pkgsFor system; in {
           default = pkgs.mkShell {
             packages = with pkgs; [
-              go_1_23      # CLAUDE.md pins Go 1.23
+              go_1_25      # CLAUDE.md pins Go 1.25
               gnumake      # make serve / test / host
               gopls
               delve

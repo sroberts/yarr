@@ -31,7 +31,7 @@ JavaScript bundler — edit the `.js`/`.css` directly.
 
 ## Conventions
 
-- Go 1.23. Build always uses tags `sqlite_foreign_keys sqlite_json`;
+- Go 1.25. Build always uses tags `sqlite_foreign_keys sqlite_json`;
   `gui` adds the tray.
 - Format with `gofmt` (default settings — no `goimports` reordering
   beyond stdlib/external split).

@@ -20,12 +20,12 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
-        go-version: '1.23'
+        go-version: '1.25'
 
     - name: Lint
-      uses: golangci/golangci-lint-action@55c2c1448f86e01eaae002a5a3a9624417608d84 # v6.5.2
+      uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
       with:
-        version: v1.62.2
+        version: v2.15.0
         args: --timeout=5m --build-tags="sqlite_foreign_keys sqlite_json"
 
     - name: Run tests with coverage

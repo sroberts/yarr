@@ -5,7 +5,7 @@ in this repository — for both human contributors and AI coding agents.
 
 ## Getting set up
 
-You need Go 1.23 and, for the end-to-end tests, Node.js.
+You need Go 1.25 and, for the end-to-end tests, Node.js.
 
 ```sh
 git clone https://github.com/sroberts/yarr.git && cd yarr
