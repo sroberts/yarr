@@ -77,7 +77,7 @@ instance. The phone is frequently on a slow or absent connection.
 
 ## Capabilities and Constraints
 
-- Go 1.23; build tags `sqlite_foreign_keys sqlite_json`; `gui` adds a tray.
+- Go 1.25; build tags `sqlite_foreign_keys sqlite_json`; `gui` adds a tray.
 - **SQLite only.** No second storage backend, no ORM.
 - **No JS framework, bundler, or transpiler.** `src/assets/` is hand-written
   HTML/CSS/JS served from `go:embed`; Vue 3 ships as a vendored global build.

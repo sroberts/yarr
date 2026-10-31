@@ -1,8 +1,9 @@
-# golangci-lint config for yarr.
+# golangci-lint config for yarr (v2 format).
 #
 # Kept conservative on purpose: this is a long-lived codebase that
 # predates the linters, so we enable a minimal default set rather than
 # whacking the whole tree. Tighten over time.
+version: "2"
 
 run:
   timeout: 5m
@@ -12,35 +13,55 @@ run:
   modules-download-mode: vendor
 
 linters:
-  disable-all: true
+  default: none
   enable:
     - errcheck
     - govet
     - ineffassign
     - staticcheck
     - unused
+  settings:
+    # v2's staticcheck also runs the old gosimple/stylecheck checks; keep
+    # the v1 scope (SA only) so the move doesn't add a style baseline.
+    staticcheck:
+      checks:
+        - "SA*"
+    errcheck:
+      # Skip standard "we know this can't fail" patterns.
+      exclude-functions:
+        - (io.Closer).Close
+        - fmt.Fprintf
+        - fmt.Fprintln
+  exclusions:
+    generated: lax
+    # The exclusions v1 applied by default.
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # Tests aren't modified except by explicit authorization. Exclude
+      # the linters whose pre-existing findings would otherwise force
+      # changes to test files.
+      - path: _test\.go
+        linters:
+          - errcheck
+    paths:
+      - vendor
+      - out
+
+formatters:
+  enable:
     - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
+      - out
+      - _test\.go
 
 issues:
-  exclude-dirs:
-    - vendor
-    - out
-  exclude-rules:
-    # Tests aren't modified except by explicit authorization. Exclude
-    # the linters whose pre-existing findings would otherwise force
-    # changes to test files.
-    - path: _test\.go
-      linters:
-        - gofmt
-        - errcheck
   # Don't drown PRs in pre-existing findings; tighten as the baseline shrinks.
   max-issues-per-linter: 0
   max-same-issues: 0
-
-linters-settings:
-  errcheck:
-    # Skip standard "we know this can't fail" patterns.
-    exclude-functions:
-      - (io.Closer).Close
-      - fmt.Fprintf
-      - fmt.Fprintln
