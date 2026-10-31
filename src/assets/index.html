@@ -402,9 +402,9 @@
                 <!-- hidden while searching: it would act on the whole feed or
                      folder, not on the results on screen -->
                 <button type="button" class="stack-heading-action"
-                        v-if="filterSelected == 'unread' && stackHeading.n && !itemSearch"
+                        v-if="scopeUnread && !itemSearch"
                         @click="markItemsRead()"
-                        :aria-label="'Mark all read in ' + stackHeading.title"
+                        :aria-label="markReadLabel"
                         title="Mark all read (R)">
                     <span class="icon">{% inline "check.svg" %}</span>
                     Mark all read

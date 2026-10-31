@@ -34,10 +34,8 @@ var shortcutFunctions = {
     }
   },
   markAllRead: function() {
-    // same condition as 'Mark all read button'
-    if (vm.filterSelected == 'unread'){
-      vm.markItemsRead()
-    }
+    // any filter, like the feed and folder menus; it's undoable
+    vm.markItemsRead()
   },
   toggleItemStarred: function() {
     if (vm.itemSelected != null) {
