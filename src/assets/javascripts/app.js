@@ -1900,7 +1900,18 @@ function rootComponent() { return {
     },
     logout: function() {
       api.logout().then(function() {
-        document.location.reload()
+        if (!app.outpostLogout) {
+          document.location.reload()
+          return
+        }
+        // Signed in through Outpost's gateway: end its session too, or the
+        // reload would sign straight back in. The gateway owns /.outpost/ on
+        // this host whatever yarr's base path, and wants a same-origin POST.
+        var form = document.createElement('form')
+        form.method = 'post'
+        form.action = '/.outpost/logout'
+        document.body.appendChild(form)
+        form.submit()
       })
     },
     toggleReadability: function() {

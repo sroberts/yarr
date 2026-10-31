@@ -4,6 +4,8 @@
 
 # upcoming
 
+- (new) Outpost login gateway: users signed in through the gateway skip yarr's login, verified against its signed identity token; logout ends the gateway session too
+- (fix) logging in through an Outpost tailnet node: the session cookie is marked `Secure` only for https requests when supervised
 - (new) save to Instapaper: save articles to Instapaper via toolbar button or `Shift+I` shortcut
 - (new) swipe triage card view: full-screen card mode for mobile/tablet PWA — swipe left to save to Instapaper, swipe right to mark as read
 - (new) PWA support: service worker, app icons, offline indicator, pull-to-refresh

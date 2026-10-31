@@ -28,6 +28,15 @@ tailscale_name = "yarr"
 #   "--secret-key-file", "/home/you/.outpost/data/yarr/session.key",
 # ]
 
+# Behind Outpost's login gateway, gateway users skip yarr's login page
+# automatically; the credentials above then only guard requests that bypass
+# the gateway (yarr's own tailnet node). Pin the host the gateway serves yarr
+# on so no other app's token can be replayed at it:
+#
+#   "--outpost-audience", "yarr.outpost.example",
+#
+# See doc/outpost.md, "logging in".
+
 # yarr needs no env table. SECRET_KEY_BASE and YARR_AUTH still work, but prefer
 # the file flags above: anything here is readable by anyone who can read
 # ~/.outpost/services/ and appears in the process environment.

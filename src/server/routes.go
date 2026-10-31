@@ -37,10 +37,12 @@ func (s *Server) handler() http.Handler {
 			Password: s.Password,
 			// /mcp carries its own bearer auth (see mcp.go); /v1/openapi.json
 			// is a schema, not data.
-			Public:        []string{"/static", "/fever", "/mcp", "/manifest.json", "/sw.js", "/up", "/v1/openapi.json"},
-			DB:            s.db,
-			SecretKeyBase: s.SecretKeyBase,
-			SecureCookie:  s.SecureCookie,
+			Public:           []string{"/static", "/fever", "/mcp", "/manifest.json", "/sw.js", "/up", "/v1/openapi.json"},
+			DB:               s.db,
+			SecretKeyBase:    s.SecretKeyBase,
+			SecureCookie:     s.SecureCookie,
+			SecureCookieAuto: s.SecureCookieAuto,
+			Gateway:          s.Gateway,
 		}
 		r.Use(a.Handler)
 	}
@@ -76,10 +78,14 @@ func (s *Server) handler() http.Handler {
 }
 
 func (s *Server) handleIndex(c *router.Context) {
+	// Signed in through Outpost, logging out has to end the gateway's session:
+	// clearing yarr's cookie alone would leave the user signed in.
+	_, viaGateway := s.Gateway.Verify(c.Req)
 	c.HTML(http.StatusOK, assets.Template("index.html"), map[string]interface{}{
-		"settings":      s.db.GetSettings(),
-		"authenticated": s.Username != "" && s.Password != "",
-		"version":       s.Version,
+		"settings":       s.db.GetSettings(),
+		"authenticated":  (s.Username != "" && s.Password != "") || viaGateway,
+		"outpost_logout": viaGateway,
+		"version":        s.Version,
 	})
 }
 
