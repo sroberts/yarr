@@ -405,6 +405,10 @@ vueApp.component('dropdown', {
   },
 })
 
+// Open modals, innermost last. A prompt can open over the New feed dialog;
+// only the top one answers Escape, outside clicks and Tab.
+var openModals = []
+
 vueApp.component('modal', {
   props: ['open', 'label'],
   emits: ['hide'],
@@ -427,6 +431,7 @@ vueApp.component('modal', {
       if (newVal) {
         this.opening = true
         this._prevFocus = document.activeElement
+        openModals.push(this)
         document.addEventListener('click', this.handleClick)
         document.addEventListener('keydown', this.handleKey)
         // move focus into the dialog for keyboard/screen-reader users
@@ -434,6 +439,7 @@ vueApp.component('modal', {
           if (this.$refs.content) this.$refs.content.focus()
         }.bind(this))
       } else {
+        openModals = openModals.filter(function(m) { return m !== this }, this)
         document.removeEventListener('click', this.handleClick)
         document.removeEventListener('keydown', this.handleKey)
         // restore focus to whatever opened the modal
@@ -443,6 +449,7 @@ vueApp.component('modal', {
   },
   methods: {
     handleClick: function(e) {
+      if (openModals[openModals.length - 1] !== this) return
       if (this.opening) {
         this.opening = false
         return
@@ -450,6 +457,10 @@ vueApp.component('modal', {
       if (e.target.closest('.modal-content') == null) this.$emit('hide')
     },
     handleKey: function(e) {
+      if (openModals[openModals.length - 1] !== this) return
+      // an Esc something inside already handled (the prompt input closes its
+      // own dialog) must not then close the dialog underneath as well
+      if (e.key === 'Escape' && e.defaultPrevented) return
       if (e.key === 'Escape') this.$emit('hide')
       // keep Tab inside the dialog: it is modal, so the page behind is inert
       if (e.key === 'Tab' && this.$refs.content) {
@@ -824,6 +835,20 @@ function rootComponent() { return {
         n: n,
         count: n ? n + ' ' + (this.filterSelected == 'starred' ? 'starred' : 'unread') : '',
       }
+    },
+    // Unread count in the current feed, folder, or all feeds, whatever the
+    // filter: R and the ✓ mark that scope read in any filter.
+    scopeUnread: function() {
+      var cur = this.current
+      if (cur.type == 'feed') return this.unreadCountForFeeds([cur.feed])
+      if (cur.type == 'folder') return this.unreadCountForFeeds(this.folderFeeds(cur.folder))
+      return this.unreadCountForFeeds(this.feeds)
+    },
+    markReadLabel: function() {
+      var cur = this.current
+      if (cur.type == 'feed' && cur.feed.title) return 'Mark “' + cur.feed.title + '” read'
+      if (cur.type == 'folder' && cur.folder.title) return 'Mark “' + cur.folder.title + '” read'
+      return 'Mark all feeds read'
     },
     // What an empty stack says, and the one way on from it. Null while the
     // stack has items, is loading, is a search (the result count says it), or
@@ -1226,10 +1251,14 @@ function rootComponent() { return {
       // and via right-click on a feed row — deliberately not persistent chrome.
       var feedSel = this.current.type == 'feed'
       var cf = this.current.feed
+      var undoLabel = this.feedUndo ? this.feedUndo.label : this.cardUndoLabel
       var cmds = [
+        {group: 'Actions', label: 'Undo: ' + undoLabel,     hint: 'u', enabled: !!(this.feedUndo || this.cardUndo), run: function() {
+          vm.cardUndo ? vm.undoCardAction() : vm.runFeedUndo()
+        }},
         {group: 'Actions', label: 'New feed',               run: function() { vm.showSettings('create') }},
         {group: 'Actions', label: 'Refresh feeds',          run: function() { vm.fetchAllFeeds() }},
-        {group: 'Actions', label: 'Mark all read',          hint: 'R', enabled: this.filterSelected == 'unread', run: S.markAllRead},
+        {group: 'Actions', label: this.markReadLabel,      hint: 'R', enabled: this.scopeUnread > 0 && !this.cardMode, run: S.markAllRead},
         {group: 'Actions', label: 'Show unread',            hint: '1', run: S.showUnread},
         {group: 'Actions', label: 'Show starred',           hint: '2', run: S.showStarred},
         {group: 'Actions', label: 'Show all',               hint: '3', run: S.showAll},
@@ -1705,17 +1734,17 @@ function rootComponent() { return {
       }})
     },
     createNewFeedFolder: function() {
-      var title = prompt('Enter folder name:')
-      if (!title) return
-      api.folders.create({'title': title}).then(function(result) {
-        vm.refreshFeeds().then(function() {
-          vm.$nextTick(function() {
-            if (vm.$refs.newFeedFolder) {
-              vm.$refs.newFeedFolder.value = result.id
-            }
+      this.askPrompt({title: 'New folder', confirmLabel: 'Create', onConfirm: function(title) {
+        api.folders.create({'title': title}).then(function(result) {
+          vm.refreshFeeds().then(function() {
+            vm.$nextTick(function() {
+              if (vm.$refs.newFeedFolder) {
+                vm.$refs.newFeedFolder.value = result.id
+              }
+            })
           })
         })
-      })
+      }})
     },
     renameFolder: function(folder) {
       this.askPrompt({title: 'Rename folder', value: folder.title, confirmLabel: 'Rename', onConfirm: function(newTitle) {

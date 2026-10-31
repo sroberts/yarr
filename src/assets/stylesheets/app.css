@@ -1631,6 +1631,8 @@ a,
 
 .card-action-pill.action-instapaper {
   background: var(--instapaper);
+  /* ink, not white: white on #FF6600 is 2.9:1, ink is about 7:1 */
+  color: #111214;
 }
 
 .card-action-pill.action-read {
