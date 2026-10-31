@@ -153,6 +153,10 @@ jobs:
           echo "Compressing: $dir"
           (test -d "$dir" && cd $dir && zip -r ../yarr_`basename $dir`.zip *)
         done
+        # Run from inside out/ so the manifest lists bare asset names, which
+        # is what installers such as Outpost match against the release's assets.
+        (cd out && sha256sum *.zip > SHA256SUMS)
+        cat out/SHA256SUMS
         ls out
     - name: Upload Release
       uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
@@ -166,3 +170,4 @@ jobs:
           files: |
             out/*.zip
             outpost.toml
+            out/SHA256SUMS
