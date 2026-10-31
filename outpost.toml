@@ -1,0 +1,7 @@
+# outpost.toml
+name           = "yarr"
+title          = "Yarr"
+description    = "RSS reader"
+healthcheck    = "/up"
+mcp            = true
+restart_policy = "on-failure"

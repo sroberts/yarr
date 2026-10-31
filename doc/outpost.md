@@ -7,6 +7,9 @@ byte of persistent state in one directory, runs in the foreground, and exits on
 SIGTERM within a second.
 
 A ready-to-edit manifest lives in [`etc/outpost/yarr.toml`](../etc/outpost/yarr.toml).
+For `outpost add sroberts/yarr`, each release also attaches
+[`outpost.toml`](../outpost.toml), which sets yarr's title and description in the
+manifest Outpost generates.
 
 ## the port
 

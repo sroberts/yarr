@@ -131,6 +131,13 @@ jobs:
     # instead of blocking the release entirely.
     if: ${{ !cancelled() }}
     steps:
+    # Only the descriptor: the steps below glob the working directory for the
+    # artifacts, and a full tree would give them more to trip over.
+    - name: Checkout outpost.toml
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: outpost.toml
+        sparse-checkout-cone-mode: false
     - name: Download Artifacts
       uses: actions/download-artifact@v4.1.7
       with:
@@ -158,3 +165,4 @@ jobs:
           prerelease: false
           files: |
             out/*.zip
+            outpost.toml
