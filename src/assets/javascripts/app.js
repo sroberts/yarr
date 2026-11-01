@@ -1306,8 +1306,10 @@ function rootComponent() { return {
       this.openContextMenu({folder: folder}, event)
     },
     openContextMenu: function(target, event) {
-      // remember the trigger so focus can return to it when the menu closes
+      // remember the trigger so focus can return to it when the menu closes;
+      // opened from a row by keyboard, focus goes back to the row instead
       this._ctxTrigger = (event && event.currentTarget) || null
+      this._ctxReturn = (event && event.returnFocus) || this._ctxTrigger
       var x = event && event.clientX, y = event && event.clientY
       if ((!x && !y) && this._ctxTrigger && this._ctxTrigger.getBoundingClientRect) {
         var tr = this._ctxTrigger.getBoundingClientRect()
@@ -1345,8 +1347,8 @@ function rootComponent() { return {
       // Return focus to the trigger only if focus was still inside the menu
       // (Escape / arrow nav). When an item was activated, its handler owns focus
       // next (e.g. a prompt modal), so we don't steal it back.
-      if (focusInMenu && this._ctxTrigger && this._ctxTrigger.focus) this._ctxTrigger.focus()
-      this._ctxTrigger = null
+      if (focusInMenu && this._ctxReturn && this._ctxReturn.focus) this._ctxReturn.focus()
+      this._ctxTrigger = this._ctxReturn = null
     },
     _ctxMenuHasFocus: function() {
       var menu = this.$refs.feedContextMenu
@@ -1381,6 +1383,19 @@ function rootComponent() { return {
       var target = m && (m.feed || m.folder)
       this.closeFeedContextMenu()
       if (target) fn.call(this, target)
+      if (target) this.refocusRow((m.feed ? 'feed:' : 'folder:') + target.id)
+    },
+    // A move re-renders the row and a delete removes it, taking focus with
+    // it: land on the row's new spot, else the selected row. Only when focus
+    // was actually dropped, so a prompt or the palette keeps it.
+    refocusRow: function(key) {
+      this.$nextTick(function() {
+        if (document.activeElement && document.activeElement !== document.body) return
+        var row = document.querySelector('#col-feed-list input[value="' + key + '"]')
+          || document.querySelector('#col-feed-list input[name="feed"]:checked')
+          || document.querySelector('#col-feed-list input[name="feed"]')
+        if (row) row.focus()
+      })
     },
     togglePalette: function() {
       this.paletteOpen ? this.closePalette() : this.openPalette()
@@ -1719,6 +1734,7 @@ function rootComponent() { return {
       api.feeds.update(feed.id, {folder_id: folder_id}).then(function() {
         feed.folder_id = folder_id
         vm.refreshStats()
+        vm.refocusRow('feed:' + feed.id)
       })
     },
     // moveFeed + an undo toast that moves the feed back to its previous folder.

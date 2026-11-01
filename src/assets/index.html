@@ -273,7 +273,7 @@
                            :class="{'d-none': mustHideFolder(folder)}"
                            v-if="folder.id">
                         <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id"
-                               @contextmenu.prevent="openFolderContextMenu(folder, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu')})"
+                               @contextmenu.prevent="openFolderContextMenu(folder, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu'), returnFocus: $event.target})"
                                :aria-label="folder.title + (filteredFolderStats[folder.id] ? ', ' + filteredFolderStats[folder.id] + ' ' + countNoun : '')">
                         <div class="selectgroup-label d-flex align-items-center w-100" v-if="folder.id"
                              :class="{'ctx-open': feedContextMenu && feedContextMenu.folder === folder}"
@@ -304,7 +304,7 @@
                               :class="{'d-none': mustHideFeed(feed)}"
                                v-for="feed in folder.feeds">
                             <input type="radio" name="feed" :value="'feed:'+feed.id" v-model="feedSelected"
-                                   @contextmenu.prevent="openFeedContextMenu(feed, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu')})"
+                                   @contextmenu.prevent="openFeedContextMenu(feed, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu'), returnFocus: $event.target})"
                                    :aria-label="feed.title + (filteredFeedStats[feed.id] ? ', ' + filteredFeedStats[feed.id] + ' ' + countNoun : '') + (feed_errors[feed.id] ? ', has an error' : '')">
                             <div class="selectgroup-label d-flex align-items-center w-100"
                                  :class="{'ctx-open': feedContextMenu && feedContextMenu.feed === feed}"
