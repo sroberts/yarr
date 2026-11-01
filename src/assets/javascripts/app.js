@@ -1672,19 +1672,24 @@ function rootComponent() { return {
         // prevStats may be stale if a stats poll landed mid-window; resync.
         vm.refreshStats()
       }, function() {
-        if (vm._readDuringUndo === readDuring) vm._readDuringUndo = null
         // Say how long ago this was asked, so articles fetched during the undo
-        // window stay unread: the user never saw them.
+        // window stay unread: the user never saw them. _readDuringUndo is kept
+        // until the write resolves: a failure reverts, and must still skip
+        // articles opened while it was in flight.
         var q = Object.assign({}, query, {elapsed_ms: Date.now() - askedAt})
         api.items.mark_read(q).then(function(res) {
           if (!res.ok) throw new Error('mark read: ' + res.status)
           settle()
+          if (vm._readDuringUndo === readDuring) vm._readDuringUndo = null
           vm.refreshStats()
-          // Reload from the server, in any filter: the unread view would keep
-          // the rows it just cleared, and items that loaded after the click
-          // (or before the list had loaded) would stay bold. Left alone while
-          // an article is open so j/k keep their place.
-          if (vm.itemSelected == null) vm.refreshItems(false)
+          // Items that loaded after the click (or before the list had loaded)
+          // would stay bold. Marked in place so loaded pages and scroll stay.
+          vm.items.forEach(function(item) {
+            if (ids[item.feed_id] && item.status == 'unread') item.status = 'read'
+          })
+          // The unread view would otherwise keep the rows it just cleared.
+          // Left alone while an article is open so j/k keep their place.
+          if (vm.filterSelected == 'unread' && vm.itemSelected == null) vm.refreshItems(false)
         }).catch(function() {
           // Nothing was written: put the server's state back and say so.
           settle()
