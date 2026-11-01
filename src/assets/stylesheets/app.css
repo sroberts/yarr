@@ -877,6 +877,7 @@ select.form-control:not([multiple]):not([size]) {
   color: var(--text-secondary);
   opacity: .5;
   cursor: default;
+  pointer-events: none;
 }
 .dropdown-item:disabled {
   color: var(--text-secondary);
@@ -891,6 +892,7 @@ select.form-control:not([multiple]):not([size]) {
    :disabled. Above the accent-fill rule so a disabled item never reads
    as pressed. */
 .dropdown-item:disabled,
+.dropdown-item[aria-disabled="true"],
 .dropdown-item.disabled {
   color: var(--text-secondary);
   opacity: 0.7;
