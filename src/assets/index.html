@@ -981,7 +981,7 @@
                  v-if="feedContextMenu.feed"
                  @click.stop>
                 <header class="dropdown-header" role="heading" aria-level="2">{{ feedContextMenu.feed.title }}</header>
-                <button class="dropdown-item" role="menuitem" :disabled="!unreadCountForFeeds([feedContextMenu.feed])" @click="runFeedCtx(markFeedRead)">
+                <button class="dropdown-item" role="menuitem" :aria-disabled="unreadCountForFeeds([feedContextMenu.feed]) ? null : 'true'" @click="unreadCountForFeeds([feedContextMenu.feed]) && runFeedCtx(markFeedRead)">
                     <span class="icon mr-1">{% inline "check.svg" %}</span>
                     Mark all read
                 </button>
@@ -1034,7 +1034,7 @@
                  v-else
                  @click.stop>
                 <header class="dropdown-header" role="heading" aria-level="2">{{ feedContextMenu.folder.title }}</header>
-                <button class="dropdown-item" role="menuitem" :disabled="!unreadCountForFeeds(folderFeeds(feedContextMenu.folder))" @click="runFeedCtx(markFolderRead)">
+                <button class="dropdown-item" role="menuitem" :aria-disabled="unreadCountForFeeds(folderFeeds(feedContextMenu.folder)) ? null : 'true'" @click="unreadCountForFeeds(folderFeeds(feedContextMenu.folder)) && runFeedCtx(markFolderRead)">
                     <span class="icon mr-1">{% inline "check.svg" %}</span>
                     Mark all read
                 </button>

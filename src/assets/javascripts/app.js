@@ -1326,7 +1326,7 @@ function rootComponent() { return {
         menu.style.visibility = ''
         // Focus the first item so keyboard users land inside the menu, matching
         // the role="menu" contract that feedContextMenuKey then fulfils.
-        var first = menu.querySelector('.dropdown-item:not(:disabled)')
+        var first = menu.querySelector('.dropdown-item:not(:disabled):not([aria-disabled="true"])')
         if (first) first.focus(); else menu.focus()
       }.bind(this))
       document.addEventListener('click', this.closeFeedContextMenu)
@@ -1353,7 +1353,11 @@ function rootComponent() { return {
       return !!(menu && menu.contains(document.activeElement))
     },
     // Fulfil the role="menu" keyboard contract: arrows / Home / End move focus
-    // between items (wrapping), Tab is trapped inside, Escape closes.
+    // between items (wrapping), Tab is trapped inside, Escape closes. Mark all
+    // read is aria-disabled, not :disabled, when there's nothing unread: its
+    // state changes live while stats poll, and a focused button that turns
+    // :disabled drops focus to <body>. aria-disabled items stay in the arrow
+    // order, as the ARIA menu pattern allows.
     feedContextMenuKey: function(e) {
       if (e.key === 'Escape') { e.preventDefault(); this.closeFeedContextMenu(); return }
       var menu = this.$refs.feedContextMenu

@@ -871,7 +871,13 @@ select.form-control:not([multiple]):not([size]) {
 .dropdown-item.text-muted {
   color: var(--text-secondary);
 }
-/* nothing to do (e.g. "Mark all read" with no unread): visible but inert */
+/* nothing to do (e.g. "Mark all read" with no unread): visible but inert.
+   aria-disabled keeps it focusable, so the pointer is all that's blocked. */
+.dropdown-item[aria-disabled="true"] {
+  color: var(--text-secondary);
+  opacity: .5;
+  cursor: default;
+}
 .dropdown-item:disabled {
   color: var(--text-secondary);
   opacity: .5;
