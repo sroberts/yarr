@@ -1583,6 +1583,11 @@ function rootComponent() { return {
         return acc + ((stats[feed.id] && stats[feed.id].unread) || 0)
       }, 0)
     },
+    // The menu's mark-read item says what it will do, or why it can't.
+    markCtxLabel: function(feeds) {
+      var n = this.unreadCountForFeeds(feeds)
+      return n ? 'Mark ' + n + ' read' : 'No unread'
+    },
     folderFeeds: function(folder) {
       return this.feeds.filter(function(f) { return f.folder_id == folder.id })
     },
@@ -1729,17 +1734,23 @@ function rootComponent() { return {
     moveFeedToNewFolder: function(feed) {
       this.askPrompt({title: 'Move to new folder', confirmLabel: 'Create & move', onConfirm: function(title) {
         api.folders.create({'title': title}).then(function(folder) {
-          api.feeds.update(feed.id, {folder_id: folder.id}).then(function() {
+          if (!folder || !folder.id) throw new Error('create folder')
+          return api.feeds.update(feed.id, {folder_id: folder.id}).then(function(res) {
+            if (!res.ok) throw new Error('move feed: ' + res.status)
             vm.refreshFeeds().then(function() {
               vm.refreshStats()
             })
           })
+        }).catch(function() {
+          vm.refreshFeeds()
+          vm.showToast('Couldn’t move “' + feed.title + '” to a new folder', 5000)
         })
       }})
     },
     createNewFeedFolder: function() {
       this.askPrompt({title: 'New folder', confirmLabel: 'Create', onConfirm: function(title) {
         api.folders.create({'title': title}).then(function(result) {
+          if (!result || !result.id) throw new Error('create folder')
           vm.refreshFeeds().then(function() {
             vm.$nextTick(function() {
               if (vm.$refs.newFeedFolder) {
@@ -1747,16 +1758,21 @@ function rootComponent() { return {
               }
             })
           })
+        }).catch(function() {
+          vm.showToast('Couldn’t create folder “' + title + '”', 5000)
         })
       }})
     },
     renameFolder: function(folder) {
       this.askPrompt({title: 'Rename folder', value: folder.title, confirmLabel: 'Rename', onConfirm: function(newTitle) {
-        api.folders.update(folder.id, {title: newTitle}).then(function() {
+        api.folders.update(folder.id, {title: newTitle}).then(function(res) {
+          if (!res.ok) throw new Error('rename folder: ' + res.status)
           folder.title = newTitle
           vm.folders.sort(function(a, b) {
             return a.title.localeCompare(b.title)
           })
+        }).catch(function() {
+          vm.showToast('Couldn’t rename “' + folder.title + '”', 5000)
         })
       }})
     },
@@ -1782,15 +1798,21 @@ function rootComponent() { return {
     },
     updateFeedLink: function(feed) {
       this.askPrompt({title: 'Change feed link', value: feed.feed_link, confirmLabel: 'Change', onConfirm: function(newLink) {
-        api.feeds.update(feed.id, {feed_link: newLink}).then(function() {
+        api.feeds.update(feed.id, {feed_link: newLink}).then(function(res) {
+          if (!res.ok) throw new Error('change link: ' + res.status)
           feed.feed_link = newLink
+        }).catch(function() {
+          vm.showToast('Couldn’t change the link for “' + feed.title + '”', 5000)
         })
       }})
     },
     renameFeed: function(feed) {
       this.askPrompt({title: 'Rename feed', value: feed.title, confirmLabel: 'Rename', onConfirm: function(newTitle) {
-        api.feeds.update(feed.id, {title: newTitle}).then(function() {
+        api.feeds.update(feed.id, {title: newTitle}).then(function(res) {
+          if (!res.ok) throw new Error('rename feed: ' + res.status)
           feed.title = newTitle
+        }).catch(function() {
+          vm.showToast('Couldn’t rename “' + feed.title + '”', 5000)
         })
       }})
     },
