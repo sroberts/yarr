@@ -1616,6 +1616,7 @@ function rootComponent() { return {
     // write deferred until the undo toast closes (same shape as deleteFeed).
     // Starred items are left alone, matching the server's MarkItemsRead.
     markFeedsRead: function(feeds, query, name) {
+      var askedAt = Date.now()
       var ids = {}
       var prevStats = {}
       var stats = this.feedStats
@@ -1638,7 +1639,10 @@ function rootComponent() { return {
         // prevStats may be stale if a stats poll landed mid-window; resync.
         vm.refreshStats()
       }, function() {
-        api.items.mark_read(query).then(function(res) {
+        // Say how long ago this was asked, so articles fetched during the undo
+        // window stay unread: the user never saw them.
+        var q = Object.assign({}, query, {elapsed_ms: Date.now() - askedAt})
+        api.items.mark_read(q).then(function(res) {
           if (!res.ok) throw new Error('mark read: ' + res.status)
           vm.refreshStats()
           // The unread view would otherwise keep the rows it just cleared.

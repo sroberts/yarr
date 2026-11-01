@@ -98,6 +98,9 @@ type MarkFilter struct {
 	FeedID   *int64
 
 	Before *time.Time
+	// ArrivedBefore leaves alone items fetched at or after it, so a delayed
+	// mark-read doesn't catch articles the user has never seen.
+	ArrivedBefore *time.Time
 }
 
 type ItemList []Item
@@ -340,6 +343,10 @@ func (s *Storage) MarkItemsRead(filter MarkFilter) bool {
 		FeedID:   filter.FeedID,
 		Before:   filter.Before,
 	}, false)
+	if filter.ArrivedBefore != nil {
+		predicate += " and i.date_arrived < ?"
+		args = append(args, filter.ArrivedBefore.UTC())
+	}
 	query := fmt.Sprintf(`
 		update items as i set status = %d
 		where %s and i.status != %d
