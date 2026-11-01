@@ -1101,13 +1101,17 @@ function rootComponent() { return {
           if (window.offlineStore) window.offlineStore.put(item)
         }
         if (this.itemSelectedDetails.status == 'unread') {
+          // a pending Mark all read's undo must not flip this one back: the
+          // server has it as read from here on
+          if (this._readDuringUndo) this._readDuringUndo[item.id] = true
           api.items.update(this.itemSelectedDetails.id, {status: 'read'}).then(function() {
             // guard the index: stats may not be loaded yet, or the feed may be
             // gone (deleted in another tab, stale offline item). Unguarded, the
             // throw aborted the three lines below — the server recorded the read
             // while the UI kept showing it unread.
             var stat = this.feedStats[this.itemSelectedDetails.feed_id]
-            if (stat) stat.unread -= 1
+            // floored: a pending Mark all read may already have zeroed it
+            if (stat) stat.unread = Math.max(0, stat.unread - 1)
             var itemInList = this.items.find(function(i) { return i.id == item.id })
             if (itemInList) itemInList.status = 'read'
             this.itemSelectedDetails.status = 'read'
@@ -1650,15 +1654,25 @@ function rootComponent() { return {
         return ids[item.feed_id] && item.status == 'unread'
       })
       touched.forEach(function(item) { item.status = 'read' })
+      // Articles opened during the window are written as read on their own.
+      var readDuring = this._readDuringUndo = {}
+      // Only put back what this action changed and nothing has changed since.
+      var revert = function() {
+        if (vm._readDuringUndo === readDuring) vm._readDuringUndo = null
+        touched.forEach(function(item) {
+          if (item.status == 'read' && !readDuring[item.id]) item.status = 'unread'
+        })
+      }
       this.showFeedUndo('Marked ' + name + ' read', function() {
         settle()
-        touched.forEach(function(item) { item.status = 'unread' })
+        revert()
         Object.keys(prevStats).forEach(function(id) {
           if (vm.feedStats[id]) vm.feedStats[id].unread = prevStats[id]
         })
         // prevStats may be stale if a stats poll landed mid-window; resync.
         vm.refreshStats()
       }, function() {
+        if (vm._readDuringUndo === readDuring) vm._readDuringUndo = null
         // Say how long ago this was asked, so articles fetched during the undo
         // window stay unread: the user never saw them.
         var q = Object.assign({}, query, {elapsed_ms: Date.now() - askedAt})
@@ -1666,13 +1680,15 @@ function rootComponent() { return {
           if (!res.ok) throw new Error('mark read: ' + res.status)
           settle()
           vm.refreshStats()
-          // The unread view would otherwise keep the rows it just cleared.
-          // Left alone while an article is open so j/k keep their place.
-          if (vm.filterSelected == 'unread' && vm.itemSelected == null) vm.refreshItems(false)
+          // Reload from the server, in any filter: the unread view would keep
+          // the rows it just cleared, and items that loaded after the click
+          // (or before the list had loaded) would stay bold. Left alone while
+          // an article is open so j/k keep their place.
+          if (vm.itemSelected == null) vm.refreshItems(false)
         }).catch(function() {
           // Nothing was written: put the server's state back and say so.
           settle()
-          touched.forEach(function(item) { item.status = 'unread' })
+          revert()
           vm.refreshStats()
           vm.showToast('Couldn’t mark ' + name + ' read', 5000)
         })
