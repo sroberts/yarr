@@ -1459,7 +1459,9 @@ function rootComponent() { return {
     },
     refreshStats: function(loopMode) {
       return api.status().then(function(data) {
-        if (loopMode && !vm.itemSelected) vm.refreshItems()
+        // Not while an action waits out its undo window: the server doesn't
+        // have it yet, so a reload would flip marked rows back to unread.
+        if (loopMode && !vm.itemSelected && !vm.feedUndo) vm.refreshItems()
 
         vm.loading.feeds = data.running
         if (data.running) {
