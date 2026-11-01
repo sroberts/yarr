@@ -513,7 +513,9 @@ func (s *Server) handleItemList(c *router.Context) {
 		// window). Items that arrived since then are left unread. Relative, so
 		// the cutoff is on the server's clock however far off the client's is.
 		if elapsed, err := c.QueryInt64("elapsed_ms"); err == nil && elapsed >= 0 {
-			cutoff := time.Now().Add(-time.Duration(elapsed) * time.Millisecond)
+			// In milliseconds, not a Duration: elapsed*time.Millisecond
+			// overflows for huge values and can land the cutoff in the future.
+			cutoff := time.UnixMilli(time.Now().UnixMilli() - elapsed)
 			filter.ArrivedBefore = &cutoff
 		}
 		s.db.MarkItemsRead(filter)
