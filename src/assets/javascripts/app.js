@@ -1459,13 +1459,20 @@ function rootComponent() { return {
     },
     refreshStats: function(loopMode) {
       return api.status().then(function(data) {
-        if (loopMode && !vm.itemSelected) vm.refreshItems()
+        // Not while an action waits out its undo window: the server doesn't
+        // have it yet, so a reload would flip marked rows back to unread.
+        if (loopMode && !vm.itemSelected && !vm.feedUndo) vm.refreshItems()
 
         vm.loading.feeds = data.running
         if (data.running) {
           setTimeout(vm.refreshStats.bind(vm, true), 500)
         }
+        // A mark-read waiting out its undo window isn't on the server yet;
+        // keep it subtracted so a poll doesn't put the counts back. Articles
+        // that arrived since still count.
+        var pending = vm._pendingRead || {}
         vm.feedStats = data.stats.reduce(function(acc, stat) {
+          if (pending[stat.feed_id]) stat.unread = Math.max(0, stat.unread - pending[stat.feed_id])
           acc[stat.feed_id] = stat
           return acc
         }, {})
@@ -1620,18 +1627,31 @@ function rootComponent() { return {
       var ids = {}
       var prevStats = {}
       var stats = this.feedStats
+      var pending = this._pendingRead = this._pendingRead || {}
       feeds.forEach(function(feed) {
         ids[feed.id] = true
         if (stats[feed.id]) {
           prevStats[feed.id] = stats[feed.id].unread
+          pending[feed.id] = (pending[feed.id] || 0) + stats[feed.id].unread
           stats[feed.id].unread = 0
         }
       })
+      // Drop this action's share of the overlay once it's written or undone.
+      var settled = false
+      var settle = function() {
+        if (settled) return
+        settled = true
+        Object.keys(prevStats).forEach(function(id) {
+          pending[id] -= prevStats[id]
+          if (pending[id] <= 0) delete pending[id]
+        })
+      }
       var touched = this.items.filter(function(item) {
         return ids[item.feed_id] && item.status == 'unread'
       })
       touched.forEach(function(item) { item.status = 'read' })
       this.showFeedUndo('Marked ' + name + ' read', function() {
+        settle()
         touched.forEach(function(item) { item.status = 'unread' })
         Object.keys(prevStats).forEach(function(id) {
           if (vm.feedStats[id]) vm.feedStats[id].unread = prevStats[id]
@@ -1644,12 +1664,14 @@ function rootComponent() { return {
         var q = Object.assign({}, query, {elapsed_ms: Date.now() - askedAt})
         api.items.mark_read(q).then(function(res) {
           if (!res.ok) throw new Error('mark read: ' + res.status)
+          settle()
           vm.refreshStats()
           // The unread view would otherwise keep the rows it just cleared.
           // Left alone while an article is open so j/k keep their place.
           if (vm.filterSelected == 'unread' && vm.itemSelected == null) vm.refreshItems(false)
         }).catch(function() {
           // Nothing was written: put the server's state back and say so.
+          settle()
           touched.forEach(function(item) { item.status = 'unread' })
           vm.refreshStats()
           vm.showToast('Couldn’t mark ' + name + ' read', 5000)
