@@ -273,6 +273,7 @@
                            :class="{'d-none': mustHideFolder(folder)}"
                            v-if="folder.id">
                         <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id"
+                               @contextmenu.prevent="openFolderContextMenu(folder, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu'), returnFocus: $event.target})"
                                :aria-label="folder.title + (filteredFolderStats[folder.id] ? ', ' + filteredFolderStats[folder.id] + ' ' + countNoun : '')">
                         <div class="selectgroup-label d-flex align-items-center w-100" v-if="folder.id"
                              :class="{'ctx-open': feedContextMenu && feedContextMenu.folder === folder}"
@@ -303,6 +304,7 @@
                               :class="{'d-none': mustHideFeed(feed)}"
                                v-for="feed in folder.feeds">
                             <input type="radio" name="feed" :value="'feed:'+feed.id" v-model="feedSelected"
+                                   @contextmenu.prevent="openFeedContextMenu(feed, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu'), returnFocus: $event.target})"
                                    :aria-label="feed.title + (filteredFeedStats[feed.id] ? ', ' + filteredFeedStats[feed.id] + ' ' + countNoun : '') + (feed_errors[feed.id] ? ', has an error' : '')">
                             <div class="selectgroup-label d-flex align-items-center w-100"
                                  :class="{'ctx-open': feedContextMenu && feedContextMenu.feed === feed}"
@@ -980,12 +982,12 @@
                  style="position: fixed; visibility: hidden;"
                  v-if="feedContextMenu.feed"
                  @click.stop>
-                <header class="dropdown-header" role="heading" aria-level="2">{{ feedContextMenu.feed.title }}</header>
-                <button class="dropdown-item" role="menuitem" :disabled="!unreadCountForFeeds([feedContextMenu.feed])" @click="runFeedCtx(markFeedRead)">
+                <header class="dropdown-header" role="presentation">{{ feedContextMenu.feed.title }}</header>
+                <button class="dropdown-item" role="menuitem" :aria-disabled="unreadCountForFeeds([feedContextMenu.feed]) ? null : 'true'" @click="unreadCountForFeeds([feedContextMenu.feed]) && runFeedCtx(markFeedRead)">
                     <span class="icon mr-1">{% inline "check.svg" %}</span>
-                    Mark all read
+                    {{ markCtxLabel([feedContextMenu.feed]) }}
                 </button>
-                <div class="dropdown-divider"></div>
+                <div class="dropdown-divider" role="separator"></div>
                 <a class="dropdown-item" role="menuitem" :href="feedContextMenu.feed.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="feedContextMenu.feed.link" @click="closeFeedContextMenu()">
                     <span class="icon mr-1">{% inline "globe.svg" %}</span>
                     Website
@@ -994,17 +996,17 @@
                     <span class="icon mr-1">{% inline "rss.svg" %}</span>
                     Feed link
                 </a>
-                <div class="dropdown-divider" v-if="feedContextMenu.feed.link || feedContextMenu.feed.feed_link"></div>
+                <div class="dropdown-divider" role="separator" v-if="feedContextMenu.feed.link || feedContextMenu.feed.feed_link"></div>
                 <button class="dropdown-item" role="menuitem" @click="runFeedCtx(renameFeed)">
                     <span class="icon mr-1">{% inline "edit.svg" %}</span>
                     Rename
                 </button>
                 <button class="dropdown-item" role="menuitem" @click="runFeedCtx(updateFeedLink)" v-if="feedContextMenu.feed.feed_link">
-                    <span class="icon mr-1">{% inline "edit.svg" %}</span>
+                    <span class="icon mr-1">{% inline "link.svg" %}</span>
                     Change link
                 </button>
-                <div class="dropdown-divider"></div>
-                <header class="dropdown-header" role="heading" aria-level="2">Move to...</header>
+                <div class="dropdown-divider" role="separator"></div>
+                <header class="dropdown-header" role="presentation">Move to…</header>
                 <template v-for="f in folders">
                     <button class="dropdown-item" role="menuitem" v-if="f.id != feedContextMenu.feed.folder_id" @click="runFeedCtx(feed => moveFeedWithUndo(feed, f))">
                         <span class="icon mr-1">{% inline "folder.svg" %}</span>
@@ -1019,7 +1021,7 @@
                     <span class="icon mr-1">{% inline "folder-plus.svg" %}</span>
                     New folder
                 </button>
-                <div class="dropdown-divider"></div>
+                <div class="dropdown-divider" role="separator"></div>
                 <button class="dropdown-item text-danger" role="menuitem" @click="runFeedCtx(deleteFeed)">
                     <span class="icon mr-1">{% inline "trash.svg" %}</span>
                     Delete
@@ -1033,17 +1035,17 @@
                  style="position: fixed; visibility: hidden;"
                  v-else
                  @click.stop>
-                <header class="dropdown-header" role="heading" aria-level="2">{{ feedContextMenu.folder.title }}</header>
-                <button class="dropdown-item" role="menuitem" :disabled="!unreadCountForFeeds(folderFeeds(feedContextMenu.folder))" @click="runFeedCtx(markFolderRead)">
+                <header class="dropdown-header" role="presentation">{{ feedContextMenu.folder.title }}</header>
+                <button class="dropdown-item" role="menuitem" :aria-disabled="unreadCountForFeeds(folderFeeds(feedContextMenu.folder)) ? null : 'true'" @click="unreadCountForFeeds(folderFeeds(feedContextMenu.folder)) && runFeedCtx(markFolderRead)">
                     <span class="icon mr-1">{% inline "check.svg" %}</span>
-                    Mark all read
+                    {{ markCtxLabel(folderFeeds(feedContextMenu.folder)) }}
                 </button>
-                <div class="dropdown-divider"></div>
+                <div class="dropdown-divider" role="separator"></div>
                 <button class="dropdown-item" role="menuitem" @click="runFeedCtx(renameFolder)">
                     <span class="icon mr-1">{% inline "edit.svg" %}</span>
                     Rename
                 </button>
-                <div class="dropdown-divider"></div>
+                <div class="dropdown-divider" role="separator"></div>
                 <button class="dropdown-item text-danger" role="menuitem" @click="runFeedCtx(deleteFolder)">
                     <span class="icon mr-1">{% inline "trash.svg" %}</span>
                     Delete

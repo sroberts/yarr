@@ -1306,8 +1306,10 @@ function rootComponent() { return {
       this.openContextMenu({folder: folder}, event)
     },
     openContextMenu: function(target, event) {
-      // remember the trigger so focus can return to it when the menu closes
+      // remember the trigger so focus can return to it when the menu closes;
+      // opened from a row by keyboard, focus goes back to the row instead
       this._ctxTrigger = (event && event.currentTarget) || null
+      this._ctxReturn = (event && event.returnFocus) || this._ctxTrigger
       var x = event && event.clientX, y = event && event.clientY
       if ((!x && !y) && this._ctxTrigger && this._ctxTrigger.getBoundingClientRect) {
         var tr = this._ctxTrigger.getBoundingClientRect()
@@ -1326,7 +1328,7 @@ function rootComponent() { return {
         menu.style.visibility = ''
         // Focus the first item so keyboard users land inside the menu, matching
         // the role="menu" contract that feedContextMenuKey then fulfils.
-        var first = menu.querySelector('.dropdown-item:not(:disabled)')
+        var first = menu.querySelector('.dropdown-item:not(:disabled):not([aria-disabled="true"])')
         if (first) first.focus(); else menu.focus()
       }.bind(this))
       document.addEventListener('click', this.closeFeedContextMenu)
@@ -1345,15 +1347,19 @@ function rootComponent() { return {
       // Return focus to the trigger only if focus was still inside the menu
       // (Escape / arrow nav). When an item was activated, its handler owns focus
       // next (e.g. a prompt modal), so we don't steal it back.
-      if (focusInMenu && this._ctxTrigger && this._ctxTrigger.focus) this._ctxTrigger.focus()
-      this._ctxTrigger = null
+      if (focusInMenu && this._ctxReturn && this._ctxReturn.focus) this._ctxReturn.focus()
+      this._ctxTrigger = this._ctxReturn = null
     },
     _ctxMenuHasFocus: function() {
       var menu = this.$refs.feedContextMenu
       return !!(menu && menu.contains(document.activeElement))
     },
     // Fulfil the role="menu" keyboard contract: arrows / Home / End move focus
-    // between items (wrapping), Tab is trapped inside, Escape closes.
+    // between items (wrapping), Tab is trapped inside, Escape closes. Mark all
+    // read is aria-disabled, not :disabled, when there's nothing unread: its
+    // state changes live while stats poll, and a focused button that turns
+    // :disabled drops focus to <body>. aria-disabled items stay in the arrow
+    // order, as the ARIA menu pattern allows.
     feedContextMenuKey: function(e) {
       if (e.key === 'Escape') { e.preventDefault(); this.closeFeedContextMenu(); return }
       var menu = this.$refs.feedContextMenu
@@ -1377,6 +1383,19 @@ function rootComponent() { return {
       var target = m && (m.feed || m.folder)
       this.closeFeedContextMenu()
       if (target) fn.call(this, target)
+      if (target) this.refocusRow((m.feed ? 'feed:' : 'folder:') + target.id)
+    },
+    // A move re-renders the row and a delete removes it, taking focus with
+    // it: land on the row's new spot, else the selected row. Only when focus
+    // was actually dropped, so a prompt or the palette keeps it.
+    refocusRow: function(key) {
+      this.$nextTick(function() {
+        if (document.activeElement && document.activeElement !== document.body) return
+        var row = document.querySelector('#col-feed-list input[value="' + key + '"]')
+          || document.querySelector('#col-feed-list input[name="feed"]:checked')
+          || document.querySelector('#col-feed-list input[name="feed"]')
+        if (row) row.focus()
+      })
     },
     togglePalette: function() {
       this.paletteOpen ? this.closePalette() : this.openPalette()
@@ -1579,6 +1598,11 @@ function rootComponent() { return {
         return acc + ((stats[feed.id] && stats[feed.id].unread) || 0)
       }, 0)
     },
+    // The menu's mark-read item says what it will do, or why it can't.
+    markCtxLabel: function(feeds) {
+      var n = this.unreadCountForFeeds(feeds)
+      return n ? 'Mark ' + n + ' read' : 'No unread'
+    },
     folderFeeds: function(folder) {
       return this.feeds.filter(function(f) { return f.folder_id == folder.id })
     },
@@ -1710,6 +1734,7 @@ function rootComponent() { return {
       api.feeds.update(feed.id, {folder_id: folder_id}).then(function() {
         feed.folder_id = folder_id
         vm.refreshStats()
+        vm.refocusRow('feed:' + feed.id)
       })
     },
     // moveFeed + an undo toast that moves the feed back to its previous folder.
@@ -1725,17 +1750,23 @@ function rootComponent() { return {
     moveFeedToNewFolder: function(feed) {
       this.askPrompt({title: 'Move to new folder', confirmLabel: 'Create & move', onConfirm: function(title) {
         api.folders.create({'title': title}).then(function(folder) {
-          api.feeds.update(feed.id, {folder_id: folder.id}).then(function() {
+          if (!folder || !folder.id) throw new Error('create folder')
+          return api.feeds.update(feed.id, {folder_id: folder.id}).then(function(res) {
+            if (!res.ok) throw new Error('move feed: ' + res.status)
             vm.refreshFeeds().then(function() {
               vm.refreshStats()
             })
           })
+        }).catch(function() {
+          vm.refreshFeeds()
+          vm.showToast('Couldn’t move “' + feed.title + '” to a new folder', 5000)
         })
       }})
     },
     createNewFeedFolder: function() {
       this.askPrompt({title: 'New folder', confirmLabel: 'Create', onConfirm: function(title) {
         api.folders.create({'title': title}).then(function(result) {
+          if (!result || !result.id) throw new Error('create folder')
           vm.refreshFeeds().then(function() {
             vm.$nextTick(function() {
               if (vm.$refs.newFeedFolder) {
@@ -1743,16 +1774,21 @@ function rootComponent() { return {
               }
             })
           })
+        }).catch(function() {
+          vm.showToast('Couldn’t create folder “' + title + '”', 5000)
         })
       }})
     },
     renameFolder: function(folder) {
       this.askPrompt({title: 'Rename folder', value: folder.title, confirmLabel: 'Rename', onConfirm: function(newTitle) {
-        api.folders.update(folder.id, {title: newTitle}).then(function() {
+        api.folders.update(folder.id, {title: newTitle}).then(function(res) {
+          if (!res.ok) throw new Error('rename folder: ' + res.status)
           folder.title = newTitle
           vm.folders.sort(function(a, b) {
             return a.title.localeCompare(b.title)
           })
+        }).catch(function() {
+          vm.showToast('Couldn’t rename “' + folder.title + '”', 5000)
         })
       }})
     },
@@ -1778,15 +1814,21 @@ function rootComponent() { return {
     },
     updateFeedLink: function(feed) {
       this.askPrompt({title: 'Change feed link', value: feed.feed_link, confirmLabel: 'Change', onConfirm: function(newLink) {
-        api.feeds.update(feed.id, {feed_link: newLink}).then(function() {
+        api.feeds.update(feed.id, {feed_link: newLink}).then(function(res) {
+          if (!res.ok) throw new Error('change link: ' + res.status)
           feed.feed_link = newLink
+        }).catch(function() {
+          vm.showToast('Couldn’t change the link for “' + feed.title + '”', 5000)
         })
       }})
     },
     renameFeed: function(feed) {
       this.askPrompt({title: 'Rename feed', value: feed.title, confirmLabel: 'Rename', onConfirm: function(newTitle) {
-        api.feeds.update(feed.id, {title: newTitle}).then(function() {
+        api.feeds.update(feed.id, {title: newTitle}).then(function(res) {
+          if (!res.ok) throw new Error('rename feed: ' + res.status)
           feed.title = newTitle
+        }).catch(function() {
+          vm.showToast('Couldn’t rename “' + feed.title + '”', 5000)
         })
       }})
     },
