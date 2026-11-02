@@ -229,6 +229,11 @@ type toolDef struct {
 }
 
 func obj(props map[string]interface{}, required ...string) map[string]interface{} {
+	if props == nil {
+		// A nil map encodes as null, and MCP requires properties to be an
+		// object: Claude rejects the whole tools/list over a single null.
+		props = map[string]interface{}{}
+	}
 	schema := map[string]interface{}{"type": "object", "properties": props}
 	if len(required) > 0 {
 		schema["required"] = required
