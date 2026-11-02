@@ -413,3 +413,34 @@ func TestMCPRefreshFeedsEmptyDB(t *testing.T) {
 		t.Fatalf("got isErr=%v text=%q", isErr, text)
 	}
 }
+
+// Every tool's inputSchema.properties has to be a JSON object, even for a
+// tool that takes no arguments: MCP clients validate the schema, and Claude
+// rejects the whole tools/list when one of them is null.
+func TestMCPToolsListPropertiesAreObjects(t *testing.T) {
+	srv, _, _ := mcpTestServer(t)
+	rec := rpcCall(t, srv, "", `{"jsonrpc":"2.0","id":1,"method":"tools/list"}`)
+	var raw struct {
+		Result struct {
+			Tools []struct {
+				Name        string `json:"name"`
+				InputSchema struct {
+					Type       string          `json:"type"`
+					Properties json.RawMessage `json:"properties"`
+				} `json:"inputSchema"`
+			} `json:"tools"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &raw); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if len(raw.Result.Tools) == 0 {
+		t.Fatal("no tools listed")
+	}
+	for _, tool := range raw.Result.Tools {
+		p := strings.TrimSpace(string(tool.InputSchema.Properties))
+		if tool.InputSchema.Type != "object" || !strings.HasPrefix(p, "{") {
+			t.Errorf("%s: inputSchema type=%q properties=%s, want an object", tool.Name, tool.InputSchema.Type, p)
+		}
+	}
+}
