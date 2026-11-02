@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/nkanaev/yarr/src/assets"
 	"github.com/nkanaev/yarr/src/content/htmlutil"
@@ -507,6 +508,15 @@ func (s *Server) handleItemList(c *router.Context) {
 		}
 		if feedID, err := c.QueryInt64("feed_id"); err == nil {
 			filter.FeedID = &feedID
+		}
+		// elapsed_ms: how long ago the user asked (the UI writes after an undo
+		// window). Items that arrived since then are left unread. Relative, so
+		// the cutoff is on the server's clock however far off the client's is.
+		if elapsed, err := c.QueryInt64("elapsed_ms"); err == nil && elapsed >= 0 {
+			// In milliseconds, not a Duration: elapsed*time.Millisecond
+			// overflows for huge values and can land the cutoff in the future.
+			cutoff := time.UnixMilli(time.Now().UnixMilli() - elapsed)
+			filter.ArrivedBefore = &cutoff
 		}
 		s.db.MarkItemsRead(filter)
 		c.Out.WriteHeader(http.StatusOK)
