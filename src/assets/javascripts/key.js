@@ -80,7 +80,7 @@ var shortcutFunctions = {
   stepInColumn(direction, event) {
     if (vm.keyColumn === 'feeds') {
       vm.navigateToFeed(direction)
-    } else if (vm.keyColumn === 'article' && vm.itemSelected != null) {
+    } else if (vm.keyColumn === 'article' && vm.itemSelected != null && !vm.itemUnavailable) {
       helperFunctions.scrollContentStep(direction, event && event.repeat)
     } else {
       vm.navigateToItem(direction)
@@ -261,10 +261,14 @@ document.addEventListener('keydown',function(event) {
 
 // Once h/l have put the column marker up, a click moves it to the column
 // clicked, so the next j/k acts where you are. Before that, clicks leave
-// j/k on the article list as always.
+// j/k on the article list as always. Match only the real columns (children
+// of #app): feed content keeps SVG ids, so an <svg id="col-feed-list"> in an
+// article must not pass for a column.
 document.addEventListener('pointerdown', function(event) {
   if (!vm.keyColumnShown || vm.cardMode) return
-  var col = event.target.closest && event.target.closest('#col-feed-list, #col-item-list, #col-item')
+  var col = event.target.closest && event.target.closest('#app > #col-feed-list, #app > #col-item-list, #app > #col-item')
   if (!col) return
+  // the empty reader has nothing to scroll: leave j/k where they were
+  if (col.id === 'col-item' && vm.itemSelected == null) return
   vm.keyColumn = ({'col-feed-list': 'feeds', 'col-item-list': 'items', 'col-item': 'article'})[col.id]
 })
