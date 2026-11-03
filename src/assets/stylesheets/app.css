@@ -470,13 +470,29 @@ select.form-control:not([multiple]):not([size]) {
   border-right: 1px solid var(--border-subtle);
 }
 
-/* the column j/k act on, once h/l have moved it: a hairline of accent on top */
-#app.keycol-feeds #col-feed-list,
-#app.keycol-items #col-item-list,
-#app.keycol-article #col-item {
-  box-shadow: inset 0 2px 0 var(--accent);
+/* the column j/k act on, once h/l have moved it: its toolbar takes a faint
+   accent wash over a 2px accent rule. The rule is drawn on top, below the
+   toolbar, so the search field and buttons can't cover it. */
+#app.keycol-feeds #col-feed-list > .view-toolbar,
+#app.keycol-items #col-item-list > .toolbar,
+#app.keycol-article #col-item > .toolbar {
+  position: relative;
+  background-color: color-mix(in oklab, var(--accent) 10%, transparent);
 }
-/* forced colors drop box-shadow; keep the marker as an outline instead */
+#app.keycol-feeds #col-feed-list > .view-toolbar::after,
+#app.keycol-items #col-item-list > .toolbar::after,
+#app.keycol-article #col-item > .toolbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: var(--accent);
+  pointer-events: none;
+  z-index: 1;
+}
+/* forced colors drop the wash and the rule; mark the column with an outline */
 @media (forced-colors: active) {
   #app.keycol-feeds #col-feed-list,
   #app.keycol-items #col-item-list,

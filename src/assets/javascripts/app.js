@@ -932,6 +932,11 @@ function rootComponent() { return {
       if (this.cardUndo) return this.cardUndoLabel
       return this.toast ? this.toast.text : ''
     },
+    // the column marker, for screen readers (empty until h/l are used)
+    keyColumnAnnouncement: function() {
+      if (!this.keyColumnShown || this.cardMode) return ''
+      return ({feeds: 'Feeds column', items: 'Articles column', article: 'Article column'})[this.keyColumn]
+    },
     // the reader's chosen font, shared by the open slip and the triage card
     readingFontClass: function() {
       return {'font-serif': this.theme.font == 'serif', 'font-monospace': this.theme.font == 'monospace'}

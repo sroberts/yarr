@@ -903,6 +903,8 @@
         <!-- One live region that outlives the toasts: a region created together
              with its text is missed by some screen readers. -->
         <div class="sr-only" role="status" aria-live="polite">{{ liveStatus }}</div>
+        <!-- names the column j/k now act on, as h/l (or a click) move it -->
+        <div class="sr-only" aria-live="polite">{{ keyColumnAnnouncement }}</div>
         <transition name="toast">
             <div class="app-toast" v-if="toast">{{ toast.text }}</div>
         </transition>
