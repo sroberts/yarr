@@ -593,6 +593,11 @@ function rootComponent() { return {
       'itemSelectedReadability': '',
       'itemSearch': '',
       'paletteOpen': false,
+      // the column j/k act on ('feeds' | 'items' | 'article'); h/l move it.
+      // The marker only shows once h/l have been used, so j/k keep their
+      // next/prev-article meaning until someone opts into column moves.
+      'keyColumn': 'items',
+      'keyColumnShown': false,
       'paletteQuery': '',
       'paletteIndex': 0,
       // {feed, x, y} while a feed row's right-click menu is open, else null
@@ -682,6 +687,9 @@ function rootComponent() { return {
         'feed-selected': this.feedSelected !== null,
         'item-selected': this.itemSelected !== null,
         'card-mode': this.cardMode,
+        'keycol-feeds': this.keyColumnShown && !this.cardMode && this.keyColumn === 'feeds',
+        'keycol-items': this.keyColumnShown && !this.cardMode && this.keyColumn === 'items',
+        'keycol-article': this.keyColumnShown && !this.cardMode && this.keyColumn === 'article',
       }
     },
     foldersWithFeeds: function() {
@@ -1083,6 +1091,8 @@ function rootComponent() { return {
       this.itemUnavailable = false
       if (newVal === null) {
         this.itemSelectedDetails = null
+        // no reader to scroll: j/k fall back to the article list
+        if (this.keyColumn === 'article') this.keyColumn = 'items'
         return
       }
       // keep the open slip in sight in the stack (prev/next, palette jumps)
