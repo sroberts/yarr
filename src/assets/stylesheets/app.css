@@ -470,6 +470,13 @@ select.form-control:not([multiple]):not([size]) {
   border-right: 1px solid var(--border-subtle);
 }
 
+/* the column j/k act on, once h/l have moved it: a hairline of accent on top */
+#app.keycol-feeds #col-feed-list,
+#app.keycol-items #col-item-list,
+#app.keycol-article #col-item {
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
 .toolbar {
   min-height: 2rem !important;
   max-height: 2rem !important;
