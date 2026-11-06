@@ -30,6 +30,9 @@ var OptList = make([]string, 0)
 const (
 	envOutpostPort    = "OUTPOST_PORT"
 	envOutpostStorage = "OUTPOST_STORAGE_DIR"
+	// envOutpostAuth is "gateway" when Outpost's login gateway authenticates
+	// every request before it reaches yarr.
+	envOutpostAuth = "OUTPOST_AUTH"
 )
 
 // Loopback by default: a supervised service is reached through the supervisor
@@ -409,6 +412,17 @@ func main() {
 		srv.CertFile = certfile
 		srv.KeyFile = keyfile
 	}
+
+	// Behind Outpost's login gateway every request is already signed in, so
+	// yarr's own login would only make the operator sign in twice (Outpost
+	// service spec, section 3). That also opens /mcp to whatever the gateway
+	// admits, which is what an Outpost access token is for.
+	gateway := os.Getenv(envOutpostAuth) == "gateway"
+	if gateway && username != "" {
+		log.Print("OUTPOST_AUTH=gateway: Outpost signs users in, so yarr's own login (--auth / --auth-file) is off")
+		username, password = "", ""
+	}
+	srv.OutpostGateway = gateway
 
 	if username != "" && password != "" {
 		srv.Username = username

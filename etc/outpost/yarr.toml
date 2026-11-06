@@ -13,8 +13,11 @@ storage = "~/.outpost/data/yarr"
 
 tailscale_name = "yarr"
 
-# Optional. yarr serves the whole UI unauthenticated by default; on a tailnet
-# that is often what you want. To require a login, keep both secrets in files
+# Behind Outpost's login gateway (OUTPOST_AUTH=gateway) yarr presents no login
+# of its own -- you sign in to Outpost -- so skip the rest of this block.
+#
+# Otherwise, optional: yarr serves the whole UI unauthenticated by default; on a
+# tailnet that is often what you want. To require a login, keep both secrets in files
 # inside the storage directory -- so a backup carries them, and neither ever
 # lives in this plaintext manifest:
 #
@@ -28,7 +31,10 @@ tailscale_name = "yarr"
 #   "--secret-key-file", "/home/you/.outpost/data/yarr/session.key",
 # ]
 
-# yarr needs no env table. SECRET_KEY_BASE and YARR_AUTH still work, but prefer
-# the file flags above: anything here is readable by anyone who can read
-# ~/.outpost/services/ and appears in the process environment.
+# yarr needs no env table. Anything in one is readable by anyone who can read
+# ~/.outpost/services/. For a credential, use an Outpost secret instead; it
+# arrives as an environment variable without being written here:
+#
+#   outpost secret set yarr-instapaper-token --service yarr   # YARR_INSTAPAPER_TOKEN
+#   outpost secret set secret-key-base --service yarr         # SECRET_KEY_BASE
 # [env]

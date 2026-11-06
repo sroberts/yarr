@@ -127,9 +127,9 @@ jobs:
       contents: write
     needs: [build_macos, build_windows, build_multi_cli]
     # Run unless the whole workflow was cancelled — so a single platform
-    # failing (historically macOS) still attaches every binary that built,
-    # instead of blocking the release entirely.
-    if: ${{ !cancelled() }}
+    # failing (historically macOS) still attaches every binary that built.
+    # The release is only *published* once all of them have (see below).
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/v') }}
     steps:
     # Only the descriptor: the steps below glob the working directory for the
     # artifacts, and a full tree would give them more to trip over.
@@ -158,16 +158,27 @@ jobs:
         (cd out && sha256sum *.zip > SHA256SUMS)
         cat out/SHA256SUMS
         ls out
-    - name: Upload Release
-      uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+    # gh finds a draft release by its tag (the action this replaces did not),
+    # attaches to it, and publishes it only when every platform built:
+    # `outpost update` installs the latest published release, so one missing
+    # a platform's binary must not be it (Outpost service spec, section 14).
+    # After a failed platform, the release stays a draft with what did build;
+    # re-running the failed jobs attaches the rest and publishes it.
+    - name: Attach binaries, then publish
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-          # release.yml owns release creation; this only attaches the binary
-          # artifacts to the existing release. draft:false keeps it published.
-          draft: false
-          prerelease: false
-          files: |
-            out/*.zip
-            outpost.toml
-            out/SHA256SUMS
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_REPO: ${{ github.repository }}
+        TAG: ${{ github.ref_name }}
+        ALL_BUILT: ${{ needs.build_macos.result == 'success' && needs.build_windows.result == 'success' && needs.build_multi_cli.result == 'success' }}
+      run: |
+        set -euo pipefail
+        if ! gh release view "$TAG" >/dev/null 2>&1; then
+          gh release create "$TAG" --title "$TAG" --generate-notes --verify-tag --draft
+        fi
+        gh release upload "$TAG" out/*.zip out/SHA256SUMS outpost.toml --clobber
+        if [ "$ALL_BUILT" = "true" ]; then
+          gh release edit "$TAG" --draft=false
+          echo "::notice::published $TAG with every platform's binaries"
+        else
+          echo "::warning::a platform build did not succeed; $TAG stays a draft with the binaries that built. Re-run the failed jobs to attach the rest and publish."
+        fi

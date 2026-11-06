@@ -642,6 +642,7 @@ function rootComponent() { return {
       },
       'refreshRate': s.refresh_rate,
       'authenticated': app.authenticated,
+      'gateway': !!app.gateway,
       'version': app.version || '',
       'feed_errors': {},
 

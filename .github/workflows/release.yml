@@ -91,6 +91,9 @@ jobs:
       # macOS/Windows binary jobs can stall in the runner queue and would
       # otherwise leave a tagged version with no release. This also backfills:
       # if the tag exists but its release is missing, it gets created now.
+      # It starts as a draft: `outpost update` installs the latest published
+      # release, so build.yml publishes it only once every platform's binaries
+      # are attached (Outpost service spec, section 14).
       - name: Create GitHub Release if missing
         id: release
         run: |
@@ -100,7 +103,7 @@ jobs:
             echo "::notice::release $tag already exists"
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
-            gh release create "$tag" --title "$tag" --generate-notes --verify-tag
+            gh release create "$tag" --title "$tag" --generate-notes --verify-tag --draft
             echo "::notice::created release $tag"
             echo "created=true" >> "$GITHUB_OUTPUT"
           fi
@@ -116,7 +119,7 @@ jobs:
               echo "- Tag already existed; no new build dispatched."
             fi
             if [ "${{ steps.release.outputs.created }}" = "true" ]; then
-              echo "- GitHub Release created with generated notes."
+              echo "- Draft GitHub Release created with generated notes; build.yml publishes it once every platform's binaries are attached."
             else
               echo "- GitHub Release already present."
             fi

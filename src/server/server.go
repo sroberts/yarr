@@ -39,6 +39,10 @@ type Server struct {
 	// auth
 	Username string
 	Password string
+	// OutpostGateway is set when Outpost's login gateway fronts yarr
+	// (OUTPOST_AUTH=gateway): the gateway signs users in, so yarr presents
+	// no login of its own and guards state-changing requests by origin.
+	OutpostGateway bool
 	// InstapaperToken is an Instapaper API v2 access token from the
 	// environment. A token entered in Settings takes priority over it.
 	InstapaperToken string
