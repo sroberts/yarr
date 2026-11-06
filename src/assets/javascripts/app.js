@@ -194,6 +194,15 @@ function normalizeThemePref(pref) {
   return 'auto'
 }
 
+// The reader's text size, kept within what the A/A stepper can reach so a
+// stale or hand-edited setting can't render the article at 5x (#127).
+var THEME_SIZE_MIN = 0.8, THEME_SIZE_MAX = 1.8
+function clampThemeSize(size) {
+  size = +size
+  if (!isFinite(size) || size <= 0) return 1.2
+  return Math.min(Math.max(+size.toFixed(1), THEME_SIZE_MIN), THEME_SIZE_MAX)
+}
+
 function systemTheme() {
   var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
   return dark ? 'dark' : 'light'
@@ -575,7 +584,9 @@ function rootComponent() { return {
     var view = (new URLSearchParams(location.search)).get('view')
     var initialFilter = (view === 'unread' || view === 'starred') ? view
                       : (view === 'all') ? ''
-                      : s.filter
+                      // a stale or unknown saved filter (e.g. 'all') would
+                      // leave no chip selected; triage is never saved (#127)
+                      : (['', 'unread', 'starred'].indexOf(s.filter) >= 0 ? s.filter : '')
     return {
       'filterSelected': initialFilter,
       'folders': [],
@@ -631,7 +642,7 @@ function rootComponent() { return {
         // 'auto' follows the OS; legacy night -> dark, sepia -> light
         'name': normalizeThemePref(s.theme_name),
         'font': s.theme_font,
-        'size': s.theme_size,
+        'size': clampThemeSize(s.theme_size),
         'accent': s.theme_accent || 'blue',
         'density': s.theme_density || 'comfortable',
         'motion': s.theme_motion || 'system',
@@ -2324,7 +2335,7 @@ function rootComponent() { return {
       this.feedNewChoiceSelected = ''
     },
     incrFont: function(x) {
-      this.theme.size = +(this.theme.size + (0.1 * x)).toFixed(1)
+      this.theme.size = clampThemeSize(this.theme.size + (0.1 * x))
     },
     fetchAllFeeds: function() {
       if (this.loading.feeds) return
