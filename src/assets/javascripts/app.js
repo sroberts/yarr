@@ -645,8 +645,11 @@ function rootComponent() { return {
       'version': app.version || '',
       'feed_errors': {},
 
+      // Instapaper secrets never reach the page, only whether each is set
       'instapaperUsername': s.instapaper_username || '',
-      'instapaperPassword': s.instapaper_password || '',
+      'instapaperPasswordSet': !!s.instapaper_password_set,
+      'instapaperTokenSet': !!s.instapaper_token_set,
+      'instapaperTokenEnv': !!s.instapaper_token_env,
       'cardItems': [],
       'cardIndex': 0,
       'cardStats': { read: 0, instapaper: 0, kept: 0, starred: 0 },
@@ -925,6 +928,12 @@ function rootComponent() { return {
       if (this.cardDone) return 'All caught up'
       if (!this.currentCard) return ''
       return 'Card ' + (this.cardIndex + 1) + ' of ' + this.cardItems.length + ': ' + (this.currentCard.title || 'untitled')
+    },
+    // a save has somewhere to go: a token (environment or Settings), or the
+    // legacy username and password
+    instapaperConfigured: function() {
+      return this.instapaperTokenEnv || this.instapaperTokenSet ||
+        (!!this.instapaperUsername && this.instapaperPasswordSet)
     },
     // the persistent live region's text: whichever toast is showing
     liveStatus: function() {
@@ -2082,15 +2091,24 @@ function rootComponent() { return {
         vm.showToast('Failed to save to Instapaper — check your connection')
       })
     },
-    updateInstapaperCredentials: function(key, value) {
-      if (key === 'instapaper_username') this.instapaperUsername = value
-      if (key === 'instapaper_password') this.instapaperPassword = value
+    // key is instapaper_token, instapaper_username or instapaper_password; an
+    // empty value clears it. A secret field is emptied once saved: the page
+    // only ever knows that it is set.
+    updateInstapaperSetting: function(key, value, input) {
+      value = (value || '').trim()
       var update = {}
       update[key] = value
-      api.settings.update(update).then(function() {
+      api.settings.update(update).then(function(resp) {
+        if (!resp.ok) throw new Error('settings: ' + resp.status)
+        if (key === 'instapaper_username') vm.instapaperUsername = value
+        if (key === 'instapaper_password') vm.instapaperPasswordSet = !!value
+        if (key === 'instapaper_token') vm.instapaperTokenSet = !!value
+        if (input && key !== 'instapaper_username') input.value = ''
         vm.instapaperSaved = true
         clearTimeout(vm._instapaperSavedTimer)
         vm._instapaperSavedTimer = setTimeout(function() { vm.instapaperSaved = false }, 2500)
+      }).catch(function() {
+        vm.showToast('Couldn’t save the Instapaper setting — check your connection')
       })
     },
     enterCardMode: function() {
@@ -2136,7 +2154,7 @@ function rootComponent() { return {
       this.filterSelected = this.previousFilter
     },
     cardSwipeLeft: function() {
-      if (!this.instapaperUsername) return this.cardSkip()
+      if (!this.instapaperConfigured) return this.cardSkip()
       var item = this.currentCard
       if (!item) return
       this.flushCardAction()

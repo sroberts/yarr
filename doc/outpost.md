@@ -104,6 +104,23 @@ args = [
 ]
 ```
 
+### the Instapaper access token
+
+Saving to Instapaper uses API v2 with an access token (generate one under
+Instapaper's developer applications; it is shown only once). Enter it in
+Settings, or hand it to yarr as `$YARR_INSTAPAPER_TOKEN` -- environment only,
+never a flag, so it stays out of `ps`. Under Outpost, make it a secret rather
+than a manifest `env` entry:
+
+```sh
+outpost secret set yarr-instapaper-token --service yarr   # prompts; becomes YARR_INSTAPAPER_TOKEN
+```
+
+The environment's token outranks the one in Settings, and Settings then says so
+instead of offering the field. Rotating the secret restarts yarr with the new
+value. Neither the token nor the legacy Instapaper password is ever sent to the
+browser or returned by `GET /api/settings`.
+
 ## describing itself
 
 Spec §9 is optional and forward-looking. yarr covers both halves.

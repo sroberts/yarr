@@ -681,7 +681,7 @@
       ],
       "post": {
         "summary": "Save an item to Instapaper",
-        "description": "Requires instapaper_username and instapaper_password to already be set via PUT /api/settings. On success, marks the item's `instapaper_saved` true and its status `read`, then returns the updated item.",
+        "description": "Saves with Instapaper API v2 when an access token is available (the server's YARR_INSTAPAPER_TOKEN environment variable, else instapaper_token set via PUT /api/settings); otherwise falls back to the legacy Simple API with instapaper_username and instapaper_password. On success, marks the item's `instapaper_saved` true and its status `read`, then returns the updated item. Failures return `{\"error\": message}` with a message fit to show the reader.",
         "responses": {
           "200": {
             "description": "Saved to Instapaper. Returns the item as it stands after being updated (instapaper_saved=true, status=read).",
@@ -694,7 +694,7 @@
             }
           },
           "400": {
-            "description": "`id` is not an integer, or Instapaper credentials are not configured.",
+            "description": "`id` is not an integer, or no Instapaper access token or credentials are configured.",
             "content": {
               "application/json": {
                 "schema": {
@@ -712,7 +712,7 @@
             "content": {}
           },
           "502": {
-            "description": "The request to Instapaper's API failed or was rejected.",
+            "description": "The request to Instapaper's API failed or was rejected (bad token, rate limiting, Instapaper outage). The `error` message says which.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1169,7 +1169,27 @@
             "type": "string"
           },
           "instapaper_password": {
-            "type": "string"
+            "type": "string",
+            "writeOnly": true,
+            "description": "Legacy Simple API password. Write-only: GET never returns it, only instapaper_password_set."
+          },
+          "instapaper_token": {
+            "type": "string",
+            "writeOnly": true,
+            "description": "Instapaper API v2 access token. Write-only: GET never returns it, only instapaper_token_set. An empty string clears it."
+          },
+          "instapaper_password_set": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "instapaper_token_set": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "instapaper_token_env": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "True when the server has YARR_INSTAPAPER_TOKEN, which outranks instapaper_token."
           }
         },
         "additionalProperties": true

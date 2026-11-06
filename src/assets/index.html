@@ -180,18 +180,18 @@
                 <!-- action indicator -->
                 <div class="card-view-action" id="card-action-indicator"></div>
                 <!-- swipe hints -->
-                <div v-if="currentCard && !cardDone" class="card-view-hints card-view-legend px-4 pb-3 d-flex align-items-center justify-content-between small" :class="{'has-skip': instapaperUsername}">
+                <div v-if="currentCard && !cardDone" class="card-view-hints card-view-legend px-4 pb-3 d-flex align-items-center justify-content-between small" :class="{'has-skip': instapaperConfigured}">
                     <!-- the legend ends are the verbs themselves: a mouse, or a
                          screen reader that keeps the arrow keys, can triage too -->
                     <button type="button" class="card-legend-btn" @click="cardSwipeLeft()" aria-keyshortcuts="ArrowLeft"
-                            :title="instapaperUsername ? 'Save to Instapaper and go to the next card (←)' : 'Keep unread and go to the next card (←)'">
-                        <span class="icon mr-1">{% inline "chevron-left.svg" %}</span>{{ instapaperUsername ? 'Instapaper' : 'Keep unread' }}
+                            :title="instapaperConfigured ? 'Save to Instapaper and go to the next card (←)' : 'Keep unread and go to the next card (←)'">
+                        <span class="icon mr-1">{% inline "chevron-left.svg" %}</span>{{ instapaperConfigured ? 'Instapaper' : 'Keep unread' }}
                     </button>
                     <div class="d-flex align-items-center">
                         <!-- star is the verb swipes can't carry: left and right
                              are taken, and vertical drags scroll the excerpt -->
                         <!-- with Instapaper on the left swipe, "not now" needs its own way -->
-                        <button type="button" class="card-legend-btn card-skip-btn mr-2" v-if="instapaperUsername"
+                        <button type="button" class="card-legend-btn card-skip-btn mr-2" v-if="instapaperConfigured"
                                 @click="cardSkip()"
                                 title="Leave unread and go to the next card (n)"
                                 aria-keyshortcuts="n">
@@ -228,11 +228,11 @@
                             <div class="card-stat-number card-stat-read">{{ cardStats.read }}</div>
                             <div class="text-muted small">marked read</div>
                         </div>
-                        <div class="text-center" v-if="instapaperUsername">
+                        <div class="text-center" v-if="instapaperConfigured">
                             <div class="card-stat-number">{{ cardStats.instapaper }}</div>
                             <div class="text-muted small">saved to Instapaper</div>
                         </div>
-                        <div class="text-center" v-if="!instapaperUsername || cardStats.kept">
+                        <div class="text-center" v-if="!instapaperConfigured || cardStats.kept">
                             <div class="card-stat-number">{{ cardStats.kept }}</div>
                             <div class="text-muted small">kept unread</div>
                         </div>
@@ -792,8 +792,28 @@
 
                 <div class="settings-group">
                     <div class="settings-title">Instapaper</div>
-                    <input type="text" class="form-control mb-1" aria-label="Instapaper username or email" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperCredentials('instapaper_username', $event.target.value)">
-                    <input type="password" class="form-control" aria-label="Instapaper password" placeholder="Password" :value="instapaperPassword" @change="updateInstapaperCredentials('instapaper_password', $event.target.value)">
+                    <p class="small text-muted mb-0" v-if="instapaperTokenEnv">Saving with the access token from the server's environment (<code>YARR_INSTAPAPER_TOKEN</code>).</p>
+                    <template v-else>
+                        <div class="d-flex">
+                            <input type="password" class="form-control" autocomplete="off" aria-label="Instapaper access token"
+                                   :placeholder="instapaperTokenSet ? 'Access token saved. Paste a new one to replace it' : 'Access token'"
+                                   @change="updateInstapaperSetting('instapaper_token', $event.target.value, $event.target)">
+                            <button type="button" class="btn btn-default ml-2" v-if="instapaperTokenSet" @click="updateInstapaperSetting('instapaper_token', '')">Remove</button>
+                        </div>
+                        <p class="small text-muted mt-1 mb-0">Generate one under <a href="https://www.instapaper.com/developers/applications" target="_blank" rel="noopener noreferrer">Instapaper developer applications</a>. Instapaper shows it only once.</p>
+                    </template>
+                    <!-- legacy sign-in: shown only to someone who already saved it -->
+                    <details class="mt-2" v-if="instapaperUsername || instapaperPasswordSet" :open="!instapaperTokenSet && !instapaperTokenEnv">
+                        <summary class="small">Username and password (legacy)</summary>
+                        <p class="small text-muted mt-1 mb-1">Used only when no access token is set. A later release removes them.</p>
+                        <input type="text" class="form-control mb-1" aria-label="Instapaper username or email" placeholder="Username or email" :value="instapaperUsername" @change="updateInstapaperSetting('instapaper_username', $event.target.value)">
+                        <div class="d-flex">
+                            <input type="password" class="form-control" autocomplete="off" aria-label="Instapaper password"
+                                   :placeholder="instapaperPasswordSet ? 'Password saved' : 'Password'"
+                                   @change="updateInstapaperSetting('instapaper_password', $event.target.value, $event.target)">
+                            <button type="button" class="btn btn-default ml-2" v-if="instapaperPasswordSet" @click="updateInstapaperSetting('instapaper_password', '')">Forget</button>
+                        </div>
+                    </details>
                     <p class="settings-saved small mt-1 mb-0" role="status">{{ instapaperSaved ? 'Saved' : '' }}</p>
                 </div>
 
@@ -888,10 +908,10 @@
                     </tr>
 
                     <tr><th colspan=2 scope="colgroup" class="shortcut-group">Triage (card mode)</th></tr>
-                    <tr><td><kbd>←</kbd></td>               <td>{{ instapaperUsername ? 'save to Instapaper and mark read' : 'keep unread' }}</td></tr>
+                    <tr><td><kbd>←</kbd></td>               <td>{{ instapaperConfigured ? 'save to Instapaper and mark read' : 'keep unread' }}</td></tr>
                     <tr><td><kbd>→</kbd></td>               <td>mark read</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>star</td></tr>
-                    <tr v-if="instapaperUsername"><td><kbd>n</kbd></td>               <td>not now (leave unread)</td></tr>
+                    <tr v-if="instapaperConfigured"><td><kbd>n</kbd></td>               <td>not now (leave unread)</td></tr>
                     <tr><td><kbd>Enter</kbd></td>           <td>read the article here / back to the card</td></tr>
                     <tr><td><kbd>o</kbd></td>               <td>open original link</td></tr>
                     <tr><td><kbd>u</kbd></td>               <td>undo last swipe</td></tr>

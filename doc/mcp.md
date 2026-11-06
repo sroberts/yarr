@@ -93,7 +93,7 @@ Articles are referred to by the numeric **id** shown in `list_articles`
 | `get_article` | Full text of one article by `id` |
 | `mark_read` / `mark_unread` | Set an article's read status |
 | `star` / `unstar` | Star / remove star |
-| `save_to_instapaper` | Save an article to Instapaper (requires Instapaper credentials in Settings) |
+| `save_to_instapaper` | Save an article to Instapaper (requires an Instapaper access token in Settings or `YARR_INSTAPAPER_TOKEN`) |
 | `mark_all_read` | Mark everything read, optionally limited to a `feed_id` or `folder_id` |
 
 ### Library management
@@ -137,7 +137,7 @@ curl -s -XPOST http://127.0.0.1:7070/mcp \
 
 Each `tools/call` returns a result of the form
 `{"content":[{"type":"text","text":"…"}],"isError":false}`. Tool-level problems
-(an unknown id, missing Instapaper credentials) come back with `isError: true`
+(an unknown id, Instapaper not set up) come back with `isError: true`
 and a human-readable message rather than a transport error, so Claude can read
 and recover from them.
 

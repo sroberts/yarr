@@ -418,6 +418,14 @@ func main() {
 	srv.SecretKeyBase = secretKeyBase
 	srv.SecureCookie = secureCookie
 
+	// An Instapaper API v2 access token, deliberately environment-only (a
+	// flag would show in ps): an Outpost secret arrives this way, and it
+	// outranks a token entered in Settings.
+	if token := strings.TrimSpace(os.Getenv("YARR_INSTAPAPER_TOKEN")); token != "" {
+		srv.InstapaperToken = token
+		log.Print("instapaper: using the access token from YARR_INSTAPAPER_TOKEN")
+	}
+
 	// The server drains before exiting, and retires the early handler itself
 	// once it is watching -- so the browser launch below, and the systray
 	// startup in the gui build, stay covered.
