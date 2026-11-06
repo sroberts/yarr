@@ -39,6 +39,9 @@ type Server struct {
 	// auth
 	Username string
 	Password string
+	// InstapaperToken is an Instapaper API v2 access token from the
+	// environment. A token entered in Settings takes priority over it.
+	InstapaperToken string
 	// https
 	CertFile string
 	KeyFile  string

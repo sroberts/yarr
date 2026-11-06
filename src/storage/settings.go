@@ -21,6 +21,7 @@ func settingsDefaults() map[string]interface{} {
 		"refresh_rate":        0,
 		"instapaper_username": "",
 		"instapaper_password": "",
+		"instapaper_token":    "",
 	}
 }
 

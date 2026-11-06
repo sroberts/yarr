@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime"
 	"net"
 	"net/http"
@@ -261,7 +263,7 @@ var mcpTools = []toolDef{
 	{"mark_unread", "Mark an article as unread.", idSchema},
 	{"star", "Star an article.", idSchema},
 	{"unstar", "Remove the star from an article (marks it read).", idSchema},
-	{"save_to_instapaper", "Save an article to Instapaper (requires Instapaper credentials in Settings). Marks the article read.", idSchema},
+	{"save_to_instapaper", "Save an article to Instapaper (requires an Instapaper access token, or the legacy username and password, in Settings). Marks the article read.", idSchema},
 	{"mark_all_read", "Mark every article as read, optionally limited to one feed or folder.", obj(map[string]interface{}{
 		"feed_id":   map[string]interface{}{"type": "integer", "description": "limit to this feed"},
 		"folder_id": map[string]interface{}{"type": "integer", "description": "limit to this folder"},
@@ -526,13 +528,11 @@ func (s *Server) toolSaveToInstapaper(args json.RawMessage) map[string]interface
 	if item == nil {
 		return textResult(fmt.Sprintf("article %d not found", id), true)
 	}
-	username, _ := s.db.GetSettingsValue("instapaper_username").(string)
-	password, _ := s.db.GetSettingsValue("instapaper_password").(string)
-	if username == "" || password == "" {
-		return textResult("Instapaper credentials not configured. Add your username and password in Settings.", true)
-	}
-	if err := InstapaperAdd(username, password, item.Link, item.Title); err != nil {
-		return textResult("failed to save to Instapaper: "+err.Error(), true)
+	if err := s.instapaperSave(item.Link, item.Title); err != nil {
+		if !errors.Is(err, errInstapaperNotConfigured) {
+			log.Print(err)
+		}
+		return textResult(instapaperMessage(err), true)
 	}
 	s.db.SetItemInstapaperSaved(id, true)
 	s.db.UpdateItemStatus(id, storage.READ)

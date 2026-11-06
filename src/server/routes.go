@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -78,7 +79,7 @@ func (s *Server) handler() http.Handler {
 
 func (s *Server) handleIndex(c *router.Context) {
 	c.HTML(http.StatusOK, assets.Template("index.html"), map[string]interface{}{
-		"settings":      s.db.GetSettings(),
+		"settings":      s.publicSettings(),
 		"authenticated": s.Username != "" && s.Password != "",
 		"version":       s.Version,
 	})
@@ -543,20 +544,14 @@ func (s *Server) handleItemInstapaper(c *router.Context) {
 		return
 	}
 
-	username, _ := s.db.GetSettingsValue("instapaper_username").(string)
-	password, _ := s.db.GetSettingsValue("instapaper_password").(string)
-	if username == "" || password == "" {
-		c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Instapaper credentials not configured. Add your username and password in Settings.",
-		})
-		return
-	}
-
-	if err := InstapaperAdd(username, password, item.Link, item.Title); err != nil {
-		log.Print(err)
-		c.JSON(http.StatusBadGateway, map[string]string{
-			"error": "Failed to save to Instapaper.",
-		})
+	if err := s.instapaperSave(item.Link, item.Title); err != nil {
+		status := http.StatusBadGateway
+		if errors.Is(err, errInstapaperNotConfigured) {
+			status = http.StatusBadRequest
+		} else {
+			log.Print(err)
+		}
+		c.JSON(status, map[string]string{"error": instapaperMessage(err)})
 		return
 	}
 
@@ -569,7 +564,7 @@ func (s *Server) handleItemInstapaper(c *router.Context) {
 
 func (s *Server) handleSettings(c *router.Context) {
 	if c.Req.Method == "GET" {
-		c.JSON(http.StatusOK, s.db.GetSettings())
+		c.JSON(http.StatusOK, s.publicSettings())
 	} else if c.Req.Method == "PUT" {
 		settings := make(map[string]interface{})
 		if err := json.NewDecoder(c.Req.Body).Decode(&settings); err != nil {
