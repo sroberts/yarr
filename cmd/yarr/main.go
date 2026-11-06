@@ -17,6 +17,7 @@ import (
 
 	"github.com/nkanaev/yarr/src/platform"
 	"github.com/nkanaev/yarr/src/server"
+	"github.com/nkanaev/yarr/src/server/auth"
 	"github.com/nkanaev/yarr/src/storage"
 	"github.com/nkanaev/yarr/src/worker"
 )
@@ -30,6 +31,9 @@ var OptList = make([]string, 0)
 const (
 	envOutpostPort    = "OUTPOST_PORT"
 	envOutpostStorage = "OUTPOST_STORAGE_DIR"
+	envOutpostAuth    = "OUTPOST_AUTH"
+	envOutpostIssuer  = "OUTPOST_ISSUER"
+	envOutpostJWKS    = "OUTPOST_JWKS_URL"
 )
 
 // Loopback by default: a supervised service is reached through the supervisor
@@ -253,6 +257,29 @@ func warnSupervisedConflicts(addr, certfile, keyfile, logfile string) {
 	}
 }
 
+// supervised reports whether an Outpost supervisor started us.
+func supervised() bool {
+	return os.Getenv(envOutpostPort) != "" || os.Getenv(envOutpostStorage) != ""
+}
+
+// outpostGateway returns a verifier for Outpost's login gateway when
+// $OUTPOST_AUTH says one is in front of us, or nil when it is not. Outpost sets
+// all three variables together, after the manifest's own env, so a gateway
+// with any of them missing is a broken environment, not a choice.
+func outpostGateway(mode, issuer, jwksURL, audience string) (*auth.Gateway, error) {
+	switch mode {
+	case "":
+		return nil, nil
+	case "gateway":
+	default:
+		return nil, fmt.Errorf("$%s=%q is not a mode yarr knows", envOutpostAuth, mode)
+	}
+	if issuer == "" || jwksURL == "" {
+		return nil, fmt.Errorf("$%s=gateway needs both $%s and $%s", envOutpostAuth, envOutpostIssuer, envOutpostJWKS)
+	}
+	return &auth.Gateway{Issuer: issuer, JWKSURL: jwksURL, Audience: audience}, nil
+}
+
 // trapStop registers the one signal handler this process has, from the first
 // instant. Database migrations can take a while and a supervisor may stop us in
 // the middle of one, long before the http server is up; the default
@@ -285,7 +312,7 @@ func main() {
 	_ = platform.FixConsoleIfNeeded()
 
 	var addr, db, authfile, auth, certfile, keyfile, basepath, logfile string
-	var secretkeyfile string
+	var secretkeyfile, outpostAudience string
 	var port int
 	var ver, open bool
 
@@ -309,6 +336,7 @@ func main() {
 	flag.StringVar(&keyfile, "key-file", opt("YARR_KEYFILE", ""), "`path` to key file for https")
 	flag.StringVar(&db, "db", opt("YARR_DB", ""), "storage file `path`")
 	flag.StringVar(&secretkeyfile, "secret-key-file", opt("YARR_SECRET_KEY_FILE", ""), "`path` to a file holding the session signing key. Takes precedence over SECRET_KEY_BASE")
+	flag.StringVar(&outpostAudience, "outpost-audience", opt("YARR_OUTPOST_AUDIENCE", ""), "the `host` Outpost's login gateway serves yarr on, e.g. yarr.outpost.example; pins the identity token's audience")
 	flag.StringVar(&logfile, "log-file", opt("YARR_LOGFILE", ""), "`path` to log file to use instead of stdout")
 	flag.BoolVar(&ver, "version", false, "print application version")
 	flag.BoolVar(&open, "open", false, "open the server in browser")
@@ -384,11 +412,34 @@ func main() {
 		}
 	}
 	secureCookie := true
+	// Under Outpost the browser may arrive over https through the login
+	// gateway or over plain http through the service's tailnet node, which a
+	// Secure cookie cannot survive. Decide per request unless told otherwise.
+	secureCookieAuto := false
 	if disableSSL := os.Getenv("DISABLE_SSL"); disableSSL != "" {
 		if parsed, err := strconv.ParseBool(disableSSL); err != nil {
 			log.Printf("invalid DISABLE_SSL value %q, defaulting to false", disableSSL)
 		} else if parsed {
 			secureCookie = false
+		}
+	} else if supervised() {
+		secureCookieAuto = true
+	}
+
+	gateway, err := outpostGateway(os.Getenv(envOutpostAuth), os.Getenv(envOutpostIssuer), os.Getenv(envOutpostJWKS), outpostAudience)
+	if err != nil {
+		log.Fatal("Failed to configure the Outpost gateway: ", err)
+	}
+	if gateway != nil {
+		if username != "" && password != "" {
+			log.Printf("signing in through the Outpost gateway at %s; yarr's own login still guards everything else", gateway.Issuer)
+			if outpostAudience == "" {
+				log.Print("warning: --outpost-audience is unset; a service behind the same gateway could replay a token it was sent to sign in to yarr")
+			}
+		} else {
+			// The gateway guards the requests it proxies. Without credentials
+			// of yarr's own, requests that bypass it are let in as before.
+			log.Printf("signing in through the Outpost gateway at %s; set --auth-file to guard requests that bypass it", gateway.Issuer)
 		}
 	}
 
@@ -417,6 +468,8 @@ func main() {
 
 	srv.SecretKeyBase = secretKeyBase
 	srv.SecureCookie = secureCookie
+	srv.SecureCookieAuto = secureCookieAuto
+	srv.Gateway = gateway
 
 	// The server drains before exiting, and retires the early handler itself
 	// once it is watching -- so the browser launch below, and the systray

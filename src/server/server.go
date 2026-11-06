@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nkanaev/yarr/src/server/auth"
 	"github.com/nkanaev/yarr/src/storage"
 	"github.com/nkanaev/yarr/src/worker"
 )
@@ -46,6 +47,10 @@ type Server struct {
 	// once
 	SecretKeyBase string
 	SecureCookie  bool
+	// SecureCookieAuto overrides SecureCookie with a per-request decision.
+	SecureCookieAuto bool
+	// Gateway is Outpost's login gateway, when yarr runs behind one.
+	Gateway *auth.Gateway
 
 	// ready gates the healthcheck: false while starting up or shutting down.
 	ready atomic.Bool
