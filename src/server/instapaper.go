@@ -93,7 +93,7 @@ func InstapaperSaveBookmark(token, articleURL, title string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-		io.Copy(io.Discard, io.LimitReader(resp.Body, 64<<10))
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 64<<10))
 		return nil
 	}
 
