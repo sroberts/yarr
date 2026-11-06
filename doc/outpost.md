@@ -1,10 +1,12 @@
 # running yarr under outpost
 
-yarr conforms to the Outpost service spec: it listens on one loopback
-TCP port in plain HTTP, serves a cheap unauthenticated healthcheck at `GET /up`,
-takes all of its configuration from flags and environment variables, keeps every
-byte of persistent state in one directory, runs in the foreground, and exits on
-SIGTERM within a second.
+yarr conforms to the [Outpost service spec](outpost-service-spec.md) (a
+vendored copy; the header says which Outpost commit it came from): it listens on
+one loopback TCP port in plain HTTP, serves a cheap unauthenticated healthcheck
+at `GET /up`, takes all of its configuration from flags and environment
+variables, keeps every byte of persistent state in one directory, runs in the
+foreground, exits on SIGTERM within a second, steps aside for Outpost's login
+gateway, and publishes releases `outpost add` and `outpost update` can install.
 
 A ready-to-edit manifest lives in [`etc/outpost/yarr.toml`](../etc/outpost/yarr.toml).
 For `outpost add sroberts/yarr`, each release also attaches
@@ -80,11 +82,46 @@ yarr logs to stdout unbuffered, with no ANSI escapes, so `outpost logs yarr`
 shows everything. Do not pass `--log-file` under Outpost: it redirects logs into
 a file Outpost neither captures nor rotates. yarr warns if you do.
 
+## behind the login gateway
+
+When Outpost's login gateway fronts yarr it sets `OUTPOST_AUTH=gateway`, and
+every request has been signed in before it arrives. yarr then:
+
+- **presents no login of its own.** `--auth`, `--auth-file` and `$YARR_AUTH`
+  are ignored (yarr logs that it is ignoring them), so you sign in once, to
+  Outpost. That includes `/mcp`: an MCP client gets in with an Outpost access
+  token (`outpost token create`), which the gateway checks and strips.
+- **refuses cross-origin writes.** Every app behind one gateway shares a site,
+  and the gateway adds your identity to whatever reaches it, so a page on a
+  sibling app could otherwise change yarr's state as you. Any request other
+  than `GET`/`HEAD`/`OPTIONS` whose `Origin` (or `Referer`) names another host
+  gets `403`. Requests with neither header -- Fever clients, MCP clients, curl
+  with an Outpost token -- aren't from a browser and pass. The check matches
+  `Host` or `X-Forwarded-Host`, both of which the gateway sets to yarr's own
+  name, so a renamed node (`yarr-1`) still works.
+- **offers Outpost's sign-out.** The ⋯ menu gains "Sign out of Outpost", a
+  same-origin `POST` to `/.outpost/logout`, which ends the whole Outpost login.
+
+yarr reads no `X-Outpost-*` header: it is a single-user app, so who is calling
+changes nothing. Its session cookie is named `auth`, clear of the gateway's
+`outpost` / `__Host-outpost`, and it serves nothing under `/.outpost/`.
+
+Without the gateway none of this applies: yarr's own login works as before,
+and with no login set, tailnet membership is the boundary.
+
 ## secrets
 
 A manifest is a plaintext file, and everything in its `env` table lands in the
-process environment. yarr takes both of its secrets from a file instead, so the
-manifest holds only a path:
+process environment. Prefer an Outpost secret (`outpost secret set`), which
+reaches yarr as an environment variable without ever being in the manifest:
+
+```sh
+outpost secret set secret-key-base --service yarr   # becomes SECRET_KEY_BASE
+```
+
+Behind the login gateway yarr needs no login secrets at all. Without it, yarr
+can also take both of its secrets from a file, so the manifest holds only a
+path:
 
 | Secret | From a file | From the environment |
 |---|---|---|
@@ -120,6 +157,23 @@ The environment's token outranks the one in Settings, and Settings then says so
 instead of offering the field. Rotating the secret restarts yarr with the new
 value. Neither the token nor the legacy Instapaper password is ever sent to the
 browser or returned by `GET /api/settings`.
+
+## releases
+
+Each `vX.Ys` release attaches a zip per platform (`yarr_<goos>_<goarch>.zip`,
+plus `_gui` variants of the macOS and Windows builds), a
+`SHA256SUMS` that `outpost add` and `outpost update` verify against, and
+`outpost.toml`. The release is created as a draft and published only once every
+platform's zip is attached, because `outpost update` installs the latest
+*published* release: if one platform's build fails (macOS runners are the usual
+suspect), the release waits as a draft with what did build until the failed job
+is re-run.
+
+`outpost.toml` declares no `args`: yarr takes its port from `$OUTPOST_PORT`,
+which every manifest `outpost add` writes, so there is nothing to keep
+compatible across releases. Database migrations run before the port is bound,
+and a failed one exits non-zero, so `outpost update` rolls the binary back
+before yarr ever reports healthy.
 
 ## describing itself
 

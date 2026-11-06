@@ -32,6 +32,10 @@ func (s *Server) handler() http.Handler {
 
 	r.Use(gzip.Middleware)
 
+	if s.OutpostGateway {
+		r.Use(gatewayOriginGuard)
+	}
+
 	if s.Username != "" && s.Password != "" {
 		a := &auth.Middleware{
 			BasePath: s.BasePath,
@@ -81,6 +85,7 @@ func (s *Server) handleIndex(c *router.Context) {
 	c.HTML(http.StatusOK, assets.Template("index.html"), map[string]interface{}{
 		"settings":      s.publicSettings(),
 		"authenticated": s.Username != "" && s.Password != "",
+		"gateway":       s.OutpostGateway,
 		"version":       s.Version,
 	})
 }

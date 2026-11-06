@@ -20,6 +20,7 @@
         window.app = window.app || {}
         window.app.settings = {% .settings %}
         window.app.authenticated = {% .authenticated %}
+        window.app.gateway = {% .gateway %}
         window.app.version = "{% .version %}"
     </script>
 </head>
@@ -129,6 +130,14 @@
                         <span class="icon mr-1">{% inline "log-out.svg" %}</span>
                         Log out
                     </button>
+                    <!-- behind Outpost's gateway: its sign-out ends the whole Outpost login -->
+                    <div class="dropdown-divider" v-if="gateway"></div>
+                    <form method="post" action="/.outpost/logout" v-if="gateway">
+                        <button type="submit" class="dropdown-item">
+                            <span class="icon mr-1">{% inline "log-out.svg" %}</span>
+                            Sign out of Outpost
+                        </button>
+                    </form>
                 </dropdown>
             </div>
             <!-- card triage mode -->
