@@ -18,7 +18,7 @@ jobs:
     # 2026-11-02; macos-15 then went three runs in a row (v2.56s) without a
     # runner being acquired. Go builds the amd64 target by cross-compiling
     # (clang -arch x86_64) just fine here.
-    runs-on: macos-26
+    runs-on: macos-26-intel
     timeout-minutes: 30
     steps:
     - name: Checkout
