@@ -12,11 +12,13 @@ permissions:
 jobs:
   build_macos:
     name: Build for MacOS
-    # macos-15 (Apple Silicon). macos-13 Intel runners were chronically
-    # queueing then cancelling; macos-14 is retired on 2026-11-02 and its
-    # brownouts left jobs queued with no runner. Go builds the amd64 target
-    # by cross-compiling (clang -arch x86_64) just fine here.
-    runs-on: macos-15
+    # macos-26 (Apple Silicon), the image macos-latest now maps to, pinned so
+    # the next -latest migration can't change it underneath us. macos-13 Intel
+    # runners were chronically queueing then cancelling; macos-14 retired on
+    # 2026-11-02; macos-15 then went three runs in a row (v2.56s) without a
+    # runner being acquired. Go builds the amd64 target by cross-compiling
+    # (clang -arch x86_64) just fine here.
+    runs-on: macos-26
     timeout-minutes: 30
     steps:
     - name: Checkout
