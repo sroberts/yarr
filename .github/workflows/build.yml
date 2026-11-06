@@ -12,12 +12,14 @@ permissions:
 jobs:
   build_macos:
     name: Build for MacOS
-    # macos-26 (Apple Silicon), the image macos-latest now maps to, pinned so
-    # the next -latest migration can't change it underneath us. macos-13 Intel
-    # runners were chronically queueing then cancelling; macos-14 retired on
-    # 2026-11-02; macos-15 then went three runs in a row (v2.56s) without a
-    # runner being acquired. Go builds the amd64 target by cross-compiling
-    # (clang -arch x86_64) just fine here.
+    # macos-26-intel. GitHub's macOS arm64 pool hit capacity limits in
+    # November 2026: macos-15 and macos-26 both went 15 minutes without a
+    # runner being acquired, three times running for v2.56s. The Intel pool
+    # picked the job up at once. Go cross-compiles the arm64 targets
+    # (clang -arch arm64) here, as it did amd64 on Apple Silicon. Earlier:
+    # macos-13 Intel runners chronically queued then cancelled, and macos-14
+    # retired on 2026-11-02. If this pool starves too, macos-26 is the arm64
+    # equivalent.
     runs-on: macos-26-intel
     timeout-minutes: 30
     steps:
