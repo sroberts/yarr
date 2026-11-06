@@ -40,7 +40,7 @@ type Server struct {
 	Username string
 	Password string
 	// InstapaperToken is an Instapaper API v2 access token from the
-	// environment. When set it outranks the token entered in Settings.
+	// environment. A token entered in Settings takes priority over it.
 	InstapaperToken string
 	// https
 	CertFile string

@@ -419,8 +419,8 @@ func main() {
 	srv.SecureCookie = secureCookie
 
 	// An Instapaper API v2 access token, deliberately environment-only (a
-	// flag would show in ps): an Outpost secret arrives this way, and it
-	// outranks a token entered in Settings.
+	// flag would show in ps): an Outpost secret arrives this way. A token
+	// entered in Settings takes priority over it.
 	if token := strings.TrimSpace(os.Getenv("YARR_INSTAPAPER_TOKEN")); token != "" {
 		srv.InstapaperToken = token
 		log.Print("instapaper: using the access token from YARR_INSTAPAPER_TOKEN")

@@ -101,14 +101,13 @@ func InstapaperSaveBookmark(token, articleURL, title string) error {
 	return &InstapaperStatusError{Status: resp.StatusCode, Body: string(msg)}
 }
 
-// instapaperToken is the access token to save with: the environment's
-// (an Outpost secret, say) wins over the one entered in Settings.
+// instapaperToken is the access token to save with: one entered in Settings
+// takes priority over the environment's (an Outpost secret, say).
 func (s *Server) instapaperToken() string {
-	if s.InstapaperToken != "" {
-		return s.InstapaperToken
+	if token, _ := s.db.GetSettingsValue("instapaper_token").(string); token != "" {
+		return token
 	}
-	token, _ := s.db.GetSettingsValue("instapaper_token").(string)
-	return token
+	return s.InstapaperToken
 }
 
 // publicSettings is the settings map as the browser and the API see it: the
