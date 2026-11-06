@@ -103,7 +103,7 @@ func newInstapaperTestServer(t *testing.T) *Server {
 	return NewServer(db, "127.0.0.1:8000")
 }
 
-// The environment's token wins, then the Settings token, then the legacy
+// A Settings token wins, then the environment's token, then the legacy
 // username and password on the Simple API.
 func TestInstapaperSave_Precedence(t *testing.T) {
 	var hits []string
@@ -124,12 +124,14 @@ func TestInstapaperSave_Precedence(t *testing.T) {
 
 	s.db.UpdateSettings(map[string]interface{}{"instapaper_username": "me", "instapaper_password": "pw"})
 	s.instapaperSave("https://example.com", "t")
-	s.db.UpdateSettings(map[string]interface{}{"instapaper_token": "settings-tok"})
-	s.instapaperSave("https://example.com", "t")
 	s.InstapaperToken = "env-tok"
 	s.instapaperSave("https://example.com", "t")
+	s.db.UpdateSettings(map[string]interface{}{"instapaper_token": "settings-tok"})
+	s.instapaperSave("https://example.com", "t")
+	s.db.UpdateSettings(map[string]interface{}{"instapaper_token": ""})
+	s.instapaperSave("https://example.com", "t")
 
-	want := []string{"v1:me", "v2:Bearer settings-tok", "v2:Bearer env-tok"}
+	want := []string{"v1:me", "v2:Bearer env-tok", "v2:Bearer settings-tok", "v2:Bearer env-tok"}
 	if strings.Join(hits, ",") != strings.Join(want, ",") {
 		t.Errorf("calls = %v, want %v", hits, want)
 	}

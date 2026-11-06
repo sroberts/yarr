@@ -801,16 +801,15 @@
 
                 <div class="settings-group">
                     <div class="settings-title">Instapaper</div>
-                    <p class="small text-muted mb-0" v-if="instapaperTokenEnv">Saving with the access token from the server's environment (<code>YARR_INSTAPAPER_TOKEN</code>).</p>
-                    <template v-else>
-                        <div class="d-flex">
-                            <input type="password" class="form-control" autocomplete="off" aria-label="Instapaper access token"
-                                   :placeholder="instapaperTokenSet ? 'Access token saved. Paste a new one to replace it' : 'Access token'"
-                                   @change="updateInstapaperSetting('instapaper_token', $event.target.value, $event.target)">
-                            <button type="button" class="btn btn-default ml-2" v-if="instapaperTokenSet" @click="updateInstapaperSetting('instapaper_token', '')">Remove</button>
-                        </div>
-                        <p class="small text-muted mt-1 mb-0">Generate one under <a href="https://www.instapaper.com/developers/applications" target="_blank" rel="noopener noreferrer">Instapaper developer applications</a>. Instapaper shows it only once.</p>
-                    </template>
+                    <!-- a token saved here takes priority over the server's -->
+                    <p class="small text-muted mb-1" v-if="instapaperTokenEnv">The server also has an access token (<code>YARR_INSTAPAPER_TOKEN</code>). {{ instapaperTokenSet ? 'The one saved here is used instead.' : 'It is used until you save one here.' }}</p>
+                    <div class="d-flex">
+                        <input type="password" class="form-control" autocomplete="off" aria-label="Instapaper access token"
+                               :placeholder="instapaperTokenSet ? 'Access token saved. Paste a new one to replace it' : 'Access token'"
+                               @change="updateInstapaperSetting('instapaper_token', $event.target.value, $event.target)">
+                        <button type="button" class="btn btn-default ml-2" v-if="instapaperTokenSet" @click="updateInstapaperSetting('instapaper_token', '')">Remove</button>
+                    </div>
+                    <p class="small text-muted mt-1 mb-0">Generate one under <a href="https://www.instapaper.com/developers/applications" target="_blank" rel="noopener noreferrer">Instapaper developer applications</a>. Instapaper shows it only once.</p>
                     <!-- legacy sign-in: shown only to someone who already saved it -->
                     <details class="mt-2" v-if="instapaperUsername || instapaperPasswordSet" :open="!instapaperTokenSet && !instapaperTokenEnv">
                         <summary class="small">Username and password (legacy)</summary>

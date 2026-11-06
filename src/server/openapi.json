@@ -681,7 +681,7 @@
       ],
       "post": {
         "summary": "Save an item to Instapaper",
-        "description": "Saves with Instapaper API v2 when an access token is available (the server's YARR_INSTAPAPER_TOKEN environment variable, else instapaper_token set via PUT /api/settings); otherwise falls back to the legacy Simple API with instapaper_username and instapaper_password. On success, marks the item's `instapaper_saved` true and its status `read`, then returns the updated item. Failures return `{\"error\": message}` with a message fit to show the reader.",
+        "description": "Saves with Instapaper API v2 when an access token is available (instapaper_token set via PUT /api/settings, else the server's YARR_INSTAPAPER_TOKEN environment variable); otherwise falls back to the legacy Simple API with instapaper_username and instapaper_password. On success, marks the item's `instapaper_saved` true and its status `read`, then returns the updated item. Failures return `{\"error\": message}` with a message fit to show the reader.",
         "responses": {
           "200": {
             "description": "Saved to Instapaper. Returns the item as it stands after being updated (instapaper_saved=true, status=read).",
@@ -1189,7 +1189,7 @@
           "instapaper_token_env": {
             "type": "boolean",
             "readOnly": true,
-            "description": "True when the server has YARR_INSTAPAPER_TOKEN, which outranks instapaper_token."
+            "description": "True when the server has YARR_INSTAPAPER_TOKEN. It is used only when instapaper_token is empty: a token saved in Settings takes priority."
           }
         },
         "additionalProperties": true

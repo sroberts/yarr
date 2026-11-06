@@ -153,8 +153,9 @@ than a manifest `env` entry:
 outpost secret set yarr-instapaper-token --service yarr   # prompts; becomes YARR_INSTAPAPER_TOKEN
 ```
 
-The environment's token outranks the one in Settings, and Settings then says so
-instead of offering the field. Rotating the secret restarts yarr with the new
+A token saved in Settings takes priority over the environment's, so you can
+override the secret from the UI; remove it there and yarr falls back to
+`$YARR_INSTAPAPER_TOKEN`. Settings notes when the environment has one. Rotating the secret restarts yarr with the new
 value. Neither the token nor the legacy Instapaper password is ever sent to the
 browser or returned by `GET /api/settings`.
 

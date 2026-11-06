@@ -44,7 +44,7 @@ type Server struct {
 	// no login of its own and guards state-changing requests by origin.
 	OutpostGateway bool
 	// InstapaperToken is an Instapaper API v2 access token from the
-	// environment. When set it outranks the token entered in Settings.
+	// environment. A token entered in Settings takes priority over it.
 	InstapaperToken string
 	// https
 	CertFile string
