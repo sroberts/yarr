@@ -188,6 +188,14 @@
                 </div>
                 <!-- action indicator -->
                 <div class="card-view-action" id="card-action-indicator"></div>
+                <!-- writes waiting to reach the server: in the flow above the
+                     verbs, so it never covers the action bar -->
+                <div class="sync-chip-row" v-if="outboxState.count">
+                    <div class="sync-chip" role="status">
+                        <span>{{ outboxState.count }} {{ outboxState.count === 1 ? 'change' : 'changes' }} not saved</span>
+                        <button type="button" class="sync-chip-btn" @click="retryOutbox()" :disabled="outboxState.syncing">{{ outboxState.syncing ? 'Saving…' : 'Retry' }}</button>
+                    </div>
+                </div>
                 <!-- swipe hints -->
                 <div v-if="currentCard && !cardDone" class="card-view-hints card-view-legend px-4 pb-3 d-flex align-items-center justify-content-between small" :class="{'has-skip': instapaperConfigured}">
                     <!-- the legend ends are the verbs themselves: a mouse, or a
@@ -936,6 +944,16 @@
         <transition name="toast">
             <div class="app-toast" v-if="toast">{{ toast.text }}</div>
         </transition>
+        <!-- writes waiting to reach the server (outbox.js); triage shows its
+             own copy above the verbs. One persistent chip, not a toast per
+             failure: they retry on their own, Retry just goes now. -->
+        <transition name="toast">
+            <div class="sync-chip sync-chip-float" role="status" v-if="outboxState.count && !cardMode"
+                 :class="{lifted: toast || feedUndo}">
+                <span>{{ outboxState.count }} {{ outboxState.count === 1 ? 'change' : 'changes' }} not saved</span>
+                <button type="button" class="sync-chip-btn" @click="retryOutbox()" :disabled="outboxState.syncing">{{ outboxState.syncing ? 'Saving…' : 'Retry' }}</button>
+            </div>
+        </transition>
         <!-- command palette (Cmd/Ctrl+K): jump to a feed/folder or run a command -->
         <div class="modal custom-modal command-palette" v-if="paletteOpen" @click.stop="closePalette()">
             <div class="command-palette-dialog" role="dialog" aria-modal="true" aria-label="Command palette" @click.stop>
@@ -1088,6 +1106,7 @@
     <!-- internal -->
     <script src="./static/javascripts/api.js"></script>
     <script src="./static/javascripts/offline.js"></script>
+    <script src="./static/javascripts/outbox.js"></script>
     <script src="./static/javascripts/app.js"></script>
     <script src="./static/javascripts/swipe.js"></script>
     <script src="./static/javascripts/key.js"></script>

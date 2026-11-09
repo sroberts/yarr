@@ -2127,6 +2127,68 @@ body[data-motion="reduce"] *::after {
      matching the swipe undo button. */
   color: color-mix(in srgb, var(--accent) 65%, white);
 }
+/* Outbox chip: writes waiting to reach the server. Same dark pill as the
+   toasts, but it stays until they're saved; Retry sends them now. */
+.sync-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .75rem;
+  max-width: calc(100% - 2rem);
+  padding: 0 .25rem 0 1rem;
+  border-radius: var(--radius);
+  background: #111214;
+  color: #fff;
+  font-size: .875rem;
+  white-space: nowrap;
+}
+.sync-chip-btn {
+  min-height: 36px;
+  padding: 0 .75rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--accent) 65%, white);
+}
+.sync-chip-btn:disabled {
+  color: rgba(255, 255, 255, .6);
+  cursor: default;
+}
+.sync-chip-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+/* lists and reader: floating where the toast sits, stepping up over a toast
+   rather than hiding behind it */
+.sync-chip-float {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(1.5rem + env(safe-area-inset-bottom));
+  z-index: 1099;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
+  transition: bottom .2s ease;
+}
+.sync-chip-float.lifted {
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
+@media (max-width: 767.98px) {
+  #app.item-selected .sync-chip-float {
+    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  #app.item-selected .sync-chip-float.lifted {
+    bottom: calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+/* triage: in the flow above the verbs, never on top of them */
+.sync-chip-row {
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem .5rem;
+}
+
 /* the keyboard route to Undo, quiet beside the word */
 .toast-kbd {
   margin-left: .4rem;

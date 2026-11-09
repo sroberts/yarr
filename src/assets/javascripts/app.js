@@ -672,6 +672,9 @@ function rootComponent() { return {
       'feedNewError': '',
       'isMac': /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
       'toast': null,
+      // article writes waiting in the outbox (outbox.js): count drives the
+      // "N changes not saved" chip, failing the can't-reach banner
+      'outboxState': {count: 0, failing: false, syncing: false},
       'linkCopied': false,
       'itemOffline': false,
       'itemUnavailable': false,
@@ -1140,18 +1143,23 @@ function rootComponent() { return {
           // a pending Mark all read's undo must not flip this one back: the
           // server has it as read from here on
           if (this._readDuringUndo) this._readDuringUndo[item.id] = true
-          api.items.update(this.itemSelectedDetails.id, {status: 'read'}).then(function() {
+          // through the outbox: offline, the read is queued and shown now;
+          // only a refusal from the server leaves it unread
+          outbox.send({kind: 'status', id: item.id, status: 'read', from: 'unread', title: item.title}).then(function() {
             // guard the index: stats may not be loaded yet, or the feed may be
             // gone (deleted in another tab, stale offline item). Unguarded, the
             // throw aborted the three lines below — the server recorded the read
             // while the UI kept showing it unread.
-            var stat = this.feedStats[this.itemSelectedDetails.feed_id]
+            // `item`, not itemSelectedDetails: a queued write resolves late,
+            // and the selection may have moved on by then
+            var stat = this.feedStats[item.feed_id]
             // floored: a pending Mark all read may already have zeroed it
             if (stat) stat.unread = Math.max(0, stat.unread - 1)
             var itemInList = this.items.find(function(i) { return i.id == item.id })
             if (itemInList) itemInList.status = 'read'
-            this.itemSelectedDetails.status = 'read'
-          }.bind(this))
+            var open = this.itemSelectedDetails
+            if (open && open.id == item.id) open.status = 'read'
+          }.bind(this)).catch(function() {})
         }
       }.bind(this)).catch(function() {
         // network unavailable — fall back to the offline cache
@@ -1981,8 +1989,9 @@ function rootComponent() { return {
         item.status = to
       }.bind(this)
       apply(oldstatus, newstatus)
-      api.items.update(item.id, {status: newstatus}).then(function(res) {
-        if (res && !res.ok) throw new Error('status: ' + res.status)
+      // Unreachable, the outbox queues the write and the change stands; only
+      // a refusal from the server puts the old state back.
+      outbox.send({kind: 'status', id: item.id, status: newstatus, from: oldstatus, title: item.title}).then(function() {
         // cache the open article for offline reading when it's starred
         if (newstatus == 'starred' && window.offlineStore &&
             this.itemSelectedDetails && this.itemSelectedDetails.id == item.id) {
@@ -1993,6 +2002,42 @@ function rootComponent() { return {
         apply(newstatus, oldstatus)
         this.showToast(this.statusFailureText(newstatus, item, oldstatus), 5000)
       }.bind(this))
+    },
+    // Every loaded copy of an article: the list, the triage deck, the reader.
+    eachItemCopy: function(id, fn) {
+      this.items.forEach(function(i) { if (i.id == id) fn(i) })
+      this.cardItems.forEach(function(i) { if (i.id == id) fn(i) })
+      if (this.itemSelectedDetails && this.itemSelectedDetails.id == id) fn(this.itemSelectedDetails)
+    },
+    // A queued write went through: make every copy agree (after a reload the
+    // lists came from the server before the queue was sent).
+    outboxSynced: function(entry) {
+      this.eachItemCopy(entry.id, function(i) {
+        if (entry.kind === 'instapaper') {
+          i.instapaper_saved = true
+          i.status = 'read'
+        } else {
+          i.status = entry.status
+        }
+      })
+    },
+    // The server refused a queued write: put the old state back and say which.
+    outboxRejected: function(entry, err) {
+      var from = entry.from || 'unread'
+      this.eachItemCopy(entry.id, function(i) {
+        if (entry.kind === 'instapaper') i.instapaper_saved = false
+        i.status = from
+      })
+      this.refreshStats()
+      if (entry.kind === 'instapaper') {
+        this.showToast('Couldn’t save “' + (entry.title || 'untitled') + '” to Instapaper. ' +
+          (err.message || ''), 5000)
+      } else {
+        this.showToast(this.statusFailureText(entry.status, entry, from), 5000)
+      }
+    },
+    retryOutbox: function() {
+      outbox.retry()
     },
     statusFailureText: function(status, item, from) {
       var name = '“' + (item.title || 'untitled') + '”'
@@ -2072,35 +2117,31 @@ function rootComponent() { return {
     saveToInstapaper: function(item) {
       if (!item || !item.link || item.instapaper_saved) return
       this.loading.instapaper = true
-      api.items.saveToInstapaper(item.id).then(function(resp) {
+      var wasUnread = item.status == 'unread'
+      // resolves with the response once saved, or null when the outbox queued
+      // it (server unreachable): either way the save stands here, and the
+      // outbox chip carries the not-yet-saved count instead of a toast
+      outbox.send({kind: 'instapaper', id: item.id, from: item.status, title: item.title}).then(function(res) {
         vm.loading.instapaper = false
-        if (!resp.ok) {
-          // toast, not alert(): a blocking unstyled browser dialog is the one
-          // thing in this pane that isn't quiet, and it can't be themed.
-          return resp.json().then(function(data) {
-            vm.showToast(data.error || 'Failed to save to Instapaper')
-          })
+        if (res) vm.showToast('Saved to Instapaper')
+        var open = vm.itemSelectedDetails
+        if (open && open.id == item.id) {
+          open.instapaper_saved = true
+          open.status = 'read'
+          if (window.offlineStore) window.offlineStore.put(open)
         }
-        return resp.json().then(function(data) {
-          vm.showToast('Saved to Instapaper')
-          vm.itemSelectedDetails.instapaper_saved = true
-          vm.itemSelectedDetails.status = 'read'
-          if (window.offlineStore) window.offlineStore.put(vm.itemSelectedDetails)
-          var itemInList = vm.items.find(function(i) { return i.id == item.id })
-          if (itemInList) {
-            itemInList.status = 'read'
-            itemInList.instapaper_saved = true
-          }
-          if (vm.feedStats[item.feed_id]) {
-            var stat = vm.feedStats[item.feed_id]
-            if (item.status == 'unread' && stat.unread > 0) {
-              stat.unread -= 1
-            }
-          }
-        })
-      }.bind(this)).catch(function() {
+        var itemInList = vm.items.find(function(i) { return i.id == item.id })
+        if (itemInList) {
+          itemInList.status = 'read'
+          itemInList.instapaper_saved = true
+        }
+        var stat = vm.feedStats[item.feed_id]
+        if (stat && wasUnread && stat.unread > 0) stat.unread -= 1
+      }).catch(function(err) {
         vm.loading.instapaper = false
-        vm.showToast('Failed to save to Instapaper — check your connection')
+        // toast, not alert(): a blocking unstyled browser dialog is the one
+        // thing in this pane that isn't quiet, and it can't be themed.
+        vm.showToast(err.message || 'Failed to save to Instapaper')
       })
     },
     // key is instapaper_token, instapaper_username or instapaper_password; an
@@ -2261,11 +2302,10 @@ function rootComponent() { return {
       this.cardUndo = null
       var item = pending.item
       if (pending.action === 'read' || pending.action === 'starred') {
-        // The card is gone by now, so a failed write has to say which article
-        // and put it back in unread: nothing silently lost, including stars.
-        api.items.update(item.id, { status: pending.action }).then(function(res) {
-          if (res && !res.ok) throw new Error('status: ' + res.status)
-        }).catch(function() {
+        // The card is gone by now. Unreachable, the write waits in the outbox
+        // and retries; refused, it has to say which article and put it back
+        // in unread: nothing silently lost, including stars.
+        outbox.send({kind: 'status', id: item.id, status: pending.action, from: 'unread', title: item.title}).catch(function() {
           vm.revertCardRead(item)
           vm.showToast(vm.statusFailureText(pending.action, item) + '. It’s back in unread.', 5000)
         })
@@ -2273,9 +2313,7 @@ function rootComponent() { return {
         // Capture the stats object so a late failure adjusts the session that
         // owned this swipe, never a fresh one started by enter/changeCardFolder.
         var stats = this.cardStats
-        api.items.saveToInstapaper(item.id).then(function(resp) {
-          if (!resp.ok) vm.reconcileFailedInstapaper(item, stats)
-        }).catch(function() {
+        outbox.send({kind: 'instapaper', id: item.id, from: 'unread', title: item.title}).catch(function() {
           vm.reconcileFailedInstapaper(item, stats)
         })
       }
@@ -2466,6 +2504,17 @@ window.addEventListener('pagehide', function() {
   vm.flushCardAction()
 })
 
+// Writes that couldn't reach the server wait in the outbox and retry; the
+// chip and the banner follow its state. Restore picks up what a previous
+// page load left queued.
+outbox.on({
+  synced: function(entry) { vm.outboxSynced(entry) },
+  rejected: function(entry, err) { vm.outboxRejected(entry, err) },
+  drained: function() { vm.refreshStats() },
+})
+outbox.subscribe(function(state) { vm.outboxState = state })
+outbox.restore()
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function(err) {
     console.warn('SW registration failed:', err);
@@ -2481,13 +2530,21 @@ if ('serviceWorker' in navigator) {
 
   // Online, the banner is parked off-screen and empty, so screen readers find
   // nothing; going offline fills the live region, which announces it.
+  // navigator.onLine stays true when the LAN route to the server is dead, so
+  // writes that keep failing count as offline too.
+  var unreachable = false
   function update() {
     var offline = !navigator.onLine
-    banner.classList.toggle('visible', offline)
-    banner.textContent = offline ? 'You\u2019re offline' : ''
+    var text = offline ? 'You\u2019re offline' : unreachable ? 'Can\u2019t reach yarr' : ''
+    banner.classList.toggle('visible', !!text)
+    banner.textContent = text
   }
   window.addEventListener('online', update)
   window.addEventListener('offline', update)
+  outbox.subscribe(function(state) {
+    unreachable = state.failing && state.count > 0
+    update()
+  })
   update()
 })();
 

@@ -1,10 +1,11 @@
-var CACHE_NAME = 'yarr-v17';
+var CACHE_NAME = 'yarr-v18';
 var STATIC_ASSETS = [
   './static/stylesheets/base.css',
   './static/stylesheets/app.css',
   './static/javascripts/vue.global.prod.js',
   './static/javascripts/api.js',
   './static/javascripts/offline.js',
+  './static/javascripts/outbox.js',
   './static/javascripts/app.js',
   './static/javascripts/key.js',
   './static/javascripts/swipe.js',
