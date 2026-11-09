@@ -8,7 +8,8 @@
 (function() {
   var DB_NAME = 'yarr-offline';
   var STORE = 'articles';
-  var VERSION = 1;
+  var OUTBOX = 'outbox';  // writes waiting to reach the server (outbox.js)
+  var VERSION = 2;
   var dbPromise = null;
 
   function openDB() {
@@ -20,6 +21,9 @@
         if (!req.result.objectStoreNames.contains(STORE)) {
           req.result.createObjectStore(STORE, {keyPath: 'id'});
         }
+        if (!req.result.objectStoreNames.contains(OUTBOX)) {
+          req.result.createObjectStore(OUTBOX, {keyPath: 'key'});
+        }
       };
       req.onsuccess = function() { resolve(req.result); };
       req.onerror = function() { reject(req.error); };
@@ -27,11 +31,11 @@
     return dbPromise;
   }
 
-  function withStore(mode, fn) {
+  function withStore(mode, fn, name) {
     return openDB().then(function(db) {
       return new Promise(function(resolve, reject) {
-        var t = db.transaction(STORE, mode);
-        var store = t.objectStore(STORE);
+        var t = db.transaction(name || STORE, mode);
+        var store = t.objectStore(name || STORE);
         var out = fn(store);
         t.oncomplete = function() { resolve(out && out.result !== undefined ? out.result : out); };
         t.onerror = function() { reject(t.error); };
@@ -57,6 +61,26 @@
           req.onerror = function() { resolve(null); };
         });
       }).catch(function() { return null; });
+    },
+    // Queued writes. The outbox keeps its own copy in memory, so these only
+    // make the queue survive a reload; they fail soft like the rest.
+    outbox: {
+      put: function(entry) {
+        return withStore('readwrite', function(store) {
+          store.put(entry);
+        }, OUTBOX).catch(function() {});
+      },
+      del: function(key) {
+        return withStore('readwrite', function(store) {
+          store.delete(key);
+        }, OUTBOX).catch(function() {});
+      },
+      all: function() {
+        return withStore('readonly', function(store) {
+          return store.getAll();
+        }, OUTBOX).then(function(rows) { return rows || []; })
+          .catch(function() { return []; });
+      },
     },
   };
 })();
