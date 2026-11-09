@@ -80,8 +80,11 @@ JavaScript bundler — edit the `.js`/`.css` directly.
   workflows on it. The job is idempotent: ordinary merges (VERSION
   unchanged, tag already exists) skip, so only the bump ships a release.
 - The tagged build runs `build.yml` (macOS/Windows/Linux artifacts +
-  draft GitHub release) and `build-docker.yml` / `build-docker-once.yml`
-  (multi-arch images to `ghcr.io/sroberts/yarr`).
+  GitHub release) and `build-docker.yml` / `build-docker-once.yml`
+  (multi-arch images to `ghcr.io/sroberts/yarr`). `build.yml` publishes
+  the release itself once every platform builds; nothing to publish by
+  hand. If a platform fails, the release stays a draft with what did
+  build: re-run the failed jobs to attach the rest and publish it.
 - Manual overrides (re-release, or shipping without a bump): push the
   `release` branch — works from web sessions, which can push branches but
   not tags — or run the Release workflow from the Actions tab. Both reuse
