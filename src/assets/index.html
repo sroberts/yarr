@@ -406,7 +406,7 @@
                  phone (where the sidebar is off-screen) never loses its place, and
                  "Mark all read" names the scope it acts on. -->
             <div class="stack-heading border-top" v-if="stackHeading">
-                <span class="slip-addr is-unread" aria-hidden="true">{{ stackHeading.code }}</span>
+                <span class="slip-addr" aria-hidden="true">{{ stackHeading.code }}</span>
                 <h2 class="stack-heading-title text-truncate">{{ stackHeading.title }}</h2>
                 <span class="stack-heading-count" v-if="stackHeading.count">· {{ stackHeading.count }}</span>
                 <!-- phones reach triage from here, in the thumb's path, instead of
@@ -455,25 +455,23 @@
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected"
                            :aria-label="(item.title || 'untitled') + ', ' + ((feedsById[item.feed_id] || {}).title || '') + (item.status == 'unread' ? ', unread' : item.status == 'starred' ? ', starred' : '') + ', ' + slipAddress(item, index)">
-                    <div class="selectgroup-label d-flex flex-column">
-                        <div class="item-meta d-flex align-items-center">
+                    <div class="selectgroup-label item-row" :class="{'is-unread': item.status == 'unread'}">
+                        <span class="item-mark" aria-hidden="true">
                             <transition name="indicator">
-                                <span class="icon icon-small mr-1" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
-                                <span class="icon icon-small mr-1 marker" v-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
+                                <span class="icon icon-small" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
+                                <span class="icon icon-small marker" v-else-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
                             </transition>
-                            <span class="slip-addr" :class="{'is-unread': item.status == 'unread'}">{{ slipAddress(item, index) }}</span>
-                            <small class="flex-fill text-truncate mr-1">
-                                {{ (feedsById[item.feed_id] || {}).title }}
-                            </small>
-                            <small class="flex-shrink-0 mr-1" v-if="readingTime(item)">{{ readingTime(item) }} min ·</small>
-                            <small class="flex-shrink-0"><relative-time v-bind:title="formatDate(item.date)" :val="item.date"/></small>
-                        </div>
+                        </span>
                         <div class="item-title" :class="{'item-title-unread': item.status == 'unread'}">{{ item.title || 'untitled' }}</div>
+                        <div class="item-meta">
+                            <span class="slip-addr">{{ slipAddress(item, index) }}</span>
+                            <span class="item-sep">·</span>
+                            <span class="item-feed">{{ (feedsById[item.feed_id] || {}).title }}</span>
+                            <span class="item-sep">·</span>
+                            <span class="flex-shrink-0"><relative-time v-bind:title="formatDate(item.date)" :val="item.date"/></span>
+                            <template v-if="readingTime(item)"><span class="item-sep">·</span><span class="flex-shrink-0">{{ readingTime(item) }} min</span></template>
+                        </div>
                     </div>
-                    <!-- the filed tab on a starred slip. After the label so the
-                         input + .selectgroup-label selection and focus rules
-                         still match; decorative (the star icon carries the state). -->
-                    <span class="slip-tab" aria-hidden="true" v-if="item.status == 'starred'"></span>
                 </label>
                 <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length" aria-label="Loading more articles"></button>
             </div>
@@ -684,14 +682,13 @@
                  :class="readingFontClass"
                  :style="{'font-size': theme.size + 'rem'}">
                 <div class="content-wrapper" :key="itemSelected">
-                    <h1 class="content-title"><b>{{ itemSelectedDetails.title || 'untitled' }}</b></h1>
+                    <h1 class="content-title">{{ itemSelectedDetails.title || 'untitled' }}</h1>
                     <div class="content-byline">
                         <button type="button" class="byline-feed" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">{{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}</button>
                         · <time :title="formatDate(itemSelectedDetails.date)">{{ shortDate(itemSelectedDetails.date) }}</time>
                         <span v-if="readingTime(itemSelectedDetails)"> · {{ readingTime(itemSelectedDetails) }} min</span>
                         <span v-if="itemOffline"> · offline copy</span>
                     </div>
-                    <hr>
                     <div v-if="!itemSelectedReadability">
                         <div v-if="contentImages.length">
                             <figure v-for="media in contentImages">
