@@ -111,6 +111,8 @@ html {
   --ink-select: #1B1C1E;
   --on-ink-select: #FFFFFF;
   --slip-shadow: 0 1px 2px rgba(27, 28, 30, .06);
+  /* how much the filing colour tints a selected list row */
+  --selected-mix: 12%;
   --status-success: #15803D;
   --status-attention: #B45309;
   --status-error: #B42318;
@@ -133,6 +135,7 @@ html {
   --ink-select: #E9EAEC;
   --on-ink-select: #141618;
   --slip-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  --selected-mix: 22%;
   --status-success: #4ADE80;
   --status-attention: #FBBF24;
   --status-error: #FF7A6B;
@@ -172,6 +175,9 @@ html {
 body {
   --accent-hover: color-mix(in oklab, var(--accent) 82%, var(--text-primary));
   --focus-ring: var(--accent);
+  /* Selected list rows (feeds, articles): a soft filing-colour tint under
+     primary text. Declared on body so it resolves the selected accent. */
+  --selected-bg: color-mix(in oklab, var(--accent) var(--selected-mix), var(--surface-base));
 
   overscroll-behavior: none;
   background-color: var(--surface-box);
@@ -689,7 +695,7 @@ select.form-control:not([multiple]):not([size]) {
   color: var(--text-secondary);
 }
 
-/* selection is an ink outline, as in the stack and sidebar, never a fill */
+/* palette selection is an ink outline (list rows use a tint) */
 .command-palette-row.selected {
   background-color: var(--surface-base);
   color: var(--text-primary);
@@ -945,27 +951,32 @@ a,
 
 .toolbar-item.active,
 .dropdown-item.active,
-.dropdown-item:active,
-.selectgroup input:checked + .selectgroup-label {
+.dropdown-item:active {
   color: var(--text-primary);
   background-color: var(--surface-base) !important;
   box-shadow: inset 0 0 0 2px var(--ink-select);
   font-weight: 600;
 }
 
-.selectgroup input:checked + .selectgroup-label .counter {
+/* A selected row is a soft tint, not an outlined box: the list stays a list. */
+.selectgroup input:checked + .selectgroup-label {
   color: var(--text-primary);
+  background-color: var(--selected-bg) !important;
+  font-weight: 600;
+}
+
+.selectgroup input:checked + .selectgroup-label .counter {
+  color: var(--text-secondary);
 }
 
 /* One solid selection at a time. With an article open, j/k drive the article
    list, so the feed list's selection steps down to a quiet marker: the hover
    surface plus weight, never a second accent block competing for the eye.
    Desktop only; narrower layouts don't show both panes at once. The
-   marker is a hairline ink edge, never a fill. */
+   marker is the neutral hover surface, never the tint. */
 @media (min-width: 992px) {
   #app.item-selected #col-feed-list .selectgroup input:checked + .selectgroup-label {
-    background-color: var(--surface-base) !important;
-    box-shadow: inset 0 0 0 1px var(--ink-select);
+    background-color: var(--surface-hover) !important;
     color: var(--text-primary);
     font-weight: 600;
   }
@@ -974,58 +985,98 @@ a,
   }
 }
 
-/* Article rows. Weight is the unread signal (it survives grayscale); read
-   titles step back a text tier. Meta uses the tertiary token, never opacity.
-   The selected slip is outlined in ink rather than flooded (see "The stack"). */
-.item-meta {
-  line-height: 100%;
-  margin-bottom: .1rem;
+/* ── The list ───────────────────────────────────────
+   Articles are plain rows on the base surface, separated by inset hairlines:
+   a table of contents, not a stack of cards. The title leads; one quiet meta
+   line follows (address · feed · age · minutes). Weight is the unread signal
+   (it survives grayscale), backed by a dot in a fixed left gutter; read titles
+   step back a text tier. Meta uses the tertiary token, never opacity. */
+#col-item-list,
+#item-list-scroll {
+  background-color: var(--surface-base);
+}
+#item-list-scroll { padding: .375rem; }
+#item-list-scroll .selectgroup + .selectgroup { margin-top: 0; }
+#item-list-scroll .selectgroup-label.item-row {
+  display: grid;
+  grid-template-columns: .75rem minmax(0, 1fr);
+  column-gap: .375rem;
+  padding: .7rem .75rem .7rem .375rem;
+  border-radius: var(--radius);
+}
+#item-list-scroll .selectgroup input:checked + .selectgroup-label {
+  font-weight: inherit;
+}
+.item-mark {
+  display: flex;
+  justify-content: center;
+  padding-top: .45em;
   color: var(--text-tertiary);
 }
+.item-mark .icon-small { margin: 0 !important; }
+.item-row.is-unread .item-mark { color: var(--text-primary); }
 .item-title {
+  font-size: 1.0667rem;
+  line-height: 1.35;
   color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
 }
 .item-title-unread {
   font-weight: 600;
   color: var(--text-primary);
 }
-#item-list-scroll .selectgroup input:checked + .selectgroup-label {
-  border-color: var(--ink-select);
-  font-weight: inherit;
+.item-meta {
+  grid-column: 2;
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  margin-top: .3rem;
+  font-size: .8rem;
+  line-height: 1.3;
+  color: var(--text-tertiary);
+  white-space: nowrap;
 }
+.item-meta .item-feed {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.item-meta .item-sep { padding: 0 .35em; }
+.item-meta .slip-addr { margin-right: 0; }
 #item-list-scroll .selectgroup input:checked + .selectgroup-label .item-title {
   color: var(--text-primary);
 }
 #item-list-scroll .selectgroup input:checked + .selectgroup-label .item-meta {
   color: var(--text-secondary);
 }
+/* the address only steps forward on the row you're on */
+#item-list-scroll .selectgroup input:checked + .selectgroup-label .slip-addr {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
 
-/* ── The stack ──────────────────────────────────────
-   Articles are slips: white cards with a 1px edge on the box ground, 6px
-   apart. Each carries its address (feed code · position in this view) in
-   mono at its head; a filed (starred) slip shows a small tab in the filing
-   colour on its top edge. The selected slip is outlined in ink. */
-#col-item-list,
-#item-list-scroll {
-  background-color: var(--surface-box);
+/* hairline separators, inset; they step aside for the hovered/selected row */
+#item-list-scroll .selectgroup + .selectgroup::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: .75rem;
+  right: .75rem;
+  height: 1px;
+  background-color: var(--border-subtle);
+  pointer-events: none;
 }
-#item-list-scroll {
-  padding-top: 8px;
-}
-#item-list-scroll .selectgroup + .selectgroup {
-  margin-top: 6px;
-}
-#item-list-scroll .selectgroup-label {
-  background-color: var(--surface-base);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  box-shadow: var(--slip-shadow);
-  padding: .55rem .75rem .6rem;
+#item-list-scroll .selectgroup:has(input:checked)::before,
+#item-list-scroll .selectgroup:has(input:checked) + .selectgroup::before {
+  background-color: transparent;
 }
 @media (hover: hover) {
-  #item-list-scroll .selectgroup-label:hover {
-    background-color: var(--surface-base);
-    border-color: var(--border-strong);
+  #item-list-scroll .selectgroup:hover::before,
+  #item-list-scroll .selectgroup:hover + .selectgroup::before {
+    background-color: transparent;
   }
 }
 .slip-addr {
@@ -1036,16 +1087,6 @@ a,
   color: var(--text-tertiary);
 }
 .slip-addr.is-unread { color: var(--text-primary); font-weight: 700; }
-.slip-tab {
-  position: absolute;
-  top: 0;
-  right: .85rem;
-  width: 14px;
-  height: 5px;
-  border-radius: 0 0 2px 2px;
-  background: var(--accent);
-  pointer-events: none;
-}
 
 /* The stack's address line, under the search field */
 .stack-heading {
@@ -1053,7 +1094,7 @@ a,
   align-items: center;
   min-height: 2.5rem;
   padding: .3rem .5rem .3rem .75rem;
-  background-color: var(--surface-box);
+  background-color: var(--surface-base);
 }
 .stack-heading .slip-addr { margin-right: .5rem; }
 .stack-heading-title {
@@ -1192,21 +1233,17 @@ a,
 .reader-slip-label .slip-addr { margin-right: .45rem; color: var(--text-secondary); font-weight: 700; }
 .reader-nav .reader-slip-label { padding-right: 0; }
 
-/* ── The open slip ─────────────────────────────────────
-   The reader sits on the box; the article is one large white slip,
-   centred, with the text column held at the measure inside it. */
+/* ── The reader ────────────────────────────────────────
+   The article sits directly on the base surface, unframed: the text column
+   held at the measure is the only shape the pane needs. */
 #col-item,
 #col-item .content {
-  background-color: var(--surface-box);
+  background-color: var(--surface-base);
 }
 #col-item .content-wrapper {
   box-sizing: content-box;
-  margin: .75rem auto 2.5rem;
-  padding: 2.25rem 2.75rem 2.75rem;
-  background-color: var(--surface-base);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius);
-  box-shadow: var(--slip-shadow);
+  margin: 0 auto 2.5rem;
+  padding: 2rem 1rem 2.75rem;
 }
 /* On a phone the slip is the screen: no box margin, border or shadow eating
    the measure, so a line holds ~45 characters instead of ~32. */
@@ -1221,12 +1258,19 @@ a,
     box-shadow: none;
   }
 }
-.content-title { font-family: var(--font-sans); }
+.content-title {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: -.012em;
+  margin-bottom: 0;
+}
 
-/* The byline sits under the enlargement like a caption: one quiet sans line,
-   never competing with the title or the body. */
+/* The byline sits under the title like a caption: one quiet sans line,
+   never competing with the title or the body. Space, not a rule, separates
+   it from the article. */
 .content-byline {
-  margin-top: .35em;
+  margin-top: .5em;
+  margin-bottom: 2em;
   font: 400 .8em/1.4 var(--font-sans);
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
@@ -2214,8 +2258,8 @@ body[data-motion="reduce"] *::after {
   margin-left: .125rem;
   color: inherit;
   cursor: pointer;
-  opacity: .3;
-  transition: opacity .1s ease;
+  opacity: 0;
+  transition: opacity .12s ease;
 }
 /* a thumb-sized target on touch screens; negative margins keep the row height */
 @media (pointer: coarse) {
@@ -2226,8 +2270,12 @@ body[data-motion="reduce"] *::after {
     opacity: .45;
   }
 }
+/* On a mouse the ⋯ appears on the row you point at, the selected row, or a
+   keyboard-focused row, so the sidebar reads as a plain list of feeds. */
 @media (hover: hover) {
-  .selectgroup-label:hover .feed-row-menu { opacity: .6; }
+  .selectgroup-label:hover .feed-row-menu,
+  .selectgroup input:checked + .selectgroup-label .feed-row-menu,
+  .selectgroup input:focus-visible + .selectgroup-label .feed-row-menu { opacity: .7; }
   .feed-row-menu:hover { opacity: 1; }
 }
 .feed-row-menu:focus-visible {
@@ -2476,3 +2524,7 @@ body[data-motion="reduce"] *::after {
   .card-view-legend.has-skip .card-star-btn { padding: .25rem .6rem; }
   .card-view-legend.has-skip { padding-left: .9rem !important; padding-right: .9rem !important; }
 }
+
+/* keep "9 min" and the date on one line when the byline wraps */
+.content-byline > span,
+.content-byline > time { white-space: nowrap; }
