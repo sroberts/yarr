@@ -1,0 +1,36 @@
+<html>
+<head>
+    <title>Instapaper Onboarding</title>
+    <link rel="stylesheet" type="text/css" href="css/options.css"/>
+    <link rel="stylesheet" type="text/css" href="css/onboard.css"/>
+    <script src="js/onboard.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="header">
+            <div class="logo"></div>
+        </div>
+        <div class="options">
+            <div class="options_header">Welcome!</div>
+            <p>Instapaper Firefox Add-On is the best way to save articles to Instapaper on Firefox.</p>
+            <div class="options_header">Information We Collect</div>
+            <p>In order to save articles to Instapaper, we collect certain information as part of this Firefox Add-On:</p>
+            <ul>
+                <li>URLs of articles you save.</li>
+                <li>HTML of articles you save.</li>
+                <li>Selected text on the page when you save articles (this becomes the article description in Instapaper).</li>
+            </ul>
+            <p>Instapaper only collects information when you save an article or take an action.</p>
+            <div class="options_header">Your Consent</div>
+            <p>Before continuing, we need your consent to collect data in the manner described above.</p>
+            <p>
+                <input id="consent" type="checkbox">
+                <label for="consent">I understand and consent to the data collection policy described above.</label>
+            </p>
+            <button id="continue">Continue</button>
+            <p>Without your consent, the Instapaper Firefox Add-On would not function properly. In that case, we recommend <a href="#" id="uninstall">uninstalling the Add-On</a>.</p>
+        </div>
+        <div class="copyright">&copy; <span id="current_year"></span> Instant Paper, Inc.</div>
+    </div>
+</body>
+</html>

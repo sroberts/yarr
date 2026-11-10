@@ -761,21 +761,6 @@ function rootComponent() { return {
           vm.feedSelected = 'folder:' + fo.id; vm.itemSelected = null
         }})
       })
-      // An address ("fb04", "FB·04", or just "4") jumps to that slip in the
-      // stack, listed first. A bare code ("fb") already fuzzy-matches its feed.
-      var jumps = []
-      var key = q.toUpperCase().replace(/[\s·.\-]/g, '')
-      if (key) {
-        var self = this
-        this.items.forEach(function(item, i) {
-          var addr = self.slipAddress(item, i)
-          if (addr.replace('·', '') === key || (/^\d+$/.test(key) && +key === i + 1)) {
-            jumps.push({group: 'Go to', label: addr + '  ' + (item.title || 'untitled'), run: function() {
-              vm.itemSelected = item.id
-            }})
-          }
-        })
-      }
       var results
       if (!q) {
         results = all
@@ -790,7 +775,7 @@ function rootComponent() { return {
           var box = document.getElementById('searchbar'); if (box) box.focus()
         }})
       }
-      return jumps.concat(results).slice(0, 50)
+      return results.slice(0, 50)
     },
     itemSelectedContent: function() {
       if (!this.itemSelected) return ''
@@ -839,24 +824,21 @@ function rootComponent() { return {
       if (i < 0) return null
       return {n: i + 1, total: this.items.length + (this.itemsHasMore ? '+' : '')}
     },
-    // The stack's address line: feed code, name, and the filter's count.
+    // The stack's heading line: its name and the filter's count.
     stackHeading: function() {
       if (this.feedSelected === null || !this.feeds.length) return null
       var cur = this.current, title, n
-      var code
       if (cur.type == 'feed') {
-        title = cur.feed.title; n = this.filteredFeedStats[cur.feed.id]; code = this.feedCodes.feeds[cur.feed.id]
+        title = cur.feed.title; n = this.filteredFeedStats[cur.feed.id]
       } else if (cur.type == 'folder') {
-        title = cur.folder.title; n = this.filteredFolderStats[cur.folder.id]; code = this.feedCodes.folders[cur.folder.id]
+        title = cur.folder.title; n = this.filteredFolderStats[cur.folder.id]
       } else {
         title = {unread: 'All Unread', starred: 'All Starred'}[this.filterSelected] || 'All Feeds'
-        code = {unread: 'AU', starred: 'AS'}[this.filterSelected] || 'AF'
         n = this.filteredTotalStats
       }
       if (!title) return null
       n = n || 0
       return {
-        code: code || '··',
         title: title,
         n: n,
         count: n ? n + ' ' + (this.filterSelected == 'starred' ? 'starred' : 'unread') : '',
@@ -910,29 +892,6 @@ function rootComponent() { return {
         }
       }
       return {title: 'No articles in ' + where + ' yet.', reader: 'No articles yet'}
-    },
-    // Unique codes for every feed and folder: two letters where they're free,
-    // a third (or a digit) to settle a clash. The view codes are reserved, and
-    // allocation runs in id order so a code only moves when its rival is new.
-    feedCodes: function() {
-      var used = {AU: true, AS: true, AF: true}
-      var self = this
-      function allocate(list) {
-        var out = {}
-        list.slice().sort(function(a, b) { return a.id - b.id }).forEach(function(x) {
-          var base = self.feedCode(x)
-          var rest = ((x.title || '').toUpperCase().match(/[\p{L}\p{N}]/gu) || []).slice(1)
-          var candidates = [base]
-          rest.forEach(function(ch) { candidates.push(base + ch) })
-          for (var d = 2; d <= 99; d++) candidates.push(base + d)
-          var code = candidates.find(function(c) { return !used[c] })
-          used[code] = true
-          out[x.id] = code
-        })
-        return out
-      }
-      var feeds = allocate(this.feeds)
-      return {feeds: feeds, folders: allocate(this.folders)}
     },
     // what the sidebar counts count, for their accessible names
     countNoun: function() {
@@ -1124,7 +1083,7 @@ function rootComponent() { return {
         if (this.keyColumn === 'article') this.keyColumn = 'items'
         return
       }
-      // keep the open slip in sight in the stack (prev/next, palette jumps)
+      // keep the open article in sight in the list (prev/next)
       this.$nextTick(function() {
         var input = document.querySelector('#item-list-scroll input[value="' + newVal + '"]')
         var label = input && input.closest('label')
@@ -1611,22 +1570,6 @@ function rootComponent() { return {
     },
     // ms: failures name an article and a recovery, so they stay up longer
     // than the routine 2.5s confirmations.
-    // A slip's address: its feed's code and its place in this view, e.g.
-    // SN·12. The code is the initials of the feed's first two words (or the
-    // first two letters of a one-word title); the number is zero-padded to
-    // two places and simply grows past 99. Front-end only: it renumbers when
-    // the view changes, by design.
-    feedCode: function(feed) {
-      var words = ((feed && feed.title) || '').replace(/[^\p{L}\p{N}\s]/gu, ' ').trim().split(/\s+/).filter(Boolean)
-      if (!words.length) return '··'
-      var code = words.length > 1 ? words[0][0] + words[1][0] : words[0].slice(0, 2)
-      return code.toUpperCase()
-    },
-    slipAddress: function(item, index) {
-      if (!item) return ''
-      var n = index + 1
-      return (this.feedCodes.feeds[item.feed_id] || '··') + '·' + (n < 10 ? '0' + n : n)
-    },
     showToast: function(text, ms) {
       var self = this
       this.toast = {text: text}

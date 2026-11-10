@@ -1,0 +1,259 @@
+.instapaper-modal-backer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    visibility: hidden;
+    background: black;
+    opacity: 0;
+    pointer-events: none;
+    transition: opactiy 200ms ease-out;
+}
+
+.instapaper-modal-backer.active {
+    z-index: 9999;
+    visibility: visible;
+    opacity: .7;
+    pointer-events: auto;
+    transition: opactiy 200ms ease-out;
+}
+
+.instapaper-modal {
+    display: block;
+    visibility: hidden;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    background: white;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    border-radius: 3px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, .2);
+    -webkit-font-smoothing: subpixel-antialiased;
+    font-size: 16px;
+}
+
+.instapaper-modal.active {
+    z-index: 10000;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#instapaper-premium-modal {
+    width: 530px;
+    padding-bottom: 15px;
+    -webkit-backface-visibility: hidden
+    -webkit-perspective: 1000
+    backface-visibility: hidden
+    perspective: 1000
+    transition-property: opacity, translate;
+    transition-duration: 180ms, 180ms;
+    transition-timing-function: ease-out;
+    transition-delay: 100ms 100ms;
+    transform: translate3d(-265px, -302px, 0); 
+    font-family: -apple-system, BlinkMacSystemFont, 'HelveticaNeue', sans-serif;
+    color: black;
+}
+
+#instapaper-premium-modal.active {
+    transform: translate3d(-265px, -317px, 0);
+}
+
+@supports (-moz-appearance:none) {
+    #instapaper-premium-modal {
+        height: 700px;
+        transform: translate3d(-265px, -335px, 0);
+    }
+
+    #instapaper-premium-modal.active {
+        transform: translate3d(-265px, -370px, 0);
+    }
+}
+
+.instapaper-modal-title {
+    padding: 20px 30px;
+    border-bottom: 1px solid #ddd;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.instapaper-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 18px;
+    padding: 8px;
+    font-size: 19px;
+    color: #888;
+    cursor: pointer;
+
+}
+
+.instapaper-modal-close:hover {
+    color: #222;
+}
+
+.instapaper-modal-group {
+    padding: 0 30px;
+    overflow-x: hidden;
+}
+
+
+.instapaper-premium-features {
+    padding: 15px;
+}
+
+.instapaper-premium-feature {
+    padding: 15px 0px;
+}
+
+.instapaper-premium-feature:before, .instapaper-premium-feature:after {
+    content: " ";
+    display: table;
+}
+
+.instapaper-premium-feature:after {
+    clear: both;
+}
+
+.instapaper-premium-img {
+    float: left;
+}
+
+.instapaper-premium-text {
+    float: left;
+    display: block;
+    margin-left: 20px;
+    margin-top: 5px;
+    max-width: 340px;
+    color: #333;
+}
+
+.instapaper-premium-title {
+    padding-bottom: 2px;
+    font-weight: bold;
+}
+
+.instapaper-button {
+    box-sizing: border-box;
+    text-decoration: none;
+    user-select: none;
+    outline: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'HelveticaNeue', sans-serif;
+    display: inline-block;
+    cursor: pointer;
+    vertical-align: middle;
+    background-color: black;
+    color: white;
+    font-size: 15px;
+    line-height: 18px;
+    padding: 8px 30px;
+    min-width: 120px;
+    border-radius: 4px;
+    text-align: center;
+    max-width: 100%;
+    border: 0;
+    line-height: 32px;
+}
+
+.instapaper-premium-button {
+    font-size: 20px;
+    height: 50px;
+    background-color: #0074bf;
+}
+
+.instapaper-premium-button:hover, .instapaper-premium-button:focus {
+    color: white;
+    background-color: #0080d3;
+}
+
+.instapaper-price {
+    font-weight: bold;
+}
+
+.instapaper-premium-yearly {
+    margin-left: 20px;
+}
+
+.instapaper-premium-img {
+    width: 70px;
+    height: 70px;
+    background-size: 70px 70px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.instapaper-premium-img-search {
+    background-image: url('chrome-extension://__MSG_@@extension_id__/img/premium_search.png');
+}
+
+.instapaper-premium-img-archive {
+    background-image: url('chrome-extension://__MSG_@@extension_id__/img/premium_archive.png');
+}
+
+.instapaper-premium-img-notes {
+    background-image: url('chrome-extension://__MSG_@@extension_id__/img/premium_notes.png');
+}
+
+.instapaper-premium-img-playlist {
+    background-image: url('chrome-extension://__MSG_@@extension_id__/img/premium_playlist.png');
+}
+
+@supports (-moz-appearance:none) {
+    .instapaper-premium-img-search {
+        background-image: url('../img/premium_search.png');
+    }
+
+    .instapaper-premium-img-archive {
+        background-image: url('../img/premium_archive.png');
+    }
+
+    .instapaper-premium-img-notes {
+        background-image: url('../img/premium_notes.png');
+    }
+
+    .instapaper-premium-img-playlist {
+        background-image: url('../img/premium_playlist.png');
+    }
+}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 1.3) {
+    .instapaper-premium-img-search {
+        background-image: url('chrome-extension://__MSG_@@extension_id__/img/premium_search@2x.png');
+    }
+
+    .instapaper-premium-img-archive {
+        background-image: url('chrome-extension://__MSG_@@extension_id__/img/premium_archive@2x.png');
+    }
+
+    .instapaper-premium-img-notes {
+        background-image: url('chrome-extension://__MSG_@@extension_id__/img/premium_notes@2x.png');
+    }
+
+    .instapaper-premium-img-playlist {
+        background-image: url('chrome-extension://__MSG_@@extension_id__/img/premium_playlist@2x.png');
+    }
+
+    @supports (-moz-appearance:none) {
+        .instapaper-premium-img-search {
+            background-image: url('../img/premium_search@2x.png');
+        }
+
+        .instapaper-premium-img-archive {
+            background-image: url('../img/premium_archive@2x.png');
+        }
+
+        .instapaper-premium-img-notes {
+            background-image: url('../img/premium_notes@2x.png');
+        }
+
+        .instapaper-premium-img-playlist {
+            background-image: url('../img/premium_playlist@2x.png');
+        }
+    }
+}

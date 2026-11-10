@@ -1,0 +1,65 @@
+.instapaper-ipicon {
+    background-image: url('chrome-extension://__MSG_@@extension_id__/img/ipicons.png');
+    background-size: 2016px 30px;
+    background-repeat: no-repeat;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.instapaper-ipicon-delete {
+    width: 25px;
+    height: 25px;
+    background-position: -300px 0px;
+}
+
+.instapaper-ipicon-delete-dark {
+    width: 25px;
+    height: 25px;
+    background-position: -325px 0px;
+}
+
+.instapaper-ipicon-highlights {
+    width: 25px;
+    height: 25px;
+    background-position: -569px 0px;
+}
+
+.instapaper-ipicon-highlights-dark {
+    width: 25px;
+    height: 25px;
+    background-position: -594px 0px;
+}
+
+.instapaper-ipicon-note-create {
+    width: 25px;
+    height: 25px;
+    background-position: -1776px 0px;
+}
+
+.instapaper-ipnote {
+    width: 15px;
+    height: 17px;
+    background-position: -1830px -5px;
+    margin-left: 2px;
+    cursor: pointer;
+    position: relative;
+    top: -1px;
+}
+
+@supports (-moz-appearance:none) {
+    .instapaper-ipicon {
+        background-image: url('../img/ipicons.png');
+    }
+}
+
+@media only screen and (-webkit-min-device-pixel-ratio: 1.3) {
+    .instapaper-ipicon {
+        background-image: url('chrome-extension://__MSG_@@extension_id__/img/ipicons@2x.png');
+    }
+
+    @supports (-moz-appearance:none) {
+        .instapaper-ipicon {
+            background-image: url('../img/ipicons@2x.png');
+        }
+    }
+}

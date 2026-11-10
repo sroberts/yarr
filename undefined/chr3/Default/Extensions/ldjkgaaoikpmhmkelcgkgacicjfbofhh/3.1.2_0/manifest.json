@@ -1,0 +1,54 @@
+{
+   "action": {
+      "default_icon": {
+         "16": "img/insta_logo_small.png",
+         "32": "img/insta_logo_small@2x.png"
+      }
+   },
+   "background": {
+      "service_worker": "js/readlater.js",
+      "type": "module"
+   },
+   "commands": {
+      "ctrl-shift-s": {
+         "description": "Save article",
+         "suggested_key": {
+            "default": "Ctrl+Shift+S"
+         }
+      }
+   },
+   "content_scripts": [ {
+      "css": [ "css/instapaper.css", "css/ipicons.css", "css/highlights.css", "css/premium.css", "css/tags.css" ],
+      "exclude_matches": [ "https://instapaper.com/read/*", "https://*.instapaper.com/read/*" ],
+      "js": [ "js/bookmarklet.js", "js/deflate-base64-min.js", "js/highlights-ugly.js", "js/premium.js", "js/tags.js" ],
+      "matches": [ "http://*/*", "https://*/*" ],
+      "run_at": "document_start"
+   }, {
+      "js": [ "js/twitter.js" ],
+      "matches": [ "http://twitter.com/*", "https://twitter.com/*", "http://x.com/*", "https://x.com/*" ]
+   }, {
+      "js": [ "js/hackernews.js" ],
+      "matches": [ "https://news.ycombinator.com/*" ]
+   }, {
+      "js": [ "js/lobsters.js" ],
+      "matches": [ "https://lobste.rs/*" ]
+   } ],
+   "description": "Instapaper browser extension to save links for offline reading.",
+   "host_permissions": [ "http://*/*", "https://*/*" ],
+   "icons": {
+      "128": "img/insta_logo.png",
+      "16": "img/insta_logo_tiny.png",
+      "48": "img/insta_logo_small.png"
+   },
+   "key": "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCNcvYperSK23UpwYHO33ZoogjhTKzDGqkePcfR0bzHwqiQrppmlQNur9JuwQmetHbSr7g+9O0p2fgfeURGsAq1sSXDOi0iMNHChza6BxpvL9MThyh9akJxg1I3WHfkAY0wvHp1dkds3J7ellAJdZQkDRKj9RWeZUh3QSgBSr90tQIDAQAB",
+   "manifest_version": 3,
+   "name": "Instapaper",
+   "options_page": "options.html",
+   "permissions": [ "storage", "activeTab", "contextMenus" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "3.1.2",
+   "web_accessible_resources": [ {
+      "matches": [ "http://*/*", "https://*/*" ],
+      "resources": [ "*.png", "*.svg" ]
+   } ]
+}
