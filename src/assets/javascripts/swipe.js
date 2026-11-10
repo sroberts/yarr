@@ -74,8 +74,10 @@
     }, 300)
   }
 
+  // the OS setting, or the in-app Motion: Reduced
   function prefersReducedMotion() {
-    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    return document.body.dataset.motion === 'reduce' ||
+      (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   }
 
   function flyAway(card, area, indicator, direction) {
@@ -87,12 +89,19 @@
       var flyRotate = direction < 0 ? -15 : 15
       card.style.transform = 'translateX(' + flyX + ') rotate(' + flyRotate + 'deg)'
       card.style.opacity = '0'
+      area.style.background = ''
+      clearPill(indicator)
+    } else {
+      // no travel: the card fades where the finger left it, under the
+      // action's tint and pill, so which way it went still reads
+      card.classList.add('fading')
+      card.style.opacity = '0'
     }
-    area.style.background = ''
-    clearPill(indicator)
 
     setTimeout(function() {
-      card.classList.remove('flying')
+      area.style.background = ''
+      clearPill(indicator)
+      card.classList.remove('flying', 'fading')
       card.style.transform = ''
       card.style.opacity = ''
       if (direction < 0) {
@@ -100,7 +109,7 @@
       } else {
         vm.cardSwipeRight()
       }
-    }, reduce ? 0 : 300)
+    }, reduce ? 200 : 300)
   }
 
   document.addEventListener('touchstart', function(e) {

@@ -930,6 +930,10 @@ function rootComponent() { return {
       // breaks between blocks so headings and paragraphs don't run together.
       var doc = new DOMParser().parseFromString(this.currentCard.content, 'text/html')
       doc.querySelectorAll('pre, script, style, noscript').forEach(function(el) { el.remove() })
+      // the feed's own source wrapping is just a space; only <br> and the
+      // ends of blocks break a line
+      var walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
+      for (var node; (node = walker.nextNode());) node.nodeValue = node.nodeValue.replace(/\s+/g, ' ')
       doc.querySelectorAll('br').forEach(function(el) { el.replaceWith('\n') })
       doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote, div, figcaption, tr').forEach(function(el) {
         el.append('\n\n')

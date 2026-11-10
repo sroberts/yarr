@@ -111,6 +111,11 @@ html {
   --ink-select: #1B1C1E;
   --on-ink-select: #FFFFFF;
   --slip-shadow: 0 1px 2px rgba(27, 28, 30, .06);
+  /* elevation: a control's bevel, a floating chip or menu, a dialog */
+  --shadow-inset: inset 0 1px 1px rgba(0, 0, 0, .07);
+  --shadow-control: 0 1px 2px rgba(0, 0, 0, .1);
+  --shadow-float: 0 4px 16px rgba(0, 0, 0, .22);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, .4);
   /* how much the filing colour tints a selected list row */
   --selected-mix: 12%;
   --status-success: #15803D;
@@ -135,6 +140,10 @@ html {
   --ink-select: #E9EAEC;
   --on-ink-select: #141618;
   --slip-shadow: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow-inset: inset 0 1px 1px rgba(0, 0, 0, .25);
+  --shadow-control: 0 1px 2px rgba(0, 0, 0, .3);
+  --shadow-float: 0 4px 16px rgba(0, 0, 0, .45);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, .6);
   --selected-mix: 22%;
   --status-success: #4ADE80;
   --status-attention: #FBBF24;
@@ -202,7 +211,7 @@ body {
 }
 
 .form-control, .form-control:focus {
-  box-shadow: inset 0px 1px 1px rgba(0, 0, 0, 0.07) !important;
+  box-shadow: var(--shadow-inset) !important;
 }
 
 select.form-control {
@@ -210,7 +219,7 @@ select.form-control {
 }
 
 select.form-control:not([multiple]):not([size]) {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-control);
   padding-right: 1.2rem;
   cursor: pointer;
 }
@@ -241,7 +250,7 @@ select.form-control:not([multiple]):not([size]) {
 
 .settings-dropdown .dropdown-menu {
   padding: 0;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .18);
+  box-shadow: var(--shadow-float);
   overflow: hidden;
   max-height: calc(100vh - 3rem);
   overflow-y: auto;
@@ -453,7 +462,7 @@ select.form-control:not([multiple]):not([size]) {
   color: var(--text-primary);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-control);
 }
 
 .btn-default:active {
@@ -655,7 +664,7 @@ select.form-control:not([multiple]):not([size]) {
   background-color: var(--surface-raised);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-overlay);
   overflow: hidden;
 }
 
@@ -1606,6 +1615,7 @@ a,
   font-size: 1.4rem;
   font-weight: 600;
   line-height: 1.25;
+  margin-top: 0;
   margin-bottom: 0.75rem;
   text-wrap: balance;
 }
@@ -1733,9 +1743,13 @@ a,
 .card-view-legend .icon { width: .9rem; height: .9rem; }
 
 .card-folder-select {
-  background: transparent;
+  /* a thumb-high target whose dotted underline stays under the words: the
+     underline is drawn into the content box at the text's baseline, not as
+     a border at the bottom of the 44px box. The right padding is the
+     chevron's room. */
+  background: linear-gradient(to right, currentColor 1px, transparent 1px)
+              0 calc(50% + .75em) / 3px 1px repeat-x content-box;
   border: none;
-  border-bottom: 1px dotted currentColor;
   color: inherit;
   font: inherit;
   cursor: pointer;
@@ -1744,7 +1758,8 @@ a,
   outline: none;
   -webkit-appearance: none;
   appearance: none;
-  padding: 0.25rem 0.5rem;
+  padding: 0 1.1rem 0 0.5rem;
+  min-height: 44px;
 }
 
 .card-stat-number {
@@ -1772,6 +1787,12 @@ a,
 
 .triage-card.flying {
   transition: transform 0.3s ease, opacity 0.3s ease;
+}
+/* reduced motion's swipe: a crossfade in place, not a flight. It outranks
+   the reduced-motion kill below, since the fade is the only sign a card
+   was acted on. */
+.triage-card.fading {
+  transition: opacity 0.2s cubic-bezier(.16, 1, .3, 1) !important;
 }
 
 /* Triage owns the window at every width (#124). The card lives in the feed
@@ -1947,7 +1968,7 @@ a,
   background: #111214;
   color: #fff;
   font-size: 0.875rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-float);
 }
 
 .card-undo-label {
@@ -2128,7 +2149,7 @@ body[data-motion="reduce"] *::after {
   background: #111214;
   color: #fff;
   font-size: 0.875rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-float);
   pointer-events: none;
 }
 
@@ -2195,7 +2216,7 @@ body[data-motion="reduce"] *::after {
   transform: translateX(-50%);
   bottom: calc(1.5rem + env(safe-area-inset-bottom));
   z-index: 1099;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
+  box-shadow: var(--shadow-float);
   transition: bottom .2s ease;
 }
 .sync-chip-float.lifted {
@@ -2453,7 +2474,7 @@ body[data-motion="reduce"] *::after {
   border-radius: var(--radius);
   background: var(--surface-raised);
   color: var(--text-primary);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+  box-shadow: var(--shadow-float);
   transform: translateY(-200%);
 }
 .skip-link:focus { transform: none; }
