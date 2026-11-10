@@ -524,7 +524,7 @@ function rootComponent() { return {
       'filters': [],
       'filterDraft': {action: 'read', keyword: '', feedId: null, applyNow: false},
       'feedSelected': s.feed,
-      'feedListWidth': s.feed_list_width || 300,
+      'feedListWidth': s.feed_list_width || 240,
       'feedNewChoice': [],
       'feedNewChoiceSelected': '',
       'items': [],
@@ -547,7 +547,7 @@ function rootComponent() { return {
       'ttsPlaying': false,
       'ttsPaused': false,
       'itemSortNewestFirst': s.sort_newest_first,
-      'itemListWidth': s.item_list_width || 300,
+      'itemListWidth': s.item_list_width || 380,
 
       'filteredFeedStats': {},
       'filteredFolderStats': {},

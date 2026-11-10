@@ -52,34 +52,36 @@
             <div class="p-2 toolbar d-flex align-items-center">
                 <div class="icon mx-2">{% inline "anchor.svg" %}</div>
                 <div class="flex-grow-1"></div>
-                <button class="toolbar-item ml-1"
+                <div class="filter-seg" role="group" aria-label="Filter">
+                <button class="toolbar-item"
                         :class="{active: filterSelected == 'unread'}"
                         :aria-pressed="filterSelected == 'unread'"
                         title="Unread"
                         @click="filterSelected = 'unread'">
                     <span class="icon">{% inline "circle-full.svg" %}</span>
                 </button>
-                <button class="toolbar-item mx-1"
+                <button class="toolbar-item"
                         :class="{active: filterSelected == 'starred'}"
                         :aria-pressed="filterSelected == 'starred'"
                         title="Starred"
                         @click="filterSelected = 'starred'">
                     <span class="icon">{% inline "star-full.svg" %}</span>
                 </button>
-                <button class="toolbar-item mr-1"
+                <button class="toolbar-item"
                         :class="{active: filterSelected == ''}"
                         :aria-pressed="filterSelected == ''"
                         title="All"
                         @click="filterSelected = ''">
                     <span class="icon">{% inline "assorted.svg" %}</span>
                 </button>
-                <button class="toolbar-item ml-1 d-none d-card-triage"
+                <button class="toolbar-item d-none d-card-triage"
                         :class="{active: filterSelected == 'triage'}"
                         :aria-pressed="filterSelected == 'triage'"
                         title="Triage"
                         @click="filterSelected = 'triage'">
                     <span class="icon">{% inline "copy.svg" %}</span>
                 </button>
+                </div>
                 <div class="flex-grow-1"></div>
                 <dropdown class="settings-dropdown" toggle-class="btn btn-link toolbar-item px-2" ref="menuDropdown" drop="right" title="Menu">
                     <template v-slot:button>
@@ -338,19 +340,20 @@
                 <label v-for="item in items" :key="item.id"
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected">
-                    <div class="selectgroup-label d-flex flex-column">
-                        <div style="line-height: 100%; opacity: .7; margin-bottom: .1rem;" class="d-flex align-items-center">
+                    <div class="selectgroup-label item-row" :class="{'is-unread': item.status=='unread'}">
+                        <span class="item-mark" aria-hidden="true">
                             <transition name="indicator">
-                                <span class="icon icon-small mr-1" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
-                                <span class="icon icon-small mr-1" v-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
+                                <span class="icon icon-small" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
+                                <span class="icon icon-small" v-else-if="item.status=='starred'">{% inline "star-full.svg" %}</span>
                             </transition>
-                            <small class="flex-fill text-truncate mr-1">
-                                {{ (feedsById[item.feed_id] || {}).title }}
-                            </small>
-                            <small class="flex-shrink-0 mr-1" v-if="readingTime(item)">{{ readingTime(item) }} min ·</small>
-                            <small class="flex-shrink-0"><relative-time v-bind:title="formatDate(item.date)" :val="item.date"/></small>
+                        </span>
+                        <div class="item-title">{{ item.title || 'untitled' }}</div>
+                        <div class="item-meta">
+                            <span class="item-feed">{{ (feedsById[item.feed_id] || {}).title }}</span>
+                            <span class="item-sep">·</span>
+                            <span class="flex-shrink-0"><relative-time v-bind:title="formatDate(item.date)" :val="item.date"/></span>
+                            <template v-if="readingTime(item)"><span class="item-sep">·</span><span class="flex-shrink-0">{{ readingTime(item) }} min</span></template>
                         </div>
-                        <div>{{ item.title || 'untitled' }}</div>
                     </div>
                 </label>
                 <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length"></button>
@@ -405,41 +408,6 @@
                     <span class="icon" v-if="itemSelectedDetails.status=='unread'">{% inline "circle-full.svg" %}</span>
                     <span class="icon" v-if="itemSelectedDetails.status!='unread'">{% inline "circle.svg" %}</span>
                 </button>
-                <dropdown class="settings-dropdown" toggle-class="toolbar-item px-2" drop="center" title="Appearance">
-                    <template v-slot:button>
-                        <span class="icon">{% inline "sliders.svg" %}</span>
-                    </template>
-
-                    <button class="dropdown-item" :class="{active: !theme.font}" @click.stop="theme.font = ''">sans-serif</button>
-                    <button class="dropdown-item font-serif" :class="{active: theme.font == 'serif'}" @click.stop="theme.font = 'serif'">serif</button>
-                    <button class="dropdown-item font-monospace" :class="{active: theme.font == 'monospace'}" @click.stop="theme.font = 'monospace'">monospace</button>
-
-                    <div class="d-flex text-center">
-                        <button class="dropdown-item" style="font-size: 0.8rem" @click.stop="incrFont(-1)">A</button>
-                        <button class="dropdown-item" style="font-size: 1.2rem" @click.stop="incrFont(1)">A</button>
-                    </div>
-                </dropdown>
-                <button class="toolbar-item"
-                        :class="{active: itemSelectedReadability}"
-                        :disabled="!itemSelectedDetails.link"
-                        @click="toggleReadability()"
-                        title="Read Here"
-                        aria-label="Read here"
-                        :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
-                    <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
-                </button>
-                <button class="toolbar-item"
-                        v-if="ttsSupported"
-                        data-testid="reader-listen"
-                        :class="{active: ttsPlaying}"
-                        @click="toggleListen()"
-                        :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'"
-                        :aria-label="ttsPlaying ? (ttsPaused ? 'Resume reading aloud' : 'Pause reading aloud') : 'Listen to article'"
-                        :aria-pressed="ttsPlaying ? 'true' : 'false'">
-                    <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
-                    <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
-                    <span class="icon" v-else>{% inline "pause.svg" %}</span>
-                </button>
                 <button class="toolbar-item"
                         :class="{active: itemSelectedDetails.instapaper_saved}"
                         :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper || !itemSelectedDetails.link"
@@ -450,17 +418,6 @@
                     <span class="icon" :class="{'icon-loading': loading.instapaper}">
                         <template v-if="itemSelectedDetails.instapaper_saved">{% inline "check.svg" %}</template>
                         <template v-else>{% inline "bookmark.svg" %}</template>
-                    </span>
-                </button>
-                <button class="toolbar-item"
-                        data-testid="reader-copy-link"
-                        :disabled="!itemSelectedDetails.link"
-                        @click="copyItemLink(itemSelectedDetails)"
-                        :title="linkCopied ? 'Link Copied' : 'Copy Link'"
-                        :aria-label="linkCopied ? 'Link copied to clipboard' : 'Copy article link'">
-                    <span class="icon">
-                        <template v-if="linkCopied">{% inline "check.svg" %}</template>
-                        <template v-else>{% inline "link.svg" %}</template>
                     </span>
                 </button>
                 <!-- An item with no link (some feeds ship content only) leaves
@@ -474,6 +431,54 @@
                    rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
+                <!-- Primary triage actions (star, read, save, open) lead; the
+                     secondary reading tools follow in a quieter group. -->
+                <button class="toolbar-item toolbar-secondary toolbar-group-start"
+                        :class="{active: itemSelectedReadability}"
+                        :disabled="!itemSelectedDetails.link"
+                        @click="toggleReadability()"
+                        title="Read Here"
+                        aria-label="Read here"
+                        :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
+                    <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
+                </button>
+                <button class="toolbar-item toolbar-secondary"
+                        v-if="ttsSupported"
+                        data-testid="reader-listen"
+                        :class="{active: ttsPlaying}"
+                        @click="toggleListen()"
+                        :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'"
+                        :aria-label="ttsPlaying ? (ttsPaused ? 'Resume reading aloud' : 'Pause reading aloud') : 'Listen to article'"
+                        :aria-pressed="ttsPlaying ? 'true' : 'false'">
+                    <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
+                    <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
+                    <span class="icon" v-else>{% inline "pause.svg" %}</span>
+                </button>
+                <button class="toolbar-item toolbar-secondary"
+                        data-testid="reader-copy-link"
+                        :disabled="!itemSelectedDetails.link"
+                        @click="copyItemLink(itemSelectedDetails)"
+                        :title="linkCopied ? 'Link Copied' : 'Copy Link'"
+                        :aria-label="linkCopied ? 'Link copied to clipboard' : 'Copy article link'">
+                    <span class="icon">
+                        <template v-if="linkCopied">{% inline "check.svg" %}</template>
+                        <template v-else>{% inline "link.svg" %}</template>
+                    </span>
+                </button>
+                <dropdown class="settings-dropdown" toggle-class="toolbar-item toolbar-secondary px-2" drop="center" title="Appearance">
+                    <template v-slot:button>
+                        <span class="icon">{% inline "sliders.svg" %}</span>
+                    </template>
+
+                    <button class="dropdown-item" :class="{active: !theme.font}" @click.stop="theme.font = ''">sans-serif</button>
+                    <button class="dropdown-item font-serif" :class="{active: theme.font == 'serif'}" @click.stop="theme.font = 'serif'">serif</button>
+                    <button class="dropdown-item font-monospace" :class="{active: theme.font == 'monospace'}" @click.stop="theme.font = 'monospace'">monospace</button>
+
+                    <div class="d-flex text-center">
+                        <button class="dropdown-item" style="font-size: 0.8rem" @click.stop="incrFont(-1)">A</button>
+                        <button class="dropdown-item" style="font-size: 1.2rem" @click.stop="incrFont(1)">A</button>
+                    </div>
+                </dropdown>
                 <div class="flex-grow-1"></div>
                 <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
                      and swipe navigation cover them, and keeping them here
@@ -498,18 +503,17 @@
                  :class="{'font-serif': theme.font == 'serif', 'font-monospace': theme.font == 'monospace'}"
                  :style="{'font-size': theme.size + 'rem'}">
                 <div class="content-wrapper" :key="itemSelected">
-                    <h1 class="content-title"><b>{{ itemSelectedDetails.title || 'untitled' }}</b></h1>
-                    <div class="text-muted">
-                        <div>
-                            <span class="cursor-pointer" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">
-                                {{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}
-                            </span>
-                        </div>
-                        <time>{{ formatDate(itemSelectedDetails.date) }}</time>
-                        <span v-if="readingTime(itemSelectedDetails)" class="small"> · {{ readingTime(itemSelectedDetails) }} min</span>
-                        <span v-if="itemOffline" class="small"> · offline copy</span>
+                    <div class="article-source">
+                        <span class="cursor-pointer" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">
+                            {{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}
+                        </span>
                     </div>
-                    <hr>
+                    <h1 class="content-title">{{ itemSelectedDetails.title || 'untitled' }}</h1>
+                    <div class="article-meta">
+                        <time>{{ formatDate(itemSelectedDetails.date) }}</time>
+                        <span v-if="readingTime(itemSelectedDetails)"> · {{ readingTime(itemSelectedDetails) }} min read</span>
+                        <span v-if="itemOffline"> · offline copy</span>
+                    </div>
                     <div v-if="!itemSelectedReadability">
                         <div v-if="contentImages.length">
                             <figure v-for="media in contentImages">

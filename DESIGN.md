@@ -51,9 +51,9 @@ typography:
   font-mono:  "'JetBrains Mono Var', SFMono-Regular, Menlo, Consolas, monospace"
   base: "15px (chrome). Reading body defaults to 1.2rem (~18px), user-adjustable."
   scales:
-    list-title:   { size: "15px", weight: "600 unread / 400 read" }
+    list-title:   { size: "16px", lineHeight: 1.35, weight: "600 primary unread / 400 secondary read", clamp: 3 }
     list-meta:    { size: "12px", weight: 400 }
-    article-h1:   { size: "1.6em", lineHeight: 1.2 }
+    article-h1:   { size: "1.75em (1.5em on phones)", weight: 700, lineHeight: 1.2 }
     article-body: { size: "~18px (1.2rem default)", lineHeight: 1.6, measure: "70ch" }
 rounded:
   base: "6px"   # --radius, applied globally
@@ -63,7 +63,7 @@ spacing:
   xs: "4px"
   sm: "8px"
   md: "16px"
-  toolbar: "2rem"
+  toolbar: "2.75rem"
   toolbar-mobile: "3rem"
   touch: "44px"
 components:
@@ -72,9 +72,13 @@ components:
     textColor: "var(--on-accent)"
     rounded: "{rounded.base}"
   selectgroup-item-selected:
-    backgroundColor: "var(--accent)"
-    textColor: "var(--on-accent)"
+    backgroundColor: "var(--selected-bg)"  # accent tinted into base: 13% light / 20% dark
+    textColor: "var(--text-primary)"
     rounded: "{rounded.base}"
+  filter-segmented:
+    track: "var(--surface-hover)"
+    thumb: "var(--segment-thumb)"  # #FFFFFF light / #2B3340 dark
+    activeIcon: "var(--accent)"
   button-default:
     backgroundColor: "var(--surface-base)"
     textColor: "var(--text-primary)"
@@ -114,7 +118,7 @@ moving or shouting without a reason the user caused.
 
 Three columns carry the entire desktop experience (feeds → items → article),
 collapsing to one column at a time on a phone with no duplicate markup. Chrome is
-held to a 2rem toolbar band and a single 1px divider. There is exactly one accent
+held to a 2.75rem toolbar band and a single 1px divider. There is exactly one accent
 color at a time, and it never decorates — it only signals state (selected, active,
 focused, link). The reading surface is deliberately unstyled beyond legibility:
 the article is the content, the app is the frame.
@@ -194,9 +198,12 @@ headings use `em` so they scale with it.
   largest type in the app; scales with the reading-size control.
 - **Article body** (~18px, line-height 1.6): reader prose, **capped at a 70ch
   measure** regardless of window width and centered.
-- **List title** (15px; 600 when unread, 400 when read): item-list headlines.
-  The weight shift *is* the unread signal (survives grayscale).
-- **List meta** (12px): feed names, timestamps, counters — `--text-tertiary`.
+- **List title** (16px, line-height 1.35, clamped to 3 lines): item-list
+  headlines, and the first thing in each row. Unread is 600 in `--text-primary`;
+  read is 400 in `--text-secondary`. The weight shift *is* the unread signal
+  (survives grayscale), backed by an accent dot in a fixed left gutter.
+- **List meta** (12px): one line under the title — `Feed · 2h · 9 min` — and
+  sidebar counters (tabular figures), all `--text-tertiary`.
 
 ### Named Rules
 **The No-Display-Face Rule.** UI labels, buttons, and data never use a display
@@ -230,9 +237,15 @@ A single global radius (`--radius: 6px`) applies to buttons, inputs, menus, and
 rows; the triage card (16px) and pills/toast (1.5rem) are the only exceptions.
 
 ### Buttons
-- **Toolbar item (icon button):** transparent at rest, `--surface-hover` wash on
-  hover. **Active fills with `--accent`, text flips to `--on-accent`** — the
-  primary "selected/active" signal across the app.
+- **Toolbar item (icon button):** one 2rem hit box (44px on touch), transparent
+  at rest, `--surface-hover` wash on hover. **A toggled button fills with
+  `--accent`, text flips to `--on-accent`.**
+- **Filter control:** unread / starred / all is one segmented control — a
+  `--surface-hover` track with a raised `--segment-thumb` and an accent icon on
+  the active segment.
+- **Reader toolbar:** primary triage actions first (Star, Read, Instapaper,
+  Open), then a gap and a quieter `--text-secondary` group (Read here, Listen,
+  Copy link, Appearance). Prev / Next / Close sit at the right on desktop.
 - **Default button:** `--surface-base`, 1px `--border-strong`, hairline shadow;
   active flattens to `--surface-hover`.
 - **Focus:** keyboard `:focus-visible` shows a 2px `--focus-ring` (the accent),
@@ -242,9 +255,17 @@ rows; the triage card (16px) and pills/toast (1.5rem) are the only exceptions.
 ### List rows (the selectgroup — signature)
 Feed list and item list are radio inputs rendered as full-width rows; the native
 input is visually hidden and the `.selectgroup-label` is the visible row.
-**Selected fills with `--accent` / `--on-accent`** — the same vocabulary as the
-active toolbar item. Compact density tightens row padding on fine pointers only;
-touch keeps 44px targets.
+**Selected rows take a soft accent tint (`--selected-bg`) with primary text** —
+not a solid fill, which was the loudest thing on screen. Article rows are separated
+by inset 1px `--border-subtle` hairlines that step aside for the hovered or
+selected row. The feed-row ⋯ appears only on hover, selection, or keyboard focus
+(always faintly visible on touch). Compact density tightens row padding on fine
+pointers only; touch keeps 44px targets.
+
+### Article header
+Feed name (small, `--text-secondary`, links to the feed), then the title (700),
+then one `--text-tertiary` meta line (date · N min read). No rule under it; space
+does the separating.
 
 ### Inputs / Dropdown / Modal
 Inputs sit on `--surface-base` with an inset hairline; focus border shifts to
@@ -266,8 +287,10 @@ the active accent lightened 35% toward white (`color-mix`) for legibility on the
 dark pill, 1.5rem radius. Fixed bottom-center thumb zone; 44px touch target.
 
 ### Named Rules
-**The One Selection Vocabulary Rule.** "Selected / active" looks the same
-everywhere — accent fill, on-accent text. The eye learns it once.
+**The Two Selection Weights Rule.** A *selected row* in a list is a soft accent
+tint with primary text; a *toggled control* (button, menu item) is a solid accent
+fill with on-accent text. Both are the accent, so the eye still learns one color
+for "this one", but lists stay calm enough to read.
 
 ## 6. Motion
 
@@ -286,7 +309,7 @@ so users can force it off regardless of system setting.
   pair status/unread with weight, icon, or label (verify in grayscale).
 - **Do** design and contrast-check every new surface in light AND dark, across
   every accent, before shipping. AAA body, AA UI.
-- **Do** cap reading measure at ~70ch and keep chrome to the 2rem toolbar band
+- **Do** cap reading measure at ~70ch and keep chrome to the 2.75rem toolbar band
   and a single 1px divider.
 - **Do** give every interactive element a full keyboard path and a visible
   `--focus-ring`; keep touch targets ≥44px.
