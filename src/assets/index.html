@@ -168,7 +168,7 @@
                     <div class="triage-card" id="triage-card" :key="currentCard.id"
                          @click="cardTap($event)">
                         <div class="triage-card-feed">
-                            <span class="d-inline-flex align-items-center"><span class="slip-addr is-unread">{{ slipAddress(currentCard, cardIndex) }}</span>{{ (feedsById[currentCard.feed_id] || {}).title }}</span>
+                            <span class="d-inline-flex align-items-center">{{ (feedsById[currentCard.feed_id] || {}).title }}</span>
                             <span class="triage-card-date"><relative-time :val="currentCard.date"/></span>
                         </div>
                         <div class="triage-card-domain" v-if="cardDomain">{{ cardDomain }}</div>
@@ -406,7 +406,6 @@
                  phone (where the sidebar is off-screen) never loses its place, and
                  "Mark all read" names the scope it acts on. -->
             <div class="stack-heading border-top" v-if="stackHeading">
-                <span class="slip-addr" aria-hidden="true">{{ stackHeading.code }}</span>
                 <h2 class="stack-heading-title text-truncate">{{ stackHeading.title }}</h2>
                 <span class="stack-heading-count" v-if="stackHeading.count">· {{ stackHeading.count }}</span>
                 <!-- phones reach triage from here, in the thumb's path, instead of
@@ -454,7 +453,7 @@
                 <label v-for="(item, index) in items" :key="item.id"
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected"
-                           :aria-label="(item.title || 'untitled') + ', ' + ((feedsById[item.feed_id] || {}).title || '') + (item.status == 'unread' ? ', unread' : item.status == 'starred' ? ', starred' : '') + ', ' + slipAddress(item, index)">
+                           :aria-label="(item.title || 'untitled') + ', ' + ((feedsById[item.feed_id] || {}).title || '') + (item.status == 'unread' ? ', unread' : item.status == 'starred' ? ', starred' : '')">
                     <div class="selectgroup-label item-row" :class="{'is-unread': item.status == 'unread'}">
                         <span class="item-mark" aria-hidden="true">
                             <transition name="indicator">
@@ -464,8 +463,6 @@
                         </span>
                         <div class="item-title" :class="{'item-title-unread': item.status == 'unread'}">{{ item.title || 'untitled' }}</div>
                         <div class="item-meta">
-                            <span class="slip-addr">{{ slipAddress(item, index) }}</span>
-                            <span class="item-sep">·</span>
                             <span class="item-feed">{{ (feedsById[item.feed_id] || {}).title }}</span>
                             <span class="item-sep">·</span>
                             <span class="flex-shrink-0"><relative-time v-bind:title="formatDate(item.date)" :val="item.date"/></span>
@@ -657,7 +654,7 @@
                         Open link
                     </a>
                 </dropdown>
-                <div class="flex-grow-1 reader-slip-label" aria-hidden="true"><span class="d-none d-md-inline-flex align-items-center" v-if="itemFrame"><span class="slip-addr">{{ slipAddress(itemSelectedDetails, itemFrame.n - 1) }}</span>{{ itemFrame.n }} of {{ itemFrame.total }}</span></div>
+                <div class="flex-grow-1 reader-slip-label" aria-hidden="true"><span class="d-none d-md-inline-flex align-items-center" v-if="itemFrame">{{ itemFrame.n }} of {{ itemFrame.total }}</span></div>
                 <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
                      and the reader-nav bar under the article cover them, and
                      keeping them here overflowed the toolbar past the viewport
@@ -713,7 +710,7 @@
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                     Previous
                 </button>
-                <span class="reader-slip-label" v-if="itemFrame" aria-hidden="true"><span class="slip-addr">{{ slipAddress(itemSelectedDetails, itemFrame.n - 1) }}</span>{{ itemFrame.n }} of {{ itemFrame.total }}</span>
+                <span class="reader-slip-label" v-if="itemFrame" aria-hidden="true">{{ itemFrame.n }} of {{ itemFrame.total }}</span>
                 <button type="button" class="reader-nav-btn"
                         @click="navigateToItem(+1)"
                         :disabled="!items.length || itemSelected == items[items.length - 1].id">

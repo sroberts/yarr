@@ -1,0 +1,58 @@
+{
+	"type": "object",
+	"properties": {
+		"AgenticAutofillRemoteBrowser": {
+			"title": "Agentic Autofill remote browser.",
+			"description": "If true, marks this browser as operated by an Agentic Autofill partner's agent: the Agentic Autofill API is available, the welcome page is not shown, and every tab starts in agentic mode.",
+			"type": "boolean"
+		},
+		"CredentialIntelligence": {
+			"title": "Credential Intelligence settings.",
+			"description": "If configured, it turns on the Credential Intelligence feature of the 1Password extension.",
+			"type": "object",
+			"properties": {
+				"userEmail": {
+					"type": "string"
+				},
+				"accountDisplayName": {
+					"type": "string"
+				},
+				"accountUuid": {
+					"type": "string"
+				},
+				"signInDomain": {
+					"type": "string"
+				},
+				"publicKey": {
+					"type": "string"
+				},
+				"hmacKey": {
+					"type": "string"
+				},
+				"domains": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"enrollmentToken": {
+					"type": "string"
+				},
+				"inviteToken": {
+					"type": "string"
+				}
+			},
+			"required": [
+				"userEmail",
+				"accountDisplayName",
+				"accountUuid",
+				"signInDomain",
+				"publicKey",
+				"hmacKey",
+				"domains",
+				"enrollmentToken",
+				"inviteToken"
+			]
+		}
+	}
+}

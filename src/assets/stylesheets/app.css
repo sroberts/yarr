@@ -1045,17 +1045,11 @@ a,
   min-width: 0;
 }
 .item-meta .item-sep { padding: 0 .35em; }
-.item-meta .slip-addr { margin-right: 0; }
 #item-list-scroll .selectgroup input:checked + .selectgroup-label .item-title {
   color: var(--text-primary);
 }
 #item-list-scroll .selectgroup input:checked + .selectgroup-label .item-meta {
   color: var(--text-secondary);
-}
-/* the address only steps forward on the row you're on */
-#item-list-scroll .selectgroup input:checked + .selectgroup-label .slip-addr {
-  color: var(--text-secondary);
-  font-weight: 700;
 }
 
 /* hairline separators, inset; they step aside for the hovered/selected row */
@@ -1079,15 +1073,6 @@ a,
     background-color: transparent;
   }
 }
-.slip-addr {
-  flex-shrink: 0;
-  margin-right: .5rem;
-  font: 500 .75rem/1 var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-tertiary);
-}
-.slip-addr.is-unread { color: var(--text-primary); font-weight: 700; }
-
 /* The stack's address line, under the search field */
 .stack-heading {
   display: flex;
@@ -1096,7 +1081,6 @@ a,
   padding: .3rem .5rem .3rem .75rem;
   background-color: var(--surface-base);
 }
-.stack-heading .slip-addr { margin-right: .5rem; }
 .stack-heading-title {
   margin: 0;
   min-width: 0;
@@ -1218,7 +1202,7 @@ a,
 /* keeper (filed) state is always the filing colour, wherever it shows */
 .marker { color: var(--accent); }
 
-/* the open slip's address and place in the stack, beside prev/next */
+/* the open article's place in the stack, beside prev/next */
 .reader-slip-label {
   display: flex;
   align-items: center;
@@ -1230,7 +1214,6 @@ a,
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
-.reader-slip-label .slip-addr { margin-right: .45rem; color: var(--text-secondary); font-weight: 700; }
 .reader-nav .reader-slip-label { padding-right: 0; }
 
 /* ── The reader ────────────────────────────────────────

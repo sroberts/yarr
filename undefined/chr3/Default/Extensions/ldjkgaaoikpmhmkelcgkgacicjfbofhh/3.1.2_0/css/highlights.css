@@ -1,0 +1,164 @@
+.instapaper-highlight {
+    background-color: rgba(255,242,51,.29804);
+    cursor: pointer;
+}
+
+.highlight_popover {
+    transition: opacity 200ms ease, margin 200ms ease;
+    visibility: hidden;
+    position: absolute;
+    opacity: 0;
+    z-index: 500;
+    left: 50%;
+    cursor: pointer;
+    margin-top: -14px;
+}
+
+.highlight_popover.reveal {
+    visibility: visible;
+    opacity: 1;
+    margin-top: -8px;
+}
+
+.highlight_button {
+    display: block;
+    margin: 0;
+    float: left;
+    position: relative;
+    background: linear-gradient(to bottom, #222, #090909);
+    padding: .375rem .875rem .375rem .625rem;
+    font-size: 13px;
+    font-family: sans-serif;
+    box-shadow: 0 1px 3px -1px rgba(0,0,0,0.7),inset 0 0 1px rgba(255,255,255,0.07),inset 0 0 2px rgba(255,255,255,0.15000000000000002);
+    color: rgb(220, 220, 220);
+    text-decoration: none;
+    -webkit-font-smoothing: antialiased;
+}
+
+.highlight_button:hover {
+    color: #ffffff;
+}
+
+.highlight_button .instapaper-ipicon {
+    position: relative;
+    top: -2px;
+}
+
+.highlight_left_button {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.highlight_right_button {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+#highlight_create_popover {
+    margin-left: -54px;
+}
+
+#highlight_delete_popover {
+    margin-left: -82px;
+}
+
+.highlight_arrow {
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    margin-left: -8px;
+    display: block;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid #090909;
+}
+
+.ipnote-container {
+    position: relative;
+}
+
+.ipnote-popover {
+    font-style: normal;
+    z-index: 999;
+    background-color: white;
+    position: absolute;
+    left: -195px;
+    top: 30px;
+    width: 400px;
+    border-radius: 0.5em;
+    -webkit-box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+    box-shadow: 0px 0px 6px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    -webkit-transform-origin: top;
+    -moz-transform-origin: top;
+    -o-transform-origin: top;
+    transform-origin: top;
+    transform: scale(0) translateZ(0);
+    transition: opacity 250ms ease;
+    
+}
+
+.ipnote-popover.showing {
+    opacity: 1;
+    transform: scale(1) translateZ(0);
+}
+
+.ipnote-popover .arrow {
+    position: absolute;
+    border-color: transparent;
+    border-style: solid;
+    border-width: 10px;
+    border-bottom: 10px solid gray;
+    top: -20px;
+    left: 195px;
+}
+
+.ipnote-popover .arrow::after {
+    position: absolute;
+    content: " ";
+    top: -10px;
+    margin-left: -10px;
+    border-color: transparent;
+    border-style: solid;
+    border-width: 10px;
+    border-bottom-color: white;
+}
+
+.ipnote-popover .header {
+	padding: 5px 10px;
+	font-family: HelveticaNeue, Helvetica, sans-serif;
+	font-size: 16px !important;
+    color: black !important;
+    border-bottom: 1px solid #DDD;
+}
+
+.ipnote-popover .header .cancel-button {
+	float: left;
+	cursor: pointer;
+}
+
+.ipnote-popover .header .save-button {
+	float: right;
+	cursor: pointer;
+}
+
+.ipnote-popover .ipnote-title {
+	text-align: center;
+	font-weight: bold;
+}
+
+.ipnote-popover textarea {
+	border: 0 !important;
+	outline: 0;
+	resize: none;
+	padding: 5px 10px;
+	width: 380px;
+	height: 120px;
+	font-size: 20px;
+    color: black !important;
+	font-family: HelveticaNeue, Helvetica, sans-serif;
+	-webkit-font-smoothing: antialiased;
+    box-shadow: none !important;
+}
