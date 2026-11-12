@@ -66,6 +66,10 @@ typography:
     fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
     fontSize: "1rem"
     fontWeight: 600
+  small:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 400
   label:
     fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
     fontSize: "0.8rem"
@@ -85,6 +89,7 @@ rounded:
   control: "3px"
   tab: "0 0 2px 2px"
   swatch: "50%"
+  pill: "999px"
 spacing:
   row-pad: "0.7rem 0.75rem 0.7rem 0.375rem"
   row-gutter: "0.75rem"
@@ -208,6 +213,7 @@ The root size is 15px; the reading size is user-controlled (default 1.2rem) and 
 - **Title** (Hanken Grotesk 600, 1.4rem, 1.25): the triage card headline.
 - **Body** (Literata 400, 1.2rem default, 1.6): article text in the reader. Users may switch to sans or mono; each reading font has its own measure (Literata 35em, Hanken 33em, JetBrains Mono 44em) so all three land at roughly 70 characters per line. The triage excerpt is Literata at 1rem in graphite.
 - **UI** (Hanken Grotesk 400, 1rem; list titles 1.0667rem / 1.35, clamped to 3 lines): list titles, feed rows, menus, settings. Unread titles step up to 600 in ink; read titles drop to graphite at 400.
+- **Small** (`--text-small`, Hanken Grotesk, 0.875rem): the list heading's name and count, labelled toolbar buttons, toasts, the sync chip, swipe pills, filter rows and code in the triage card. The one step between UI and Label; nothing sits at .85 or .9rem.
 - **Label** (Hanken Grotesk 400, 0.8rem): the row meta line, bylines (sans, pencil, tabular), "n of m", settings labels, the triage card header.
 - **Counter** (JetBrains Mono, 0.78rem, tabular): sidebar and heading counts, in graphite.
 - **Wordmark** (Hanken Grotesk 700, -0.01em): "yarr" beside the anchor mark at the head of the feed sidebar, tablet and up.
