@@ -176,4 +176,16 @@
     swiping = false
     directionLocked = false
   })
+
+  // The OS can take over a gesture mid-drag (notification shade, edge swipe,
+  // incoming call). No touchend follows, so put the card back here.
+  document.addEventListener('touchcancel', function() {
+    var card = getCard()
+    if (card && swiping) resetVisuals(card, getArea(), getIndicator())
+    startX = 0
+    startY = 0
+    offsetX = 0
+    swiping = false
+    directionLocked = false
+  })
 })();
