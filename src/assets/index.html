@@ -48,6 +48,8 @@
          applied imperatively by the appLayoutClasses watcher in app.js. -->
     <a class="skip-link" href="#col-item-list">Skip to articles</a>
     <div id="app" class="d-flex" v-cloak>
+        <!-- the reader's article title is the h1 while an item is open -->
+        <h1 class="sr-only" v-if="!itemSelected">yarr</h1>
         <!-- feed list -->
         <div id="col-feed-list" role="navigation" aria-label="Feeds" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
             <drag :width="feedListWidth" @resize="resizeFeedList"></drag>
