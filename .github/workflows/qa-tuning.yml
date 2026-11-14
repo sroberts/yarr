@@ -96,6 +96,7 @@ jobs:
             core.notice(`min_rate=${minRate}`);
 
       - name: Open PR with refreshed metrics
+        id: cpr
         if: ${{ fromJson(steps.metrics.outputs.data).min_rate >= 0.5 }}
         uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
         with:
@@ -114,6 +115,15 @@ jobs:
           branch: bot/qa-tuning-refresh
           delete-branch: true
           labels: automation, qa-tuning
+
+      # Merge the refresh once the required test/e2e checks pass. The
+      # master ruleset only allows merge commits.
+      - name: Enable auto-merge on the refresh PR
+        if: ${{ steps.cpr.outputs.pull-request-number && steps.cpr.outputs.pull-request-operation != 'closed' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.cpr.outputs.pull-request-number }}
+        run: gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --auto --merge
 
       - name: Block on degraded category (threshold gate)
         if: ${{ fromJson(steps.metrics.outputs.data).min_rate < 0.5 }}
