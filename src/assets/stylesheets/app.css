@@ -1129,7 +1129,7 @@ a,
 .stack-heading-action .icon { width: 1rem; height: 1rem; }
 .stack-heading-action:hover { background-color: var(--surface-hover); color: var(--text-primary); }
 @media (pointer: coarse) {
-  .stack-heading-action { min-height: 2.75rem; }
+  .stack-heading-action { min-height: 44px; }
 }
 
 /* phones: the stack heading's actions crowd out the count first */
@@ -2324,6 +2324,18 @@ body[data-motion="reduce"] *::after {
 }
 @media (hover: none) {
   .feed-row-menu { opacity: .45; }
+}
+/* with a mouse the glyph is ~15px; an invisible 24px box meets WCAG 2.5.8
+   without growing the row (on touch the button itself is already 44px) */
+.feed-row-menu { position: relative; }
+.feed-row-menu::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
 }
 
 /* search clear button (sits at the right of the search field) */
