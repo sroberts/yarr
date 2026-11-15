@@ -237,6 +237,23 @@ document.addEventListener('keydown',function(event) {
     }
     return
   }
+  // Enter / Space with the pointer over a sidebar folder collapse or expand
+  // it. A control focused elsewhere (a button, link, field) keeps its own
+  // Enter / Space; focus on the page or a feed-list row doesn't. The folder
+  // row's own chevron handles its keys itself and stops them.
+  if ((event.key === 'Enter' || event.key === ' ') && !vm.cardMode && vm.hoveredFolder &&
+      !vm.feedContextMenu && !document.querySelector('.dropdown-menu.show')) {
+    var hovered = vm.hoveredFolder
+    var focus = event.target
+    var focusFree = focus === document.body || focus === document.documentElement ||
+      (focus.closest && focus.closest('#feed-list-scroll') &&
+        !focus.closest('button, a[href], [role="button"], select, textarea, input:not([type="radio"])'))
+    if (focusFree && vm.folders.some(function(f) { return f.id === hovered.id })) {
+      event.preventDefault()
+      vm.toggleFolderExpanded(hovered)
+      return
+    }
+  }
   // In triage card mode the list/reader shortcuts don't apply; use the card map.
   if (vm.cardMode) {
     // An open menu owns the keys, Esc included: it closes the menu and

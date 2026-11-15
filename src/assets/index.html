@@ -301,7 +301,9 @@
                 <div v-for="folder in foldersWithFeeds">
                     <label class="selectgroup mt-1"
                            :class="{'d-none': mustHideFolder(folder)}"
-                           v-if="folder.id">
+                           v-if="folder.id"
+                           @mouseenter="hoveredFolder = folder"
+                           @mouseleave="hoveredFolder === folder && (hoveredFolder = null)">
                         <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id"
                                @contextmenu.prevent="openFolderContextMenu(folder, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu'), returnFocus: $event.target})"
                                :aria-label="folder.title + (filteredFolderStats[folder.id] ? ', ' + filteredFolderStats[folder.id] + ' ' + countNoun : '')">
@@ -924,6 +926,7 @@
                     <tr><th colspan=2 scope="colgroup" class="shortcut-group">Moving around</th></tr>
                     <tr><td><kbd>j</kbd> <kbd>k</kbd></td>  <td>next / prev in the current column (feed, article, or scroll the reader)</td></tr>
                     <tr><td><kbd>h</kbd> <kbd>l</kbd></td>  <td>move to the column left / right</td></tr>
+                    <tr><td><kbd>Enter</kbd> <kbd>Space</kbd></td>  <td>collapse / expand the folder under the pointer</td></tr>
                     <tr><td><kbd>q</kbd> <kbd>Esc</kbd></td>  <td>close article</td></tr>
 
                     <tr><th colspan=2 scope="colgroup" class="shortcut-group">Articles</th></tr>
