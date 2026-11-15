@@ -133,6 +133,11 @@ html {
   --on-status-fill: #FFFFFF;
   --scrollbar-thumb: #C6C9C5;
   --scrollbar-thumb-hover: #A6AAA5;
+  /* floating pills (toasts, swipe undo, sync chip): near-black over the
+     pale ground; the edge melts into the fill */
+  --toast-bg: #111214;
+  --toast-edge: #111214;
+  --on-toast: #FFFFFF;      /* 18.9:1 */
 }
 
 .theme-dark {
@@ -162,6 +167,11 @@ html {
   --on-status-fill: #FFFFFF;
   --scrollbar-thumb: #3F444A;
   --scrollbar-thumb-hover: #565C63;
+  /* floating pills step up above every surface, with a strong rim, so they
+     never sink into the dark ground */
+  --toast-bg: #2F3439;
+  --toast-edge: #60676E;
+  --on-toast: #FFFFFF;      /* 12.6:1 */
   /* filing-colour fallback for dark when no [data-accent] is present */
   --accent: #8FAAF0;
   --on-accent: #141618;
@@ -1159,6 +1169,11 @@ a,
   cursor: pointer;
   white-space: nowrap;
 }
+/* phones: Triage beside Mark all read; the first takes the slack, the second
+   keeps a clear gap so two 44px thumb targets never touch */
+@media (max-width: 767.98px) {
+  .stack-heading-action + .stack-heading-action { margin-left: .75rem; }
+}
 .stack-heading-action .icon { width: 1rem; height: 1rem; }
 .stack-heading-action:hover { background-color: var(--surface-hover); color: var(--text-primary); }
 @media (pointer: coarse) {
@@ -1796,6 +1811,13 @@ a,
   color: var(--on-ink-select);
 }
 
+/* keep unread (left swipe without Instapaper): a quieter graphite pill, so
+   orange only ever means "sent to Instapaper" */
+.card-action-pill.action-keep {
+  background: var(--text-secondary);
+  color: var(--surface-base);
+}
+
 .card-view-hints {
   flex-shrink: 0;
   /* The legend and the Star button are the only on-screen statement of what
@@ -2065,10 +2087,11 @@ a,
   max-width: calc(100% - 2rem);
   padding: 0 0.25rem 0 1rem;
   border-radius: var(--radius);
-  background: #111214;
-  color: #fff;
+  background: var(--toast-bg);
+  color: var(--on-toast);
   font-size: var(--text-small);
-  box-shadow: var(--shadow-float);
+  /* the rim is drawn inset, so it costs no layout */
+  box-shadow: inset 0 0 0 1px var(--toast-edge), var(--shadow-float);
 }
 /* a mouse doesn't need the 44px: leave a gap above the verbs at the desk */
 @media (pointer: fine) {
@@ -2289,10 +2312,11 @@ body[data-motion="reduce"] *::after {
   max-width: calc(100% - 2rem);
   padding: 0.5rem 1rem;
   border-radius: var(--radius);
-  background: #111214;
-  color: #fff;
+  background: var(--toast-bg);
+  color: var(--on-toast);
   font-size: var(--text-small);
-  box-shadow: var(--shadow-float);
+  /* the rim is drawn inset, so it costs no layout */
+  box-shadow: inset 0 0 0 1px var(--toast-edge), var(--shadow-float);
   pointer-events: none;
 }
 
@@ -2327,10 +2351,11 @@ body[data-motion="reduce"] *::after {
   max-width: calc(100% - 2rem);
   padding: 0 .25rem 0 1rem;
   border-radius: var(--radius);
-  background: #111214;
-  color: #fff;
+  background: var(--toast-bg);
+  color: var(--on-toast);
   font-size: var(--text-small);
   white-space: nowrap;
+  box-shadow: inset 0 0 0 1px var(--toast-edge);
 }
 .sync-chip-btn {
   min-height: 36px;
@@ -2359,11 +2384,16 @@ body[data-motion="reduce"] *::after {
   transform: translateX(-50%);
   bottom: calc(1.5rem + env(safe-area-inset-bottom));
   z-index: 1099;
-  box-shadow: var(--shadow-float);
+  box-shadow: inset 0 0 0 1px var(--toast-edge), var(--shadow-float);
   transition: bottom .2s ease;
 }
 .sync-chip-float.lifted {
   bottom: calc(4.5rem + env(safe-area-inset-bottom));
+}
+/* desk: centred in the article list column (--list-mid, set from the column
+   widths), so it never straddles the divider or covers the reader's text */
+@media (min-width: 992px) {
+  .sync-chip-float { left: var(--list-mid, 50%); }
 }
 @media (max-width: 767.98px) {
   #app.item-selected .sync-chip-float {

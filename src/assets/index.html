@@ -420,9 +420,10 @@
                 <h2 class="stack-heading-title text-truncate">{{ stackHeading.title }}</h2>
                 <span class="stack-heading-count" v-if="stackHeading.count">· {{ stackHeading.count }}</span>
                 <!-- phones reach triage from here, in the thumb's path, instead of
-                     via the feed list's top-row icon -->
+                     via the feed list's top-row icon; in any filter, while the
+                     scope has something unread to triage -->
                 <button type="button" class="stack-heading-action d-md-none"
-                        v-if="filterSelected == 'unread' && stackHeading.n"
+                        v-if="scopeUnread > 0"
                         @click="filterSelected = 'triage'"
                         aria-label="Triage unread, one card at a time">
                     <span class="icon">{% inline "cards.svg" %}</span>
@@ -961,7 +962,8 @@
              failure: they retry on their own, Retry just goes now. -->
         <transition name="toast">
             <div class="sync-chip sync-chip-float" role="status" v-if="outboxState.count && !cardMode"
-                 :class="{lifted: toast || feedUndo}">
+                 :class="{lifted: toast || feedUndo}"
+                 :style="{'--list-mid': (feedListWidth + itemListWidth / 2) + 'px'}">
                 <span>{{ outboxState.count }} {{ outboxState.count === 1 ? 'change' : 'changes' }} not saved</span>
                 <button type="button" class="sync-chip-btn" @click="retryOutbox()" :disabled="outboxState.syncing">{{ outboxState.syncing ? 'Saving…' : 'Retry' }}</button>
             </div>
