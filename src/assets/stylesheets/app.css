@@ -1407,14 +1407,15 @@ a,
 }
 .offline-banner.visible {
   height: var(--offline-banner-h);
-  padding-top: env(safe-area-inset-top, 0px);
 }
+/* body already pads the safe-area insets (top included), so the banner
+   doesn't add the top inset again; the columns give up its height too */
 .offline-banner.visible ~ #app .vh-100 {
-  height: calc(100vh - var(--offline-banner-h) - env(safe-area-inset-top, 0px)) !important;
+  height: calc(100vh - var(--offline-banner-h) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
 }
 @supports (height: 100dvh) {
   .offline-banner.visible ~ #app .vh-100 {
-    height: calc(100dvh - var(--offline-banner-h) - env(safe-area-inset-top, 0px)) !important;
+    height: calc(100dvh - var(--offline-banner-h) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -1453,10 +1454,16 @@ a,
   margin: 0 !important;
 }
 
-/* PWA standalone: use dynamic viewport height where supported */
+/* PWA standalone: use dynamic viewport height where supported. body pads
+   the safe-area insets, so the shell gives them back: a full 100dvh column
+   under that padding would overflow the document by the inset, and the page
+   would scroll and bounce on a notched phone. */
+.vh-100 {
+  height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+}
 @supports (height: 100dvh) {
   .vh-100 {
-    height: 100dvh !important;
+    height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
@@ -2721,3 +2728,25 @@ body[data-motion="reduce"] *::after {
 /* keep "9 min" and the date on one line when the byline wraps */
 .content-byline > span,
 .content-byline > time { white-space: nowrap; }
+
+/* ── Native feel (installed app) ─────────────────
+   The app shouldn't behave like a web page in a frame: no grey tap flash,
+   no double-tap zoom or 300ms tap delay on controls, no rubber-band of the
+   whole document, and no iOS zoom into a focused field. Pinch-zoom stays on
+   deliberately: yarr is a reader, and article images and low-vision users
+   need it. */
+* { -webkit-tap-highlight-color: transparent; }
+html {
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+a, button, input, select, textarea, label, summary, [role="button"] {
+  touch-action: manipulation;
+}
+/* iOS zooms into any focused field under 16px (the root is 15px) */
+@media (pointer: coarse) {
+  input, select, textarea, .form-control, .toolbar-search {
+    font-size: max(16px, 1rem);
+  }
+}

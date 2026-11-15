@@ -108,8 +108,11 @@ func (s *Server) handleManifest(c *router.Context) {
 		"short_name":  "yarr",
 		"description": "yet another rss reader",
 		"display":     "standalone",
-		"start_url":   startURL,
-		"scope":       startURL,
+		// a stable identity, so a later start_url change doesn't install a
+		// second copy of the app
+		"id":        startURL,
+		"start_url": startURL,
+		"scope":     startURL,
 		// match the dark base surface (#0E1116); the running chrome tracks the
 		// active theme via <meta name="theme-color"> media queries in the page.
 		"background_color": "#0E1116",

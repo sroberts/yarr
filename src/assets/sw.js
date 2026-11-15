@@ -1,4 +1,7 @@
-var CACHE_NAME = 'yarr-v18';
+var CACHE_NAME = 'yarr-v19';
+// the app page itself, cached on each successful load so an installed app
+// opens with no connection (saved and starred articles are in IndexedDB)
+var SHELL_KEY = './';
 var STATIC_ASSETS = [
   './static/stylesheets/base.css',
   './static/stylesheets/app.css',
@@ -49,6 +52,30 @@ self.addEventListener('activate', function(event) {
 // JS/CSS it depends on in lockstep avoids "fresh HTML + stale cached JS"
 // mismatches across deploys, while the cache fallback preserves offline use.
 self.addEventListener('fetch', function(event) {
+  var req = event.request;
+  // Page loads: network first; keep the last good copy of the app page, and
+  // fall back to it offline. One copy whatever the query (?view= shortcuts),
+  // and only a real 200 page, never a redirect or an error.
+  if (req.mode === 'navigate' && req.method === 'GET') {
+    event.respondWith(
+      fetch(req).then(function(response) {
+        if (response.ok && response.type === 'basic' && !response.redirected) {
+          var copy = response.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(SHELL_KEY, copy);
+          });
+        }
+        return response;
+      }).catch(function() {
+        return caches.open(CACHE_NAME).then(function(cache) {
+          return cache.match(SHELL_KEY);
+        }).then(function(cached) {
+          return cached || Response.error();
+        });
+      })
+    );
+    return;
+  }
   event.respondWith(
     fetch(event.request).then(function(response) {
       var url = new URL(event.request.url);
