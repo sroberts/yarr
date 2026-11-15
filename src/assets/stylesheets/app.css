@@ -1471,21 +1471,29 @@ a {
   }
 }
 
-/* PWA standalone: prevent text selection on app chrome, allow in content */
-@media (display-mode: standalone) {
+/* App chrome isn't selectable and long-press shows no iOS callout or
+   magnifier, when installed and on any touch-only device; article text,
+   fields and the triage card's text stay selectable, and article images keep
+   the long-press menu (save, share). UI images (feed icons) don't drag. */
+@media (display-mode: standalone), (hover: none) {
   body {
     -webkit-user-select: none;
     user-select: none;
+    -webkit-touch-callout: none;
   }
   .content, .content * {
     -webkit-user-select: text;
     user-select: text;
+    -webkit-touch-callout: default;
   }
-  .form-control, .toolbar-search {
+  .form-control, .toolbar-search, input, textarea {
     -webkit-user-select: text;
     user-select: text;
+    -webkit-touch-callout: default;
   }
 }
+#app img { -webkit-user-drag: none; }
+.content img { -webkit-user-drag: auto; }
 
 /* responsive layout
 
