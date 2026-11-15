@@ -2559,6 +2559,10 @@ outbox.on({
 outbox.subscribe(function(state) { vm.outboxState = state })
 outbox.restore()
 
+// iOS Safari only applies :active while a touch is down if the page listens
+// for touchstart; the press tint for touch (app.css, hover: none) needs it.
+document.addEventListener('touchstart', function() {}, { passive: true })
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(function(err) {
     console.warn('SW registration failed:', err);

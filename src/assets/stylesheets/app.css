@@ -497,8 +497,10 @@ select.form-control:not([multiple]):not([size]) {
   border-radius: var(--radius);
 }
 
-.btn-outline:hover {
-  background-color: var(--surface-hover);
+@media (hover: hover) {
+  .btn-outline:hover {
+    background-color: var(--surface-hover);
+  }
 }
 
 /* column dividers: border starts below the toolbar, not at window top */
@@ -995,9 +997,11 @@ select.form-control:not([multiple]):not([size]) {
 
 /* links are ink with an underline; the filing colour is kept for filed
    state and focus. Selected/active states are an ink outline. */
-a,
-.btn-link:hover {
+a {
   color: var(--text-primary);
+}
+@media (hover: hover) {
+  .btn-link:hover { color: var(--text-primary); }
 }
 
 ::selection {
@@ -1175,7 +1179,7 @@ a,
   .stack-heading-action + .stack-heading-action { margin-left: .75rem; }
 }
 .stack-heading-action .icon { width: 1rem; height: 1rem; }
-.stack-heading-action:hover { background-color: var(--surface-hover); color: var(--text-primary); }
+@media (hover: hover) { .stack-heading-action:hover { background-color: var(--surface-hover); color: var(--text-primary); } }
 @media (pointer: coarse) {
   .stack-heading-action { min-height: 44px; }
 }
@@ -1335,7 +1339,7 @@ a,
   font-weight: 600;
   cursor: pointer;
 }
-.content-byline .byline-feed:hover { text-decoration: underline; text-underline-offset: 2px; }
+@media (hover: hover) { .content-byline .byline-feed:hover { text-decoration: underline; text-underline-offset: 2px; } }
 
 /* ── The feed column ───────────────────────────────────
    Three columns from tablet width up: feeds and folders in a sidebar, the
@@ -2503,7 +2507,7 @@ body[data-motion="reduce"] *::after {
   color: var(--text-tertiary);
   cursor: pointer;
 }
-.input-icon .search-clear:hover { color: var(--text-primary); }
+@media (hover: hover) { .input-icon .search-clear:hover { color: var(--text-primary); } }
 /* hide the native search clear so we use ours */
 .toolbar-search[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; }
 
@@ -2750,3 +2754,21 @@ a, button, input, select, textarea, label, summary, [role="button"] {
     font-size: max(16px, 1rem);
   }
 }
+
+/* Touch press feedback. Hover styles are pointer-only (above), so a tap would
+   otherwise give no sign it landed; on touch-only devices controls tint while
+   pressed instead, and the tint never sticks. Menu items keep their own
+   accent :active fill. */
+@media (hover: none) {
+  .toolbar-item:active,
+  .btn-outline:active,
+  .stack-heading-action:active,
+  .card-legend-btn:active,
+  .card-star-btn:active,
+  .reader-nav-btn:active:not(:disabled),
+  .segmented > button:active:not(:disabled),
+  .selectgroup-label:active {
+    background-color: var(--surface-hover);
+  }
+}
+
