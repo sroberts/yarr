@@ -1075,6 +1075,17 @@ function rootComponent() { return {
     // a new card always starts collapsed (swipe, undo, folder change, re-entry)
     'currentCard': function(card, prev) {
       if (!card || !prev || card.id !== prev.id) this.cardExpanded = false
+      // entering triage: once the first card shows, give it focus, so Enter
+      // reads it instead of pressing whatever had focus (the ⋯ menu after
+      // Settings, a sidebar row)
+      if (card && this._focusCardOnEnter) {
+        this._focusCardOnEnter = false
+        this.$nextTick(function() {
+          var el = document.getElementById('triage-card')
+          var view = document.getElementById('card-view')
+          if (el && view && !view.contains(document.activeElement)) el.focus({preventScroll: true})
+        })
+      }
     },
     'filterSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
@@ -2195,6 +2206,7 @@ function rootComponent() { return {
       var folderId = cur.type == 'folder' ? cur.folder.id : (cur.type == 'feed' ? cur.feed.folder_id : null)
       this.cardFolder = folderId ? String(folderId) : ''
       this.cardLoading = true
+      this._focusCardOnEnter = true
       this.loadCardItems(null)
     },
     changeCardFolder: function(folderId) {

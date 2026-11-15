@@ -239,6 +239,9 @@ document.addEventListener('keydown',function(event) {
   }
   // In triage card mode the list/reader shortcuts don't apply; use the card map.
   if (vm.cardMode) {
+    // An open menu owns the keys, Esc included: it closes the menu and
+    // leaves triage alone, and letters don't triage the card behind it.
+    if (vm.feedContextMenu || document.querySelector('.dropdown-menu.show')) return
     // A focused control keeps its own keys: Enter/Space press the button or
     // link, the arrows move through the folder picker. Everything else (and the
     // arrows on a clicked legend button) still triages.

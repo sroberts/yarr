@@ -167,7 +167,7 @@
                     <!-- Tap / Enter opens the article here in the card: the content is
                          already loaded, so reading it costs no round-trip and the
                          swipe decision stays one gesture away. o opens the original. -->
-                    <div class="triage-card" id="triage-card" :key="currentCard.id"
+                    <div class="triage-card" id="triage-card" :key="currentCard.id" tabindex="-1"
                          @click="cardTap($event)">
                         <div class="triage-card-feed">
                             <span class="d-inline-flex align-items-center">{{ (feedsById[currentCard.feed_id] || {}).title }}</span>

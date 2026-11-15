@@ -2152,6 +2152,10 @@ a:focus-visible,
   border-radius: var(--radius-control);
 }
 
+/* the triage card takes focus on entry only as the keyboard's home (Enter
+   reads it); it isn't a control, so no ring */
+#triage-card:focus { outline: none; }
+
 /* inset rings inside clipped/scrolling containers so they aren't cropped */
 .content:focus-visible,
 .content pre:focus-visible {
