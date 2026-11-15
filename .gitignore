@@ -28,3 +28,6 @@ versioninfo.rc
 
 # Claude Code local config + installed skills
 /.claude/
+
+# stray browser profiles from headless test runs (an unset profile path)
+/undefined/

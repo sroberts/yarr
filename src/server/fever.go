@@ -121,6 +121,14 @@ func (s *Server) handleFever(c *router.Context) {
 	case formHasValue(c.Req.Form, "links"):
 		s.feverLinksHandler(c)
 	case formHasValue(c.Req.Form, "mark"):
+		// Behind the gateway yarr has no credentials of its own, and the
+		// origin guard only checks unsafe methods: a GET carrying mark=
+		// would let any page that links here change state as the user.
+		// Fever clients POST.
+		if s.OutpostGateway && c.Req.Method != "POST" {
+			c.Out.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		s.feverMarkHandler(c)
 	default:
 		c.JSON(http.StatusOK, map[string]interface{}{

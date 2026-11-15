@@ -109,12 +109,14 @@
           dequeue(e)
           failures = 0
           synced += 1
-          if (handlers.synced) handlers.synced(e, res)
+          // superseded while in flight: the newer write owns the item's
+          // state, so don't paint this older one over it
+          if (handlers.synced && latest[e.key] === e) handlers.synced(e, res)
           return false
         }, function(err) {
           if (err.permanent) {
             dequeue(e)
-            if (handlers.rejected) handlers.rejected(e, err)
+            if (handlers.rejected && latest[e.key] === e) handlers.rejected(e, err)
             return false
           }
           // still unreachable: stop here rather than hammer it with the rest
@@ -171,7 +173,12 @@
       if (!store()) return Promise.resolve()
       return store().all().then(function(entries) {
         entries.sort(function(a, b) { return a.queuedAt - b.queuedAt }).forEach(function(e) {
-          if (latest[e.key]) return  // already written again this session
+          if (latest[e.key]) {
+            // already written again this session: drop the stale row, or the
+            // next reload would replay it over the newer write
+            if (pending[e.key] !== latest[e.key]) store().del(e.key)
+            return
+          }
           e.seq = ++seq
           latest[e.key] = e
           pending[e.key] = e
