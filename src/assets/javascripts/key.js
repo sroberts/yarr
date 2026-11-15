@@ -261,14 +261,17 @@ document.addEventListener('keydown',function(event) {
 
 // Once h/l have put the column marker up, a click moves it to the column
 // clicked, so the next j/k acts where you are. Before that, clicks leave
-// j/k on the article list as always. Match only the real columns (children
-// of #app): feed content keeps SVG ids, so an <svg id="col-feed-list"> in an
-// article must not pass for a column.
+// j/k on the article list as always. Only a click into a column's content
+// counts (the feed tree, the article list, the reader body): toolbars, menus,
+// a row's ⋯ button and dialogs leave the marker where it was. Match only the
+// real columns (children of #app): feed content keeps SVG ids, so an
+// <svg id="col-feed-list"> in an article must not pass for a column.
 document.addEventListener('pointerdown', function(event) {
   if (!vm.keyColumnShown || vm.cardMode) return
-  var col = event.target.closest && event.target.closest('#app > #col-feed-list, #app > #col-item-list, #app > #col-item')
-  if (!col) return
-  // the empty reader has nothing to scroll: leave j/k where they were
-  if (col.id === 'col-item' && vm.itemSelected == null) return
-  vm.keyColumn = ({'col-feed-list': 'feeds', 'col-item-list': 'items', 'col-item': 'article'})[col.id]
+  var target = event.target
+  if (!target.closest) return
+  if (target.closest('button, [role="button"], [role^="menu"], .dropdown-menu, [role="dialog"], .modal')) return
+  var region = target.closest('#app > #col-feed-list > #feed-list-scroll, #app > #col-item-list > #item-list-scroll, #app > #col-item > .content')
+  if (!region) return
+  vm.keyColumn = ({'feed-list-scroll': 'feeds', 'item-list-scroll': 'items'})[region.id] || 'article'
 })

@@ -94,6 +94,9 @@ html {
   /* the single fixed brand action color (Instapaper), both themes */
   --instapaper: #FF6600;
 
+  /* the offline banner's strip; the columns give up this much while it shows */
+  --offline-banner-h: 1.75rem;
+
   /* filing-blue fallback if [data-accent] is somehow absent */
   --accent: #2B4C9A;
   --on-accent: #FFFFFF;
@@ -125,6 +128,9 @@ html {
   --status-success: #15803D;
   --status-attention: #B45309;
   --status-error: #B42318;
+  /* a status as a filled strip (the offline banner): white text clears AA */
+  --status-attention-fill: #B45309; /* 5.0:1 under white */
+  --on-status-fill: #FFFFFF;
   --scrollbar-thumb: #C6C9C5;
   --scrollbar-thumb-hover: #A6AAA5;
 }
@@ -152,6 +158,8 @@ html {
   --status-success: #4ADE80;
   --status-attention: #FBBF24;
   --status-error: #FF7A6B;
+  --status-attention-fill: #92400E; /* 7.1:1 under white */
+  --on-status-fill: #FFFFFF;
   --scrollbar-thumb: #3F444A;
   --scrollbar-thumb-hover: #565C63;
   /* filing-colour fallback for dark when no [data-accent] is present */
@@ -489,14 +497,15 @@ select.form-control:not([multiple]):not([size]) {
   border-right: 1px solid var(--border-subtle);
 }
 
-/* the column j/k act on, once h/l have moved it: its toolbar takes a faint
-   accent wash over a 2px accent rule. The rule is drawn on top, below the
-   toolbar, so the search field and buttons can't cover it. */
+/* the column j/k act on, once h/l have moved it: a 3px filing-colour rule
+   across the top edge of the column, like a tab, over a light wash on its
+   toolbar. At the top edge it can't be read as a field's focus underline,
+   and it is drawn on top so the search field and buttons can't cover it. */
 #app.keycol-feeds #col-feed-list > .view-toolbar,
 #app.keycol-items #col-item-list > .toolbar,
 #app.keycol-article #col-item > .toolbar {
   position: relative;
-  background-color: color-mix(in oklab, var(--accent) 10%, transparent);
+  background-color: color-mix(in oklab, var(--accent) 12%, transparent);
 }
 #app.keycol-feeds #col-feed-list > .view-toolbar::after,
 #app.keycol-items #col-item-list > .toolbar::after,
@@ -505,11 +514,16 @@ select.form-control:not([multiple]):not([size]) {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 2px;
+  top: 0;
+  height: 3px;
   background-color: var(--accent);
   pointer-events: none;
   z-index: 1;
+}
+/* the search field fills the list's toolbar: let the wash show through it
+   at rest, so the list column reads like the other two */
+#app.keycol-items #col-item-list > .toolbar .toolbar-search:not(:hover):not(:focus) {
+  background-color: transparent;
 }
 /* forced colors drop the wash and the rule; mark the column with an outline */
 @media (forced-colors: active) {
@@ -651,6 +665,15 @@ select.form-control:not([multiple]):not([size]) {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+/* the close stays in reach while a long sheet (shortcuts, settings) scrolls
+   under it; top matches its resting spot, so it doesn't jump */
+.custom-modal .modal-close {
+  position: sticky;
+  top: .5rem;
+  z-index: 1;
+  background-color: var(--surface-raised);
+  border-radius: var(--radius-control);
 }
 @media (max-width: 480px) {
   .custom-modal .modal-dialog { margin-top: 1rem; margin-bottom: 1rem; }
@@ -863,9 +886,14 @@ select.form-control:not([multiple]):not([size]) {
 }
 
 .content blockquote {
+  /* the browser's 40px side margins took a phone quote to ~25 characters */
+  margin: 1em 0;
   border-left: 3px solid var(--border-strong);
   padding-left: 1rem;
   color: var(--text-secondary);
+}
+@media (max-width: 767.98px) {
+  .content blockquote { padding-left: .75rem; }
 }
 
 /* em-relative so headings scale with the reading size control */
@@ -888,6 +916,11 @@ select.form-control:not([multiple]):not([size]) {
 .content p {
   margin-top: 1rem;
   margin-bottom: 1rem;
+}
+/* no one-word last lines in the reading column */
+.content p,
+.content li {
+  text-wrap: pretty;
 }
 
 /* ── Surfaces & components (token-driven, theme-agnostic) ──────── */
@@ -1169,6 +1202,11 @@ a,
   font-size: .75rem;
 }
 .dropdown-item:has(.menu-kbd) { display: flex; align-items: center; }
+/* Every item with an icon lays out the same way, so a label starts at the
+   same x whether or not it has a shortcut: flex drops the space between icon
+   and label, so the margin stands in for it. */
+.dropdown-item:has(> .icon.mr-1) { display: flex; align-items: center; }
+.dropdown-item > .icon.mr-1 { margin-right: .5rem; }
 
 /* menus float a step above whatever they open over, in both themes */
 .dropdown-menu {
@@ -1184,6 +1222,8 @@ a,
   color: var(--text-secondary);
 }
 .shortcut-table tr:first-child .shortcut-group { padding-top: .25rem; }
+/* a row's keys stay on one line ("1 2 3", "Ctrl K") */
+.shortcut-table td:first-child { white-space: nowrap; }
 
 /* the triage legend's two verbs, drawn as the legend but pressable */
 .card-legend-btn {
@@ -1337,32 +1377,29 @@ a,
   background-color: var(--scrollbar-thumb-hover);
 }
 
-/* offline banner */
+/* offline banner: a strip in the flow above the columns, not over them.
+   While it shows, the columns give up its height, so every toolbar control
+   stays where it was and stays clickable. Empty and zero-height online. */
 .offline-banner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  background-color: #C2362C;  /* fixed deep red, white text clears AA in both themes */
-  color: #fff;
+  height: 0;
+  overflow: hidden;
+  background-color: var(--status-attention-fill);
+  color: var(--on-status-fill);
   text-align: center;
-  padding: .375rem;
   font-size: .8rem;
-  font-weight: 600;
-  transform: translateY(-100%);
-  transition: transform .3s ease;
-  pointer-events: none;
+  font-weight: 500;
+  line-height: var(--offline-banner-h);
 }
-
 .offline-banner.visible {
-  transform: translateY(0);
-  pointer-events: auto;
+  height: var(--offline-banner-h);
+  padding-top: env(safe-area-inset-top, 0px);
 }
-
-@supports (padding: env(safe-area-inset-top)) {
-  .offline-banner.visible {
-    padding-top: calc(.375rem + env(safe-area-inset-top));
+.offline-banner.visible ~ #app .vh-100 {
+  height: calc(100vh - var(--offline-banner-h) - env(safe-area-inset-top, 0px)) !important;
+}
+@supports (height: 100dvh) {
+  .offline-banner.visible ~ #app .vh-100 {
+    height: calc(100dvh - var(--offline-banner-h) - env(safe-area-inset-top, 0px)) !important;
   }
 }
 
@@ -1671,6 +1708,48 @@ a,
   overflow-y: auto;
 }
 
+/* A long excerpt fades at its bottom clip, like an overflowing code block,
+   and the fade lifts at the end. Scroll-driven: an excerpt that doesn't
+   scroll has an inactive timeline and so no mask at all. */
+@supports (animation-timeline: scroll()) {
+  .triage-card-excerpt {
+    animation: excerpt-clip linear both;
+    animation-timeline: scroll(self);
+  }
+}
+@keyframes excerpt-clip {
+  0%, 98% {
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 2.5rem), transparent 100%);
+  }
+  100% {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}
+
+/* An image-only post (a comic, a photo): its first image in the excerpt's
+   slot, scaled down to fit, never up. On a phone the card is content-sized,
+   so the image caps at half the screen; the desk card's height is fixed
+   (768px and up), so there it fits the slot. */
+.triage-card-image {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.triage-card-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+}
+@media (min-width: 768px) {
+  .triage-card-image img { max-height: 100%; }
+}
+
 .triage-card-footer {
   display: flex;
   justify-content: space-between;
@@ -1847,12 +1926,15 @@ a,
   #app.card-mode .card-view-legend {
     margin-bottom: auto;
   }
-  /* a reading-width card: enough of the article to decide at a desk */
+  /* a reading-width card: enough of the article to decide at a desk. Its
+     height is fixed, not content-driven, so the action line, Star and the
+     legend stay put from card to card; the excerpt takes the slack and
+     scrolls. The area is content-sized here, so size against the window:
+     toolbar, folder picker, action line and legend take about 16rem. */
   #app.card-mode .triage-card {
     max-width: 640px;
-    /* the area is content-sized here, so cap against the window instead:
-       toolbar, folder picker, action line and legend take about 12rem */
-    max-height: calc(100vh - 12rem);
+    height: min(40rem, calc(100vh - 16rem));
+    max-height: none;
   }
   #app.card-mode .card-view-hints {
     width: 100%;
@@ -1956,13 +2038,27 @@ a,
   }
 }
 
-/* swipe undo toast (thumb zone) */
+/* The action line between card and verbs: the swipe pill and the undo toast
+   share one cell, and the row is always the toast's height, so neither the
+   undo nor the pill moves the legend or lands on Star. */
+.card-action-row {
+  display: grid;
+  flex-shrink: 0;
+  min-height: 44px;
+}
+.card-action-row > * {
+  grid-area: 1 / 1;
+}
+/* a new swipe's pill takes the line from a still-open undo */
+.card-action-row:has(.card-action-pill) .card-undo-toast:not(.floating) {
+  visibility: hidden;
+}
+
+/* swipe undo toast: docked in the action line; floats in the thumb zone only
+   on the done screen, where there are no verbs to cover */
 .card-undo-toast {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(4.5rem + env(safe-area-inset-bottom));
-  z-index: 1100;
+  justify-self: center;
+  align-self: center;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -1974,6 +2070,17 @@ a,
   font-size: var(--text-small);
   box-shadow: var(--shadow-float);
 }
+/* a mouse doesn't need the 44px: leave a gap above the verbs at the desk */
+@media (pointer: fine) {
+  .card-undo-toast:not(.floating) .card-undo-btn { min-height: 36px; }
+}
+.card-undo-toast.floating {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  z-index: 1100;
+}
 
 .card-undo-label {
   white-space: nowrap;
@@ -1981,6 +2088,8 @@ a,
 
 .card-undo-btn {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
   min-height: 44px;
   min-width: 44px;
   padding: 0 1rem;

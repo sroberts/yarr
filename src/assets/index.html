@@ -176,8 +176,10 @@
                         <div class="triage-card-domain" v-if="cardDomain">{{ cardDomain }}</div>
                         <h2 class="triage-card-title">{{ currentCard.title || 'untitled' }}</h2>
                         <div class="triage-card-excerpt" :class="readingFontClass" v-if="!cardExpanded && cardExcerpt">{{ cardExcerpt }}</div>
+                        <div class="triage-card-image" v-else-if="!cardExpanded && cardImage"><img :src="cardImage.src" :alt="cardImage.alt" referrerpolicy="no-referrer" decoding="async" draggable="false" @error="cardImageFailed = cardImage.src"></div>
                         <div class="triage-card-excerpt triage-card-empty" v-else-if="!currentCard.content">No preview in the feed.<span v-if="currentCard.link"><span class="hint-touch"> Open the original to read it.</span><span class="hint-pointer"> Press <kbd>o</kbd> to open the original.</span></span></div>
                         <div class="triage-card-body" :class="readingFontClass" v-else-if="cardExpanded" v-html="currentCard.content"></div>
+                        <div class="triage-card-excerpt triage-card-empty" v-else>No text in the feed’s preview.</div>
                         <div class="triage-card-footer">
                             <span class="triage-card-hint" v-if="!currentCard.content"><a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop>Open original</a></span>
                             <span class="triage-card-hint" v-else-if="!cardExpanded"><span class="hint-touch">tap to read here</span><span class="hint-pointer">Enter to read here</span></span>
@@ -188,8 +190,22 @@
                         </div>
                     </div>
                 </div>
-                <!-- action indicator -->
-                <div class="card-view-action" id="card-action-indicator"></div>
+                <!-- the action line: the swipe pill while a card moves, then the
+                     undo for it. In the flow between card and verbs, and sized
+                     for the toast, so neither covers the legend or shifts it -->
+                <div class="card-action-row">
+                    <!-- action indicator -->
+                    <div class="card-view-action" id="card-action-indicator"></div>
+                    <!-- undo last swipe; on the done screen it floats in the thumb zone -->
+                    <transition name="undo">
+                        <div class="card-undo-toast" :class="{floating: cardDone}" v-if="cardUndo"
+                             @mouseenter="pauseCardUndo()" @mouseleave="resumeCardUndo()"
+                             @focusin="pauseCardUndo()" @focusout="resumeCardUndo()">
+                            <span class="card-undo-label">{{ cardUndoLabel }}</span>
+                            <button type="button" class="card-undo-btn" @click="undoCardAction()" aria-keyshortcuts="u">Undo<kbd class="toast-kbd d-none d-md-inline-flex">u</kbd></button>
+                        </div>
+                    </transition>
+                </div>
                 <!-- writes waiting to reach the server: in the flow above the
                      verbs, so it never covers the action bar -->
                 <div class="sync-chip-row" v-if="outboxState.count">
@@ -268,13 +284,6 @@
                     <p class="text-muted mb-4">New articles land here when your feeds next refresh.</p>
                     <button class="btn btn-default" @click="exitCardMode()">Back to the list</button>
                 </div>
-                <!-- undo last swipe -->
-                <transition name="undo">
-                    <div class="card-undo-toast" v-if="cardUndo">
-                        <span class="card-undo-label">{{ cardUndoLabel }}</span>
-                        <button type="button" class="card-undo-btn" @click="undoCardAction()">Undo</button>
-                    </div>
-                </transition>
             </div>
             <div id="feed-list-scroll" class="p-2 overflow-auto scroll-touch border-top flex-grow-1" v-show="!cardMode">
                 <label class="selectgroup">
@@ -440,7 +449,7 @@
                 <!-- First-run: single-column layouts (mobile, zoomed desktop) land
                      here, not on the feed list, so the "add a feed" CTA has to
                      live in this pane too or the app looks broken (#120). -->
-                <div class="empty-hint" v-if="feeds.length === 0">
+                <div class="empty-hint" v-if="feeds.length === 0 && !itemsError">
                     <p class="mb-2">No feeds yet.</p>
                     <button class="btn btn-default btn-block mb-3" @click="showSettings('create')">Add your first feed</button>
                     <p class="text-muted small mb-0">Or import an OPML file under <span class="icon icon-small">{% inline "more-horizontal.svg" %}</span> → Settings.<span class="kbd-hint"> Press <kbd>?</kbd> for keyboard shortcuts.</span></p>
@@ -472,7 +481,14 @@
                         </div>
                     </div>
                 </label>
-                <button class="btn btn-link btn-block loading my-3" v-if="itemsHasMore && feeds.length" aria-label="Loading more articles"></button>
+                <!-- a failed load says so and offers the retry, rather than
+                     reading as an empty feed or spinning forever -->
+                <div class="empty-hint stack-empty" v-if="itemsError" role="alert">
+                    <p class="mb-1">Couldn’t load {{ items.length ? 'more articles' : 'articles' }}.</p>
+                    <p class="text-muted small mb-3">The server didn’t answer. Check the connection and try again.</p>
+                    <button class="btn btn-default" @click="retryItems()">Retry</button>
+                </div>
+                <button class="btn btn-link btn-block loading my-3" v-else-if="itemsHasMore && feeds.length" aria-label="Loading more articles"></button>
             </div>
         </div>
         <!-- item show -->
@@ -482,7 +498,7 @@
             <div class="toolbar reader-blank-toolbar flex-shrink-0" v-if="!itemSelectedDetails"></div>
             <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted" v-if="!itemSelectedDetails && !itemUnavailable">
                 <span class="icon mb-2" style="opacity:.5">{% inline "book-open.svg" %}</span>
-                <p class="mb-1">{{ stackEmpty ? stackEmpty.reader : 'Select an article to read' }}</p>
+                <p class="mb-1">{{ itemsError && !items.length ? 'Couldn’t load articles' : stackEmpty ? stackEmpty.reader : 'Select an article to read' }}</p>
                 <p class="small mb-0"><kbd>j</kbd> / <kbd>k</kbd> to move, <kbd>?</kbd> for shortcuts</p>
             </div>
             <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted px-4 text-center" v-if="itemUnavailable">
@@ -739,7 +755,7 @@
                     <div class="settings-section">
                         <span class="settings-label" id="set-filing-colour">Filing colour</span>
                         <div class="accent-swatches" role="group" aria-labelledby="set-filing-colour">
-                            <button class="accent-swatch" :class="'swatch-'+a" :aria-label="({rose: 'red', slate: 'graphite'})[a] || a" :aria-pressed="(theme.accent == a) ? 'true' : 'false'" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
+                            <button class="accent-swatch" :class="'swatch-'+a" :aria-label="a" :aria-pressed="(theme.accent == a) ? 'true' : 'false'" @click.stop="theme.accent = a" v-for="a in ['blue','teal','green','violet','rose','amber','slate']">
                                 <span class="accent-check" v-if="theme.accent == a">{% inline "check.svg" %}</span>
                             </button>
                         </div>
