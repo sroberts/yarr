@@ -552,6 +552,7 @@ function rootComponent() { return {
     this.refreshStats()
       .then(this.refreshFeeds.bind(this))
       .then(this.refreshItems.bind(this, false))
+      .catch(this.itemsFailed.bind(this))
 
     api.feeds.list_errors().then(function(errors) {
       vm.feed_errors = errors
@@ -629,10 +630,13 @@ function rootComponent() { return {
       'filteredTotalStats': null,
 
       'settings': '',
+      // the last article list request failed: the list says so and offers a retry
+      'itemsError': false,
       'loading': {
         'feeds': 0,
         'newfeed': false,
-        'items': false,
+        // true until the first list arrives, so the empty copy can't flash first
+        'items': true,
         'readability': false,
         'instapaper': false,
       },
@@ -668,6 +672,8 @@ function rootComponent() { return {
       'cardLoading': false,
       'cardUndo': null,
       'cardExpanded': false,
+      // a card image that failed to load, so the card falls back to its line
+      'cardImageFailed': '',
       'instapaperSaved': false,
       'feedNewError': '',
       'isMac': /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent),
@@ -862,7 +868,7 @@ function rootComponent() { return {
     // stack has items, is loading, is a search (the result count says it), or
     // there are no feeds at all (the first-run hint covers that).
     stackEmpty: function() {
-      if (this.items.length || this.loading.items || this.itemSearch || !this.feeds.length) return null
+      if (this.items.length || this.loading.items || this.itemsError || this.itemSearch || !this.feeds.length) return null
       var self = this
       if (this.feedSelected === null) {
         return {
@@ -942,6 +948,31 @@ function rootComponent() { return {
       // the wide desk card has room to decide on more than a phone's worth
       var max = window.matchMedia('(min-width: 768px)').matches ? 1200 : 600
       return text.length > max ? text.substring(0, max) + '…' : text
+    },
+    // An image-only post (a comic, a photo) has no excerpt: the card shows its
+    // first image instead. Parsed inertly from the same content the card
+    // already renders when read in place; only http(s) URLs, and no tracking
+    // pixels (the sanitizer drops width/height, so the template also drops
+    // an image that loads at 2px or less).
+    cardImage: function() {
+      if (!this.currentCard || !this.currentCard.content) return null
+      var doc = new DOMParser().parseFromString(this.currentCard.content, 'text/html')
+      var imgs = doc.querySelectorAll('img[src]')
+      for (var i = 0; i < imgs.length; i++) {
+        var img = imgs[i]
+        var w = parseInt(img.getAttribute('width'), 10), h = parseInt(img.getAttribute('height'), 10)
+        if (w <= 2 || h <= 2) continue
+        var url
+        try {
+          url = new URL(img.getAttribute('src'), this.currentCard.link || location.href)
+        } catch (e) {
+          continue
+        }
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') continue
+        if (url.href === this.cardImageFailed) return null
+        return {src: url.href, alt: img.getAttribute('alt') || img.getAttribute('title') || ''}
+      }
+      return null
     },
     cardDomain: function() {
       if (!this.currentCard || !this.currentCard.link) return ''
@@ -1044,15 +1075,28 @@ function rootComponent() { return {
     // a new card always starts collapsed (swipe, undo, folder change, re-entry)
     'currentCard': function(card, prev) {
       if (!card || !prev || card.id !== prev.id) this.cardExpanded = false
+      // entering triage: once the first card shows, give it focus, so Enter
+      // reads it instead of pressing whatever had focus (the ⋯ menu after
+      // Settings, a sidebar row)
+      if (card && this._focusCardOnEnter) {
+        this._focusCardOnEnter = false
+        this.$nextTick(function() {
+          var el = document.getElementById('triage-card')
+          var view = document.getElementById('card-view')
+          if (el && view && !view.contains(document.activeElement)) el.focus({preventScroll: true})
+        })
+      }
     },
     'filterSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
       this.stopListen()  // halt read-aloud when leaving/entering triage or switching views
       if (oldVal === 'triage') {
-        this.flushCardAction()
+        // the counts reload once the pending write is sent, not before: a
+        // status read that beats the write would put the old count back
+        var flushed = this.flushCardAction()
         this.cardItems = []
         this.cardIndex = 0
-        this.refreshStats()
+        Promise.resolve(flushed).then(this.refreshStats.bind(this), this.refreshStats.bind(this))
       }
       if (newVal === 'triage') {
         this.previousFilter = oldVal || ''
@@ -1062,7 +1106,9 @@ function rootComponent() { return {
       this.itemSelected = null
       this.items = []
       this.itemsHasMore = true
-      api.settings.update({filter: newVal}).then(this.refreshItems.bind(this, false))
+      // the list doesn't wait on the setting: a failed save mustn't blank it
+      this.refreshItems(false)
+      this.saveSetting({filter: newVal})
       this.computeStats()
     },
     'feedSelected': function(newVal, oldVal) {
@@ -1070,7 +1116,8 @@ function rootComponent() { return {
       this.itemSelected = null
       this.items = []
       this.itemsHasMore = true
-      api.settings.update({feed: newVal}).then(this.refreshItems.bind(this, false))
+      this.refreshItems(false)
+      this.saveSetting({feed: newVal})
       if (this.$refs.itemlist) this.$refs.itemlist.scrollTop = 0
     },
     'itemSelected': function(newVal, oldVal) {
@@ -1149,7 +1196,8 @@ function rootComponent() { return {
     },
     'itemSortNewestFirst': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
-      api.settings.update({sort_newest_first: newVal}).then(vm.refreshItems.bind(this, false))
+      this.refreshItems(false)
+      this.saveSetting({sort_newest_first: newVal})
     },
     'feedListWidth': debounce(function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
@@ -1524,10 +1572,22 @@ function rootComponent() { return {
           vm.feeds = values[1]
         })
     },
+    // Remember a view choice on the server. The list never waits on it, and a
+    // failed save only means the choice isn't restored next visit, so it is
+    // logged, not toasted on every switch.
+    saveSetting: function(data) {
+      return api.settings.update(data).catch(function(err) {
+        console.warn('yarr: settings not saved', data, err)
+      })
+    },
     refreshItems: function(loadMore = false) {
+      // a newer request (a feed or filter switch) supersedes this one
+      var seq = this._itemsSeq = (this._itemsSeq || 0) + 1
+      this.itemsError = false
       if (this.feedSelected === null) {
         vm.items = []
         vm.itemsHasMore = false
+        vm.loading.items = false
         return
       }
 
@@ -1538,6 +1598,8 @@ function rootComponent() { return {
 
       this.loading.items = true
       return api.items.list(query).then(function(data) {
+        if (seq !== vm._itemsSeq) return
+        if (!data || !Array.isArray(data.list)) throw new Error('bad items response')
         if (loadMore) {
           vm.items = vm.items.concat(data.list)
         } else {
@@ -1552,7 +1614,29 @@ function rootComponent() { return {
             vm.refreshItems(true)
           }
         })
+      }).catch(function(err) {
+        if (seq === vm._itemsSeq) vm.itemsFailed(err)
       })
+    },
+    // The list couldn't load: say so honestly (not "no articles") and stop
+    // the more-articles spinner until the retry.
+    itemsFailed: function(err) {
+      console.warn('yarr: articles not loaded', err)
+      this.loading.items = false
+      this.itemsError = true
+    },
+    retryItems: function() {
+      // the first load can fail before the feeds arrive; fetch the lot again
+      if (!this.feeds.length) {
+        this.itemsError = false
+        this.loading.items = true
+        return this.refreshStats()
+          .then(this.refreshFeeds.bind(this))
+          .then(this.refreshItems.bind(this, false))
+          .catch(this.itemsFailed.bind(this))
+      }
+      // with articles showing, it was the next page that failed
+      return this.refreshItems(this.items.length > 0)
     },
     itemListCloseToBottom: function() {
       // approx. vertical space at the bottom of the list (loading el & paddings) when 1rem = 16px
@@ -1569,6 +1653,8 @@ function rootComponent() { return {
     loadMoreItems: function(event, el) {
       if (!this.itemsHasMore) return
       if (this.loading.items) return
+      // after a failure only the Retry button asks again, not every scroll
+      if (this.itemsError || !this.items.length) return
       if (this.itemListCloseToBottom()) return this.refreshItems(true)
       if (this.itemSelected && this.itemSelected === this.items[this.items.length - 1].id) return this.refreshItems(true)
     },
@@ -2120,6 +2206,7 @@ function rootComponent() { return {
       var folderId = cur.type == 'folder' ? cur.folder.id : (cur.type == 'feed' ? cur.feed.folder_id : null)
       this.cardFolder = folderId ? String(folderId) : ''
       this.cardLoading = true
+      this._focusCardOnEnter = true
       this.loadCardItems(null)
     },
     changeCardFolder: function(folderId) {
@@ -2213,11 +2300,20 @@ function rootComponent() { return {
         this.feedStats[item.feed_id].unread += 1
       }
     },
+    // The triage undo holds like the feed undo: 6s, paused while the toast is
+    // hovered or focused (pauseCardUndo / resumeCardUndo).
     scheduleCardUndo: function(item, action, index) {
-      var timer = setTimeout(function() {
-        vm.flushCardAction()
-      }, 4000)
-      this.cardUndo = { item: item, action: action, index: index, timer: timer }
+      this.cardUndo = { item: item, action: action, index: index, timer: null }
+      this.resumeCardUndo()
+    },
+    pauseCardUndo: function() {
+      if (this.cardUndo) clearTimeout(this.cardUndo.timer)
+    },
+    resumeCardUndo: function() {
+      var u = this.cardUndo
+      if (!u) return
+      clearTimeout(u.timer)
+      u.timer = setTimeout(function() { if (vm.cardUndo === u) vm.flushCardAction() }, 6000)
     },
     // Reverse the most recent swipe before its server write fires. Because the
     // write is deferred, nothing has to be undone on the server.
@@ -2242,6 +2338,7 @@ function rootComponent() { return {
       this.cardUndo = null
     },
     // Commit the pending swipe: fire the deferred server write and clear undo.
+    // Returns the write, so a caller can wait for it before reloading counts.
     flushCardAction: function() {
       var pending = this.cardUndo
       if (!pending) return
@@ -2252,7 +2349,7 @@ function rootComponent() { return {
         // The card is gone by now. Unreachable, the write waits in the outbox
         // and retries; refused, it has to say which article and put it back
         // in unread: nothing silently lost, including stars.
-        outbox.send({kind: 'status', id: item.id, status: pending.action, from: 'unread', title: item.title}).catch(function() {
+        return outbox.send({kind: 'status', id: item.id, status: pending.action, from: 'unread', title: item.title}).catch(function() {
           vm.revertCardRead(item)
           vm.showToast(vm.statusFailureText(pending.action, item) + '. It’s back in unread.', 5000)
         })
@@ -2260,7 +2357,7 @@ function rootComponent() { return {
         // Capture the stats object so a late failure adjusts the session that
         // owned this swipe, never a fresh one started by enter/changeCardFolder.
         var stats = this.cardStats
-        outbox.send({kind: 'instapaper', id: item.id, from: 'unread', title: item.title}).catch(function() {
+        return outbox.send({kind: 'instapaper', id: item.id, from: 'unread', title: item.title}).catch(function() {
           vm.reconcileFailedInstapaper(item, stats)
         })
       }
@@ -2473,9 +2570,10 @@ if ('serviceWorker' in navigator) {
   var banner = document.createElement('div')
   banner.className = 'offline-banner'
   banner.setAttribute('role', 'status')
-  document.body.appendChild(banner)
+  // in the flow above the columns, which step down while it shows (app.css)
+  document.body.insertBefore(banner, document.getElementById('app'))
 
-  // Online, the banner is parked off-screen and empty, so screen readers find
+  // Online, the banner is collapsed and empty, so screen readers find
   // nothing; going offline fills the live region, which announces it.
   // navigator.onLine stays true when the LAN route to the server is dead, so
   // writes that keep failing count as offline too.

@@ -40,10 +40,13 @@
 
     var progress = Math.min(Math.abs(dx) / threshold, 1)
 
-    // Background tint — follows the active accent (read) / Instapaper tokens
+    // Background tint — follows the active accent (read); left is Instapaper
+    // orange only when it saves there, otherwise a neutral keep-unread wash
     var tint = (progress * 15).toFixed(1)
+    var saves = vm.instapaperConfigured
     if (dx < 0) {
-      area.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--instapaper) ' + tint + '%, transparent) 0%, transparent 60%)'
+      var leftTint = saves ? 'var(--instapaper)' : 'var(--text-secondary)'
+      area.style.background = 'linear-gradient(90deg, color-mix(in srgb, ' + leftTint + ' ' + tint + '%, transparent) 0%, transparent 60%)'
     } else if (dx > 0) {
       area.style.background = 'linear-gradient(90deg, transparent 40%, color-mix(in srgb, var(--accent) ' + tint + '%, transparent) 100%)'
     } else {
@@ -53,10 +56,10 @@
     // Action pill
     if (Math.abs(dx) > threshold) {
       if (dx < 0) {
-        var label = vm.instapaperConfigured ? 'Save to Instapaper' : 'Keep Unread'
-        showPill(indicator, 'action-instapaper', label)
+        if (saves) showPill(indicator, 'action-instapaper', 'Save to Instapaper')
+        else showPill(indicator, 'action-keep', 'Keep unread')
       } else {
-        showPill(indicator, 'action-read', 'Mark Read')
+        showPill(indicator, 'action-read', 'Mark read')
       }
     } else {
       clearPill(indicator)

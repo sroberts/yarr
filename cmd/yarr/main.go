@@ -418,9 +418,16 @@ func main() {
 	// service spec, section 3). That also opens /mcp to whatever the gateway
 	// admits, which is what an Outpost access token is for.
 	gateway := os.Getenv(envOutpostAuth) == "gateway"
+	// Only on loopback, though: bound beyond it, requests can reach yarr
+	// without passing through the gateway, and dropping the login would
+	// leave it open to anyone who can reach the port.
 	if gateway && username != "" {
-		log.Print("OUTPOST_AUTH=gateway: Outpost signs users in, so yarr's own login (--auth / --auth-file) is off")
-		username, password = "", ""
+		if isLoopback(addr) {
+			log.Print("OUTPOST_AUTH=gateway: Outpost signs users in, so yarr's own login (--auth / --auth-file) is off")
+			username, password = "", ""
+		} else {
+			log.Printf("warning: OUTPOST_AUTH=gateway but listening on %s, beyond loopback, so yarr keeps its own login", addr)
+		}
 	}
 	srv.OutpostGateway = gateway
 

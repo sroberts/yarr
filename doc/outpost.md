@@ -89,14 +89,17 @@ every request has been signed in before it arrives. yarr then:
 
 - **presents no login of its own.** `--auth`, `--auth-file` and `$YARR_AUTH`
   are ignored (yarr logs that it is ignoring them), so you sign in once, to
-  Outpost. That includes `/mcp`: an MCP client gets in with an Outpost access
+  Outpost. Only while yarr listens on loopback, as Outpost runs it: bound
+  beyond loopback, requests needn't pass through the gateway, so yarr keeps
+  its own login and logs a warning. That includes `/mcp`: an MCP client gets in with an Outpost access
   token (`outpost token create`), which the gateway checks and strips.
 - **refuses cross-origin writes.** Every app behind one gateway shares a site,
   and the gateway adds your identity to whatever reaches it, so a page on a
   sibling app could otherwise change yarr's state as you. Any request other
   than `GET`/`HEAD`/`OPTIONS` whose `Origin` (or `Referer`) names another host
   gets `403`. Requests with neither header -- Fever clients, MCP clients, curl
-  with an Outpost token -- aren't from a browser and pass. The check matches
+  with an Outpost token -- aren't from a browser and pass. A Fever `mark`
+  must be a `POST`, so a cross-site link can't mark items as a `GET`. The check matches
   `Host` or `X-Forwarded-Host`, both of which the gateway sets to yarr's own
   name, so a renamed node (`yarr-1`) still works.
 - **offers Outpost's sign-out.** The ⋯ menu gains "Sign out of Outpost", a

@@ -29,6 +29,7 @@ colors:
   status-success: "#15803D"
   status-attention: "#B45309"
   status-error: "#B42318"
+  status-attention-fill: "#B45309"
   box-ground-dark: "#141618"
   slip-dark: "#1C1F22"
   raised-dark: "#22262A"
@@ -41,6 +42,10 @@ colors:
   status-success-dark: "#4ADE80"
   status-attention-dark: "#FBBF24"
   status-error-dark: "#FF7A6B"
+  status-attention-fill-dark: "#92400E"
+  toast: "#111214"
+  toast-dark: "#2F3439"
+  toast-edge-dark: "#60676E"
 typography:
   headline:
     fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
@@ -84,6 +89,16 @@ typography:
     fontSize: "1rem"
     fontWeight: 700
     letterSpacing: "-0.01em"
+  wordmark-login:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 600
+    letterSpacing: "-0.02em"
+    lineHeight: 1
+  tally:
+    fontFamily: "Hanken Grotesk Var, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    fontSize: "2rem"
+    fontWeight: 700
 rounded:
   slip: "4px"
   control: "3px"
@@ -190,6 +205,8 @@ A near-monochrome ink-on-paper palette with one deliberately scarce filing colou
 - **Graphite** (`graphite` / `graphite-dark`): read article titles, counters, bylines' feed name, secondary actions.
 - **Pencil** (`pencil` / `pencil-dark`): tertiary text: row meta, placeholders, captions, the "n of m" list position.
 - **Status** (`status-success`, `status-attention`, `status-error`, each with a dark value): semantic feedback only, never decoration.
+- **Status Fill** (`--status-attention-fill`: `status-attention-fill` / `status-attention-fill-dark`, under `--on-status-fill` white): a status drawn as a filled strip rather than as text, so white on it clears AA in both themes (5.0:1 light, 7.1:1 dark). Today only the offline banner uses it.
+- **Toast** (`--toast-bg` / `--toast-edge` / `--on-toast`; `toast`, `toast-dark`, `toast-edge-dark`): the fill, rim and text of every floating pill (app toast, swipe undo, sync chip). Light keeps a near-black pill whose rim melts into it (white text 18.7:1); dark steps up to a raised slate above every surface (1.44:1 against the box ground) with a strong rim (3.2:1 against the ground) so it never sinks into the dark, white text 12.6:1. The lightened filing-colour action on it clears AA in every accent: 5.4 to 6.8:1 light, 6.4 to 9.1:1 dark.
 
 ### Named Rules
 **The Filing Colour Rule.** The filing colour means "filed", "focused" or "this one". It marks the star, keyboard focus, focused fields, the text-selection tint and (as a 12% light / 22% dark tint) the selected list row, and nothing else: not links, not unread, not headers, not scrollbars.
@@ -216,7 +233,8 @@ The root size is 15px; the reading size is user-controlled (default 1.2rem) and 
 - **Small** (`--text-small`, Hanken Grotesk, 0.875rem): the list heading's name and count, labelled toolbar buttons, toasts, the sync chip, swipe pills, filter rows and code in the triage card. The one step between UI and Label; nothing sits at .85 or .9rem.
 - **Label** (Hanken Grotesk 400, 0.8rem): the row meta line, bylines (sans, pencil, tabular), "n of m", settings labels, the triage card header.
 - **Counter** (JetBrains Mono, 0.78rem, tabular): sidebar and heading counts, in graphite.
-- **Wordmark** (Hanken Grotesk 700, -0.01em): "yarr" beside the anchor mark at the head of the feed sidebar, tablet and up.
+- **Wordmark** (Hanken Grotesk 700, -0.01em): "yarr" beside the anchor mark at the head of the feed sidebar, tablet and up. On the login page, the one screen with nothing else to carry, it steps up to 1.5rem / 600 / -0.02em (`.login-brand-name`).
+- **Tally** (Hanken Grotesk 700, 2rem): the four counts on triage's "All caught up" screen (`.card-stat-number`), under its 1.5rem / 650 title. The only numbers above body size, and only after a real run.
 
 ### Named Rules
 **The Weight Is Unread Rule.** Unread is carried by a 600 ink title and an ink dot in the row's left gutter, which survive grayscale. Read rows step back a text tier, never an opacity.
@@ -233,7 +251,7 @@ The page is the box. Three widths:
 - **Tablet (768px to 991.98px):** sidebar (35%) and list (65%); opening an article replaces both with the reader.
 - **Phone (below 768px):** feeds, list and reader take turns full-width; the reader gets a bottom thumb-zone bar with labelled previous/next and the "n of m" position. Secondary reader actions fold into an overflow menu so six 44px controls fit 320px.
 
-Spacing rhythm is small and fixed: article rows pad `0.7rem 0.75rem 0.7rem 0.375rem` with a 0.75rem gutter for the unread dot or star, and sit flush with an inset hairline between them. The reader is unframed: the text column at the measure, `2rem 1rem 2.75rem` around it (`1.25rem 1.1rem 1.75rem` on phones), with space rather than a rule under the byline. The triage card is 640px wide on desk, 400px on phone, centred with its action line and legend directly beneath.
+Spacing rhythm is small and fixed: article rows pad `0.7rem 0.75rem 0.7rem 0.375rem` with a 0.75rem gutter for the unread dot or star, and sit flush with an inset hairline between them. The reader is unframed: the text column at the measure, `2rem 1rem 2.75rem` around it (`1.25rem 1.1rem 1.75rem` on phones), with space rather than a rule under the byline. The triage card is 640px wide on desk, 400px on phone, with its action line and legend directly beneath. On the desk the card has a fixed height (`min(40rem, 100vh - 16rem)`), so the action line, Star and the legend hold one position from card to card; the excerpt takes the slack and scrolls.
 
 Touch: below 992px every toolbar control, list row and menu item is at least 44px; a compact density option tightens rows on fine pointers only.
 
@@ -257,7 +275,7 @@ Flat. Resting surfaces have no shadow and no card edge; hierarchy comes from wei
 
 ## Shapes
 
-One small corner (4px) for list rows, the triage card, buttons, segmented tracks and toasts; 3px on toolbar icon buttons, the search field and focus outlines. Accent swatches are the only circles. Edges are 1px hairlines; the only 2px strokes are the toggle outline and the focus ring. Blockquotes take a 3px strong-edge rule on the left.
+One small corner (4px) for list rows, the triage card, buttons, segmented tracks and toasts; 3px on toolbar icon buttons, the search field and focus outlines. Accent swatches are the only circles. Edges are 1px hairlines; the only 2px strokes are the toggle outline and the focus ring, and the only 3px strokes are the key-column marker and the blockquote rule. Blockquotes take a 3px strong-edge rule on the left, `1em 0` margins (no browser side indent) and 1rem of padding (0.75rem on phones), so a quote keeps the reading measure.
 
 ## Components
 
@@ -277,7 +295,7 @@ The signature object.
 - On a phone the reader is the screen, edge to edge. Below desk width the reader replaces the list, so a Back chevron leads its toolbar on phones and tablets alike. The byline's feed name is a button that opens that feed.
 
 ### Stack Heading
-The list's own heading line under the search field, at every width, on slip white: the feed, folder or "All Unread/Starred/Feeds" name in 600 ink, and the filter's count in graphite ("Feed B · 3 unread"). In the Unread view a labelled "Mark all read" text button sits at its right, so the bulk action names its scope; it hides while a search is active, since the server would mark the whole scope, not the results. On phones a labelled "Triage" button sits beside it, and the list's way back reads "‹ Feeds". It is how a phone keeps its place with the sidebar off-screen.
+The list's own heading line under the search field, at every width, on slip white: the feed, folder or "All Unread/Starred/Feeds" name in 600 ink, and the filter's count in graphite ("Feed B · 3 unread"). In the Unread view a labelled "Mark all read" text button sits at its right, so the bulk action names its scope; it hides while a search is active, since the server would mark the whole scope, not the results. On phones a labelled "Triage" button sits beside it whenever the scope has anything unread, in any filter, a clear 0.75rem from Mark all read, and the list's way back reads "‹ Feeds". It is how a phone keeps its place with the sidebar off-screen.
 
 ### Feed Sidebar
 - **Style:** the box ground: folders and feeds are plain rows (icon, name, mono counter), feeds indented under an expandable folder. The ⋯ actions button is hidden at rest on a mouse and appears on the hovered, selected or keyboard-focused row; on touch it stays faintly visible.
@@ -292,6 +310,9 @@ Unread, Starred, All, Triage at the head of the feed sidebar, named in text wher
 - **Star (triage):** the one triage verb without a gesture, so it is a labelled button drawn in the filing colour (1px filing border, filing text, slip white ground).
 - **Segmented toggle (settings):** a strong-edge track of equal segments with subtle dividers, 36px at a desk and 44px on touch; the active segment inverts to ink.
 
+### Key Column Marker
+Once h/l have been pressed, the column j/k act on is marked: a 3px filing-colour rule across the top edge of the column, like a tab, over a 12% filing-colour wash on its toolbar (the list's search field lets the wash show through at rest). At the top edge it can't be mistaken for a field's focus underline. Clicking into a column's content (the feed tree, the article list, the reader body) moves the marker there; toolbars, menus, a row's ⋯ button and dialogs leave it where it was. Under forced colours it is a 2px Highlight outline round the column.
+
 ### Dialogs and Menus
 Settings, the shortcut sheet, prompts and the palette are real dialogs: labelled, Tab stays inside, and page shortcuts pause while one is open (? still swaps Settings for the sheet). The scrim dims the page to 45% rather than blacking it out. The palette opened over a dialog closes alone on Esc and hands focus back to the dialog. Settings rows name their control groups, so a screen reader hears "Theme, group" before the choices. A "Skip to articles" link appears on the first Tab. Menus open onto their first item from the keyboard, move with the arrows, Home and End, and close when Tab leaves them; they carry a strong edge and a soft shadow in both themes, with shortcut keys in pencil at the right. The shortcut sheet groups its keys under small headings: Views, Moving around, Articles, Triage.
 
@@ -300,10 +321,10 @@ Settings, the shortcut sheet, prompts and the palette are real dialogs: labelled
 - **Form fields:** slip white; focus turns the border filing-coloured. Placeholders are pencil at full opacity.
 
 ### Triage Card
-One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with feed name and age, then domain (hidden for IP addresses and LAN names), then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". The excerpt keeps paragraph breaks, leaves code out, and is set in the reader's font, as is the article read in the card, so expanding never changes the voice. "Open original" is an ink underline, not the filing colour. A card with no body says "No preview in the feed" and offers the original instead of a read-here hint; tapping it opens the original. Triage starts in the folder being read, and its header keeps the view filters beside the wordmark as in the three-column layout. The swipe action pill is ink for mark-read and Instapaper orange for save. Swipes snap and fly at 0.3s; under reduced motion (the OS setting or Motion: Reduced) the card does not travel, it fades in place in 0.2s under the action's tint and pill. On phones the card sits low, near the thumb, with the folder picker under the legend at the bottom edge. With Instapaper connected the left swipe saves, so "Not now" (n) is an outlined button beside Star that leaves the card unread; on a phone it takes Listen's place, and at 320px Star drops to its glyph. Triage with nothing unread is one state, "Nothing unread in <folder>", with a way back to the list; the "All caught up" tally only follows a real run. Each new card is announced to screen readers ("Card 3 of 12: title"). A focused button, link or the folder picker keeps its own Enter, Space and arrows; the letters and Esc still triage. The finished screen titles itself "All caught up" at 1.5rem/650, with every count in ink. The legend ends ("‹ Keep unread" or "‹ Instapaper", "Mark read ›") are buttons drawn as legend text, so a mouse or a screen reader can triage at the desk; they never wrap, and Listen drops out below 360px.
+One slip, enlarged, on the box: slip white, strong edge, 4px corner, 1.5rem padding. Header line with feed name and age, then domain (hidden for IP addresses and LAN names), then the 1.4rem title, then a scrolling Literata excerpt (or the article itself, read in place), then a footer with the hint and "n of m". The excerpt keeps paragraph breaks, leaves code out, and is set in the reader's font, as is the article read in the card, so expanding never changes the voice. "Open original" is an ink underline, not the filing colour. A card with no body says "No preview in the feed" and offers the original instead of a read-here hint; tapping it opens the original. Triage starts in the folder being read, and its header keeps the view filters beside the wordmark as in the three-column layout. The swipe action pill is ink for mark-read, Instapaper orange for save, and graphite (`--text-secondary` under the slip colour, with a matching neutral edge tint) for keep unread when Instapaper isn't connected; orange appears only when the swipe really sends to Instapaper. Swipes snap and fly at 0.3s; under reduced motion (the OS setting or Motion: Reduced) the card does not travel, it fades in place in 0.2s under the action's tint and pill. On phones the card sits low, near the thumb, with the folder picker under the legend at the bottom edge. With Instapaper connected the left swipe saves, so "Not now" (n) is an outlined button beside Star that leaves the card unread; on a phone it takes Listen's place, and at 320px Star drops to its glyph. Triage with nothing unread is one state, "Nothing unread in <folder>", with a way back to the list; the "All caught up" tally only follows a real run. Each new card is announced to screen readers ("Card 3 of 12: title"). A focused button, link or the folder picker keeps its own Enter, Space and arrows; the letters and Esc still triage. The finished screen titles itself "All caught up" at 1.5rem/650, with every count in ink. The legend ends ("‹ Keep unread" or "‹ Instapaper", "Mark read ›") are buttons drawn as legend text, so a mouse or a screen reader can triage at the desk; they never wrap, and Listen drops out below 360px.
 
 ### Toasts
-An always-dark pill (4px corner, toast shadow), bottom centre in the thumb zone, auto-dismissing; the undo variant carries a lightened filing-colour action with its key, `u`, in an outlined key cap beside it at desk widths. Undo holds for 6s (10s for a delete), pauses while hovered or focused, and `u` reaches it from anywhere. Status text reaches screen readers through one live region; the offline banner is empty, and silent, until the connection drops.
+A dark pill on the `--toast-*` roles (near-black in light, a raised slate with a strong 1px rim in dark; 4px corner, toast shadow), bottom centre in the thumb zone, auto-dismissing; the undo variant carries a lightened filing-colour action with its key, `u`, in an outlined key cap beside it at desk widths. Triage's undo is docked instead: it sits in the action line between the card and the verbs, a row always sized for it (and shared with the swipe pill, which hides it while a card moves), so it never covers Star, Listen or the legend; only on the "All caught up" screen does it float in the thumb zone. The sync chip ("n changes not saved · Retry") floats with the toasts on phones and tablets; on the desk it centres in the article list column, so it never straddles the divider or covers the reader's text. Undo holds for 6s (10s for a delete), pauses while hovered or focused, and `u` reaches it from anywhere. Status text reaches screen readers through one live region; the offline banner is empty, and silent, until the connection drops. The banner is a quiet strip in the flow above the columns (`--status-attention-fill` under white, 500 weight, 1.75rem), not an overlay: while it shows the columns give up its height, so no toolbar control is covered.
 
 ### Accent Picker
 Seven circular swatches under "Filing colour", each previewing its own theme's value; the chosen one gets an ink ring and a check mark so the choice survives colour blindness.
