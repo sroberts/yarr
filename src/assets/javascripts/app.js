@@ -614,6 +614,8 @@ function rootComponent() { return {
       'paletteIndex': 0,
       // {feed, x, y} while a feed row's right-click menu is open, else null
       'feedContextMenu': null,
+      // the sidebar folder row under the pointer: Enter / Space toggle it (key.js)
+      'hoveredFolder': null,
       // {title, value, confirmLabel, onConfirm} while the themed input prompt
       // (rename/change-link/new-folder) is open, else null
       'promptModal': null,
