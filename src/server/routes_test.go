@@ -258,11 +258,12 @@ func TestManifestPWAFields(t *testing.T) {
 	}
 	// theme-matched dark surface (#126): the pre-redesign #1a1a2e/#ffffff drifted
 	// from the token system and gave dark users a white launch chrome.
-	if manifest["background_color"] != "#0E1116" {
-		t.Errorf("expected background_color #0E1116, got %v", manifest["background_color"])
+	// #246: it tracks the dark --surface-box, the page's first painted colour.
+	if manifest["background_color"] != "#141618" {
+		t.Errorf("expected background_color #141618, got %v", manifest["background_color"])
 	}
-	if manifest["theme_color"] != "#0E1116" {
-		t.Errorf("expected theme_color #0E1116, got %v", manifest["theme_color"])
+	if manifest["theme_color"] != "#141618" {
+		t.Errorf("expected theme_color #141618, got %v", manifest["theme_color"])
 	}
 	if manifest["display"] != "standalone" {
 		t.Errorf("expected display standalone, got %v", manifest["display"])
