@@ -952,7 +952,8 @@ function rootComponent() { return {
     // An image-only post (a comic, a photo) has no excerpt: the card shows its
     // first image instead. Parsed inertly from the same content the card
     // already renders when read in place; only http(s) URLs, and no tracking
-    // pixels.
+    // pixels (the sanitizer drops width/height, so the template also drops
+    // an image that loads at 2px or less).
     cardImage: function() {
       if (!this.currentCard || !this.currentCard.content) return null
       var doc = new DOMParser().parseFromString(this.currentCard.content, 'text/html')
@@ -1079,10 +1080,12 @@ function rootComponent() { return {
       if (oldVal === undefined) return  // do nothing, initial setup
       this.stopListen()  // halt read-aloud when leaving/entering triage or switching views
       if (oldVal === 'triage') {
-        this.flushCardAction()
+        // the counts reload once the pending write is sent, not before: a
+        // status read that beats the write would put the old count back
+        var flushed = this.flushCardAction()
         this.cardItems = []
         this.cardIndex = 0
-        this.refreshStats()
+        Promise.resolve(flushed).then(this.refreshStats.bind(this), this.refreshStats.bind(this))
       }
       if (newVal === 'triage') {
         this.previousFilter = oldVal || ''
@@ -1639,6 +1642,8 @@ function rootComponent() { return {
     loadMoreItems: function(event, el) {
       if (!this.itemsHasMore) return
       if (this.loading.items) return
+      // after a failure only the Retry button asks again, not every scroll
+      if (this.itemsError || !this.items.length) return
       if (this.itemListCloseToBottom()) return this.refreshItems(true)
       if (this.itemSelected && this.itemSelected === this.items[this.items.length - 1].id) return this.refreshItems(true)
     },
@@ -2321,6 +2326,7 @@ function rootComponent() { return {
       this.cardUndo = null
     },
     // Commit the pending swipe: fire the deferred server write and clear undo.
+    // Returns the write, so a caller can wait for it before reloading counts.
     flushCardAction: function() {
       var pending = this.cardUndo
       if (!pending) return
@@ -2331,7 +2337,7 @@ function rootComponent() { return {
         // The card is gone by now. Unreachable, the write waits in the outbox
         // and retries; refused, it has to say which article and put it back
         // in unread: nothing silently lost, including stars.
-        outbox.send({kind: 'status', id: item.id, status: pending.action, from: 'unread', title: item.title}).catch(function() {
+        return outbox.send({kind: 'status', id: item.id, status: pending.action, from: 'unread', title: item.title}).catch(function() {
           vm.revertCardRead(item)
           vm.showToast(vm.statusFailureText(pending.action, item) + '. It’s back in unread.', 5000)
         })
@@ -2339,7 +2345,7 @@ function rootComponent() { return {
         // Capture the stats object so a late failure adjusts the session that
         // owned this swipe, never a fresh one started by enter/changeCardFolder.
         var stats = this.cardStats
-        outbox.send({kind: 'instapaper', id: item.id, from: 'unread', title: item.title}).catch(function() {
+        return outbox.send({kind: 'instapaper', id: item.id, from: 'unread', title: item.title}).catch(function() {
           vm.reconcileFailedInstapaper(item, stats)
         })
       }

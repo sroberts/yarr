@@ -501,6 +501,8 @@ func (s *Server) handleItemList(c *router.Context) {
 				text := htmlutil.ExtractText(item.Content)
 				items[i].Title = htmlutil.TruncateText(text, 140)
 			}
+			// the triage card renders this with v-html, like the item view
+			items[i].Content = sanitizer.Sanitize(item.Link, item.Content)
 		}
 		c.JSON(http.StatusOK, map[string]interface{}{
 			"list":     items,
