@@ -113,10 +113,11 @@ func (s *Server) handleManifest(c *router.Context) {
 		"id":        startURL,
 		"start_url": startURL,
 		"scope":     startURL,
-		// match the dark base surface (#0E1116); the running chrome tracks the
+		// match the dark box ground (--surface-box, #141618), the first colour the
+		// page paints, so launch doesn't flash; the running chrome tracks the
 		// active theme via <meta name="theme-color"> media queries in the page.
-		"background_color": "#0E1116",
-		"theme_color":      "#0E1116",
+		"background_color": "#141618",
+		"theme_color":      "#141618",
 		"categories":       []string{"news", "productivity"},
 		"icons": []map[string]interface{}{
 			{
