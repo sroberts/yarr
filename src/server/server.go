@@ -43,6 +43,9 @@ type Server struct {
 	// (OUTPOST_AUTH=gateway): the gateway signs users in, so yarr presents
 	// no login of its own and guards state-changing requests by origin.
 	OutpostGateway bool
+	// OutpostVerifier, when set, checks the gateway's identity token on
+	// every request, so a process on the machine can't skip the gateway.
+	OutpostVerifier *OutpostVerifier
 	// InstapaperToken is an Instapaper API v2 access token from the
 	// environment. A token entered in Settings takes priority over it.
 	InstapaperToken string

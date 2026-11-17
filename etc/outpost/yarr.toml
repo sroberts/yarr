@@ -14,7 +14,12 @@ storage = "~/.outpost/data/yarr"
 tailscale_name = "yarr"
 
 # Behind Outpost's login gateway (OUTPOST_AUTH=gateway) yarr presents no login
-# of its own -- you sign in to Outpost -- so skip the rest of this block.
+# of its own -- you sign in to Outpost -- so skip the rest of this block. It
+# verifies the gateway's identity token on every request instead; to refuse
+# tokens minted for sibling apps, pin the names yarr is served at:
+#
+# [env]
+# YARR_OUTPOST_HOSTS = "yarr.tail.ts.net"
 #
 # Otherwise, optional: yarr serves the whole UI unauthenticated by default; on a
 # tailnet that is often what you want. To require a login, keep both secrets in files

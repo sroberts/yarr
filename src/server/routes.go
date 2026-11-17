@@ -32,6 +32,10 @@ func (s *Server) handler() http.Handler {
 
 	r.Use(gzip.Middleware)
 
+	if s.OutpostVerifier != nil {
+		r.Use(s.outpostIdentityGuard)
+	}
+
 	if s.OutpostGateway {
 		r.Use(gatewayOriginGuard)
 	}
