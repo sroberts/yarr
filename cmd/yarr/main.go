@@ -33,6 +33,13 @@ const (
 	// envOutpostAuth is "gateway" when Outpost's login gateway authenticates
 	// every request before it reaches yarr.
 	envOutpostAuth = "OUTPOST_AUTH"
+	// envOutpostIssuer and envOutpostJWKS come with the gateway: who signs
+	// X-Outpost-Identity, and where its public keys are.
+	envOutpostIssuer = "OUTPOST_ISSUER"
+	envOutpostJWKS   = "OUTPOST_JWKS_URL"
+	// envOutpostHosts optionally pins the names yarr is served at, so a
+	// token minted for a sibling app is refused even with a forged Host.
+	envOutpostHosts = "YARR_OUTPOST_HOSTS"
 )
 
 // Loopback by default: a supervised service is reached through the supervisor
@@ -430,6 +437,21 @@ func main() {
 		}
 	}
 	srv.OutpostGateway = gateway
+	if gateway {
+		// The gateway signs a token onto every request it passes; checking
+		// it is what stops another process on the machine from connecting
+		// to the loopback port and acting as the user.
+		issuer, jwksURL := os.Getenv(envOutpostIssuer), os.Getenv(envOutpostJWKS)
+		if issuer == "" || jwksURL == "" {
+			log.Fatalf("OUTPOST_AUTH=gateway needs $%s and $%s to verify the gateway's identity token", envOutpostIssuer, envOutpostJWKS)
+		}
+		srv.OutpostVerifier = server.NewOutpostVerifier(issuer, jwksURL, os.Getenv(envOutpostHosts))
+		if len(srv.OutpostVerifier.Hosts) > 0 {
+			log.Printf("OUTPOST_AUTH=gateway: verifying identity tokens for %s", strings.Join(srv.OutpostVerifier.Hosts, ", "))
+		} else {
+			log.Printf("OUTPOST_AUTH=gateway: verifying identity tokens; set $%s to pin yarr's hostnames", envOutpostHosts)
+		}
+	}
 
 	if username != "" && password != "" {
 		srv.Username = username

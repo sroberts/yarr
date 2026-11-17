@@ -93,6 +93,25 @@ every request has been signed in before it arrives. yarr then:
   beyond loopback, requests needn't pass through the gateway, so yarr keeps
   its own login and logs a warning. That includes `/mcp`: an MCP client gets in with an Outpost access
   token (`outpost token create`), which the gateway checks and strips.
+- **verifies the gateway's identity token.** yarr's port is on loopback, but
+  the gateway isn't the only thing on the machine: any other process could
+  connect to it directly. So every request but the `/up` healthcheck must carry
+  a valid `X-Outpost-Identity`: an EdDSA JWT signed by a key from
+  `$OUTPOST_JWKS_URL`, issued by `$OUTPOST_ISSUER`, unexpired, and for the host
+  the request was sent to. Anything else gets `401`, or `503` if yarr can't
+  fetch the keys at all. Outpost sets both variables alongside
+  `OUTPOST_AUTH=gateway`; if either is missing, yarr refuses to start. Keys are
+  cached for five minutes and refetched when a token names a new one, and a
+  cached key keeps working while the gateway is unreachable. If you set
+  `public_paths` in the manifest, yarr still refuses those requests, because
+  they carry no identity.
+- **can pin its own hostnames.** Outpost doesn't tell a service the name it is
+  served at, so by default the token's audience is checked against the
+  request's `Host`. That stops a process holding no token, but not a sibling
+  service replaying one the gateway handed it (each lasts 60 seconds) with its
+  own name as `Host`. Set `$YARR_OUTPOST_HOSTS` to the names yarr is served at,
+  comma-separated (`yarr.tail.ts.net,yarr-1.tail.ts.net`), and a token for any
+  other host is refused.
 - **refuses cross-origin writes.** Every app behind one gateway shares a site,
   and the gateway adds your identity to whatever reaches it, so a page on a
   sibling app could otherwise change yarr's state as you. Any request other
@@ -105,8 +124,8 @@ every request has been signed in before it arrives. yarr then:
 - **offers Outpost's sign-out.** The ⋯ menu gains "Sign out of Outpost", a
   same-origin `POST` to `/.outpost/logout`, which ends the whole Outpost login.
 
-yarr reads no `X-Outpost-*` header: it is a single-user app, so who is calling
-changes nothing. Its session cookie is named `auth`, clear of the gateway's
+yarr checks that `X-Outpost-Identity` is valid but ignores who it names: it
+is a single-user app, so who is calling changes nothing. Its session cookie is named `auth`, clear of the gateway's
 `outpost` / `__Host-outpost`, and it serves nothing under `/.outpost/`.
 
 Without the gateway none of this applies: yarr's own login works as before,
