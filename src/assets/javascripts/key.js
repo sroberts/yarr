@@ -237,22 +237,30 @@ document.addEventListener('keydown',function(event) {
     }
     return
   }
-  // Enter / Space with the pointer over a sidebar folder collapse or expand
-  // it. A control focused elsewhere (a button, link, field) keeps its own
+  // Enter / Space collapse or expand a sidebar folder: the one the keyboard
+  // cursor is on in the feeds column, otherwise the one under the pointer.
+  // A control focused elsewhere (a button, link, field) keeps its own
   // Enter / Space; focus on the page or a feed-list row doesn't. The folder
   // row's own chevron handles its keys itself and stops them.
-  if ((event.key === 'Enter' || event.key === ' ') && !vm.cardMode && vm.hoveredFolder &&
+  if ((event.key === 'Enter' || event.key === ' ') && !vm.cardMode &&
       !vm.feedContextMenu && !document.querySelector('.dropdown-menu.show')) {
-    var hovered = vm.hoveredFolder
     var focus = event.target
     var focusFree = focus === document.body || focus === document.documentElement ||
       (focus.closest && focus.closest('#feed-list-scroll') &&
         !focus.closest('button, a[href], [role="button"], select, textarea, input:not([type="radio"])'))
-    // mouseleave never fires for a row hidden or removed under the pointer
-    // (filter change, column hidden), so check the pointer is still on its row
-    var stillHovered = document.querySelector('#feed-list-scroll label.selectgroup:hover > input[value="folder:' + hovered.id + '"]')
+    var folderId = null
+    var selected = /^folder:(\d+)$/.exec(vm.feedSelected || '')
+    if (vm.keyColumnShown && vm.keyColumn === 'feeds' && selected) {
+      folderId = +selected[1]
+    } else if (vm.hoveredFolder && !vm.itemSelected &&
+        // with an article open, Space scrolls it wherever the pointer rests;
+        // mouseleave never fires for a row hidden or removed under the
+        // pointer (filter change, column hidden), so check it's still there
+        document.querySelector('#feed-list-scroll label.selectgroup:hover > input[value="folder:' + vm.hoveredFolder.id + '"]')) {
+      folderId = vm.hoveredFolder.id
+    }
     // a feed refresh replaces vm.folders, so act on the current object by id
-    var folder = stillHovered && vm.folders.find(function(f) { return f.id === hovered.id })
+    var folder = folderId !== null && vm.folders.find(function(f) { return f.id === folderId })
     if (focusFree && folder) {
       event.preventDefault()
       vm.toggleFolderExpanded(folder)
