@@ -248,9 +248,14 @@ document.addEventListener('keydown',function(event) {
     var focusFree = focus === document.body || focus === document.documentElement ||
       (focus.closest && focus.closest('#feed-list-scroll') &&
         !focus.closest('button, a[href], [role="button"], select, textarea, input:not([type="radio"])'))
-    if (focusFree && vm.folders.some(function(f) { return f.id === hovered.id })) {
+    // mouseleave never fires for a row hidden or removed under the pointer
+    // (filter change, column hidden), so check the pointer is still on its row
+    var stillHovered = document.querySelector('#feed-list-scroll label.selectgroup:hover > input[value="folder:' + hovered.id + '"]')
+    // a feed refresh replaces vm.folders, so act on the current object by id
+    var folder = stillHovered && vm.folders.find(function(f) { return f.id === hovered.id })
+    if (focusFree && folder) {
       event.preventDefault()
-      vm.toggleFolderExpanded(hovered)
+      vm.toggleFolderExpanded(folder)
       return
     }
   }

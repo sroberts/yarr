@@ -1,4 +1,4 @@
-var CACHE_NAME = 'yarr-v19';
+var CACHE_NAME = 'yarr-v20';
 // the app page itself, cached on each successful load so an installed app
 // opens with no connection (saved and starred articles are in IndexedDB)
 var SHELL_KEY = './';
@@ -59,7 +59,11 @@ self.addEventListener('fetch', function(event) {
   if (req.mode === 'navigate' && req.method === 'GET') {
     event.respondWith(
       fetch(req).then(function(response) {
-        if (response.ok && response.type === 'basic' && !response.redirected) {
+        // Only the app page itself: a navigation to /opml/export, an API
+        // URL or a gateway sign-in page must never become the shell.
+        var isShell = new URL(req.url).pathname === new URL(self.registration.scope).pathname &&
+          (response.headers.get('Content-Type') || '').indexOf('text/html') === 0;
+        if (isShell && response.ok && response.type === 'basic' && !response.redirected) {
           var copy = response.clone();
           caches.open(CACHE_NAME).then(function(cache) {
             cache.put(SHELL_KEY, copy);
