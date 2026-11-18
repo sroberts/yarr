@@ -253,7 +253,8 @@ document.addEventListener('keydown',function(event) {
     if (vm.keyColumnShown && vm.keyColumn === 'feeds' && selected) {
       folderId = +selected[1]
     } else if (vm.hoveredFolder && !vm.itemSelected &&
-        // with an article open, Space scrolls it wherever the pointer rests;
+        // with an article open, Enter / Space are left to the reader rather
+        // than a folder the pointer happens to rest on;
         // mouseleave never fires for a row hidden or removed under the
         // pointer (filter change, column hidden), so check it's still there
         document.querySelector('#feed-list-scroll label.selectgroup:hover > input[value="folder:' + vm.hoveredFolder.id + '"]')) {
