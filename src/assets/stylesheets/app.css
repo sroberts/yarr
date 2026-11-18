@@ -1481,7 +1481,8 @@ a {
     user-select: none;
     -webkit-touch-callout: none;
   }
-  .content, .content * {
+  .content, .content *,
+  .triage-card-excerpt, .triage-card-body, .triage-card-body * {
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: default;
@@ -1676,6 +1677,8 @@ a {
 .triage-card-empty { color: var(--text-secondary); }
 
 .triage-card-domain {
+  /* the excerpt takes the card's slack; the header lines keep their height */
+  flex-shrink: 0;
   font-size: 0.75rem;
   color: var(--text-tertiary);
   margin-top: -0.5rem;

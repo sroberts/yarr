@@ -947,6 +947,13 @@ function rootComponent() { return {
         el.append('\n\n')
       })
       var text = (doc.body.textContent || '').replace(/[ \t]*\n[ \t]*/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+      // Many feeds open their content with the feed name and the title the
+      // card already shows above it; drop those leading repeats.
+      var norm = function(s) { return (s || '').replace(/\s+/g, ' ').trim().toLowerCase() }
+      var repeats = [norm(this.currentCard.title), norm((this.feedsById[this.currentCard.feed_id] || {}).title)]
+      var lines = text.split('\n')
+      while (lines.length > 1 && (lines[0].trim() === '' || repeats.indexOf(norm(lines[0])) !== -1 && norm(lines[0]) !== '')) lines.shift()
+      text = lines.join('\n').trim()
       // the wide desk card has room to decide on more than a phone's worth
       var max = window.matchMedia('(min-width: 768px)').matches ? 1200 : 600
       return text.length > max ? text.substring(0, max) + '…' : text

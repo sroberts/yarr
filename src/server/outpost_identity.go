@@ -62,6 +62,9 @@ type OutpostVerifier struct {
 	fetched     time.Time
 	lastAttempt time.Time
 	lastLog     time.Time
+	// fetching is closed when the JWKS fetch under way finishes; nil when
+	// none is.
+	fetching chan struct{}
 }
 
 // NewOutpostVerifier makes a verifier for the given issuer and JWKS URL.
@@ -202,26 +205,39 @@ func (v *OutpostVerifier) audienceOK(r *http.Request, auds []string) bool {
 }
 
 // key returns the public key named kid, fetching the JWKS when the cache
-// is stale or doesn't know the key.
+// is stale or doesn't know the key. The fetch runs without v.mu held, so a
+// slow or hung JWKS endpoint stalls only the requests that need it: one
+// naming a key yarr already has carries on with the cached copy.
 func (v *OutpostVerifier) key(kid string) (ed25519.PublicKey, error) {
 	v.mu.Lock()
-	defer v.mu.Unlock()
-
 	now := v.clock()
 	key, known := v.keys[kid]
 	stale := now.Sub(v.fetched) >= outpostKeysTTL
-	if known && !stale {
+	if known && (!stale || v.fetching != nil) {
+		v.mu.Unlock()
 		return key, nil
 	}
-	if v.keys == nil || now.Sub(v.lastAttempt) >= outpostRefetchGap {
+	if wait := v.fetching; wait != nil {
+		// Someone is already fetching; share their result.
+		v.mu.Unlock()
+		<-wait
+		v.mu.Lock()
+	} else if v.keys == nil || now.Sub(v.lastAttempt) >= outpostRefetchGap {
 		v.lastAttempt = now
+		done := make(chan struct{})
+		v.fetching = done
+		v.mu.Unlock()
 		keys, err := v.fetch()
+		v.mu.Lock()
 		if err != nil {
 			v.logf("outpost: fetching %s: %v", v.JWKSURL, err)
 		} else {
 			v.keys, v.fetched = keys, now
 		}
+		v.fetching = nil
+		close(done)
 	}
+	defer v.mu.Unlock()
 	if v.keys == nil {
 		return nil, errKeysUnavailable
 	}
