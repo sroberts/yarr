@@ -259,7 +259,7 @@ document.addEventListener('keydown',function(event) {
         // than a folder the pointer happens to rest on;
         // mouseleave never fires for a row hidden or removed under the
         // pointer (filter change, column hidden), so check it's still there
-        document.querySelector('#feed-list-scroll label.selectgroup:hover > input[value="folder:' + vm.hoveredFolder.id + '"]')) {
+        document.querySelector('#feed-list-scroll .folder-row:hover input[value="folder:' + vm.hoveredFolder.id + '"]')) {
       folderId = vm.hoveredFolder.id
     }
     // a feed refresh replaces vm.folders, so act on the current object by id
