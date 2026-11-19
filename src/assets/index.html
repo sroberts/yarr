@@ -528,13 +528,13 @@
                      conveyed by a swapped glyph alone. -->
                 <button class="toolbar-item mr-1 d-block reader-back"
                         @click="closeArticle()"
-                        title="Back"
+                        title="Back (q)"
                         aria-label="Back to article list">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
                 <button class="toolbar-item"
                         @click="toggleItemStarred(itemSelectedDetails)"
-                        :title="itemSelectedDetails.status=='starred' ? 'Unstar' : 'Star'"
+                        :title="itemSelectedDetails.status=='starred' ? 'Unstar (s)' : 'Star (s)'"
                         aria-keyshortcuts="s"
                         aria-label="Star article"
                         :aria-pressed="itemSelectedDetails.status=='starred' ? 'true' : 'false'">
@@ -544,7 +544,7 @@
                 <!-- title tracks the action this click performs; the static
                      "Mark Unread" contradicted the icon on an unread item. -->
                 <button class="toolbar-item"
-                        :title="itemSelectedDetails.status=='unread' ? 'Mark Read' : 'Mark Unread'"
+                        :title="itemSelectedDetails.status=='unread' ? 'Mark Read (r)' : 'Mark Unread (r)'"
                         aria-keyshortcuts="r"
                         aria-label="Mark read"
                         :aria-pressed="itemSelectedDetails.status!='unread' ? 'true' : 'false'"
@@ -575,7 +575,7 @@
                         :class="{active: itemSelectedReadability}"
                         :disabled="!itemSelectedDetails.link"
                         @click="toggleReadability()"
-                        title="Read Here"
+                        title="Read Here (i)"
                         aria-keyshortcuts="i"
                         aria-label="Read here"
                         :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
@@ -587,7 +587,7 @@
                         aria-keyshortcuts="p"
                         :class="{active: ttsPlaying}"
                         @click="toggleListen()"
-                        :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'"
+                        :title="(ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen') + ' (p)'"
                         :aria-label="ttsPlaying ? (ttsPaused ? 'Resume reading aloud' : 'Pause reading aloud') : 'Listen to article'"
                         :aria-pressed="ttsPlaying ? 'true' : 'false'">
                     <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
@@ -598,7 +598,7 @@
                         :class="{active: itemSelectedDetails.instapaper_saved}"
                         :disabled="itemSelectedDetails.instapaper_saved || loading.instapaper || !itemSelectedDetails.link"
                         @click="saveToInstapaper(itemSelectedDetails)"
-                        title="Save to Instapaper"
+                        title="Save to Instapaper (Shift+I)"
                         aria-label="Save to Instapaper"
                         aria-keyshortcuts="Shift+I"
                         :aria-pressed="itemSelectedDetails.instapaper_saved ? 'true' : 'false'">
@@ -611,7 +611,7 @@
                         data-testid="reader-copy-link"
                         :disabled="!itemSelectedDetails.link"
                         @click="copyItemLink(itemSelectedDetails)"
-                        :title="linkCopied ? 'Link Copied' : 'Copy Link'"
+                        :title="linkCopied ? 'Link Copied' : 'Copy Link (c)'"
                         aria-keyshortcuts="c"
                         :aria-label="linkCopied ? 'Link copied to clipboard' : 'Copy article link'">
                     <span class="icon">
@@ -627,7 +627,7 @@
                    :class="{disabled: !itemSelectedDetails.link}"
                    :href="itemSelectedDetails.link || null"
                    :aria-disabled="!itemSelectedDetails.link"
-                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link" aria-label="Open original link in a new tab" aria-keyshortcuts="o">
+                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link (o)" aria-label="Open original link in a new tab" aria-keyshortcuts="o">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <!-- Phone overflow: nine 44px controls need 412px plus padding,
@@ -687,13 +687,13 @@
                      and the reader-nav bar under the article cover them, and
                      keeping them here overflowed the toolbar past the viewport
                      edge (unreachable). -->
-                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article" aria-label="Previous article" aria-keyshortcuts="k" :disabled="!items.length || itemSelected == items[0].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(-1)" title="Previous Article (k)" aria-label="Previous article" aria-keyshortcuts="k" :disabled="!items.length || itemSelected == items[0].id">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" aria-label="Next article" aria-keyshortcuts="j" :disabled="!items.length || itemSelected == items[items.length - 1].id">
+                <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article (j)" aria-label="Next article" aria-keyshortcuts="j" :disabled="!items.length || itemSelected == items[items.length - 1].id">
                     <span class="icon">{% inline "chevron-right.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex reader-close" @click="closeArticle()" title="Close Article" aria-label="Close article" aria-keyshortcuts="q">
+                <button class="toolbar-item d-none d-md-inline-flex reader-close" @click="closeArticle()" title="Close Article (q)" aria-label="Close article" aria-keyshortcuts="q">
                     <span class="icon">{% inline "x.svg" %}</span>
                 </button>
             </div>
