@@ -573,7 +573,7 @@ test('reader toolbar: icon controls carry accessible names and toggle state', as
   // read/unread: the tooltip names the action this click performs
   const read = page.getByRole('button', { name: 'Mark read' })
   await expect(read).toHaveAttribute('aria-pressed', 'true')   // starring marks it read
-  await expect(read).toHaveAttribute('title', 'Mark Unread')
+  await expect(read).toHaveAttribute('title', 'Mark Unread (r)')
 })
 
 test('focus ring follows the selected accent in both themes', async ({ page }) => {
@@ -753,7 +753,7 @@ test('copy link: button and c shortcut put the article URL on the clipboard', as
     .toBe('https://example.com/copy-me')
   // the button confirms in place, then reverts on its own
   await expect(copy).toHaveAttribute('title', 'Link Copied')
-  await expect(copy).toHaveAttribute('title', 'Copy Link', { timeout: 4000 })
+  await expect(copy).toHaveAttribute('title', 'Copy Link (c)', { timeout: 4000 })
 
   // keyboard path (the toast has to clear first so we see the new one land)
   await expect(page.locator('.app-toast')).toHaveCount(0, { timeout: 4000 })
@@ -807,7 +807,7 @@ test('copy link: reports failure instead of claiming success', async ({ page }) 
   await expect(page.getByRole('heading', { name: 'No Clipboard' })).toBeVisible()
   await page.getByTestId('reader-copy-link').click()
   await expect(page.locator('.app-toast')).toHaveText("Couldn't copy link")
-  await expect(page.getByTestId('reader-copy-link')).toHaveAttribute('title', 'Copy Link')
+  await expect(page.getByTestId('reader-copy-link')).toHaveAttribute('title', 'Copy Link (c)')
 })
 
 test('link-less item: every link-dependent reader control reads as disabled', async ({ page }) => {
@@ -825,14 +825,14 @@ test('link-less item: every link-dependent reader control reads as disabled', as
   const copy = page.getByTestId('reader-copy-link')
   await expect(copy).toBeDisabled()
 
-  const open = page.locator('#col-item .toolbar a.toolbar-item[title="Open Link"]')
+  const open = page.locator('#col-item .toolbar a.toolbar-item[title="Open Link (o)"]')
   await expect(open).toHaveAttribute('aria-disabled', 'true')
   expect(await open.getAttribute('href')).toBeNull()   // not a link, not focusable
   const dimmed = await open.evaluate(el => getComputedStyle(el).opacity)
   expect(Number(dimmed)).toBeLessThan(1)
 
-  await expect(page.locator('#col-item .toolbar button[title="Read Here"]')).toBeDisabled()
-  await expect(page.locator('#col-item .toolbar button[title="Save to Instapaper"]')).toBeDisabled()
+  await expect(page.locator('#col-item .toolbar button[title="Read Here (i)"]')).toBeDisabled()
+  await expect(page.locator('#col-item .toolbar button[title="Save to Instapaper (Shift+I)"]')).toBeDisabled()
 
   // the command palette offers the same verdict — it must not drift from the toolbar
   const offered = await page.evaluate(() => vm.paletteCommands()
