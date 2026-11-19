@@ -14,6 +14,9 @@ async function stubItems(page) {
     api.items.list = function () { return Promise.resolve({ list: list, has_more: false }) }
     api.items.get = function (id) { return Promise.resolve(list.find(function (i) { return i.id == id })) }
     api.items.update = function () { return Promise.resolve() }
+    // the feed and filter switches below must not persist into the shared
+    // e2e DB, or later tests load on the wrong view
+    api.settings.update = function () { return Promise.resolve() }
     // the empty e2e DB starts on the feed list (null): pick All Feeds
     vm.feedSelected = ''
     return vm.$nextTick().then(function () { return vm.refreshItems(false) })
