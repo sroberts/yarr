@@ -1265,6 +1265,21 @@ a {
 }
 @media (hover: hover) { .card-legend-btn:hover { background: var(--surface-hover); color: var(--text-primary); } }
 @media (pointer: coarse) { .card-legend-btn { min-height: 44px; } }
+/* With a keyboard, the legend names each verb's key; the caps stand in for
+   the swipe chevrons at the ends, since the arrow says the direction too. */
+.legend-kbd {
+  display: none;
+  padding: 0 .3rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--text-tertiary);
+  font: 600 .7rem/1.4 var(--font-sans);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card-view-legend .legend-kbd { display: inline-block; }
+  .card-view-legend .legend-chevron { display: none; }
+}
 @media (max-width: 359px) {
   /* 320px: the verbs keep one line; Listen stays in the reader */
   .card-view-legend .card-listen-btn { display: none; }
