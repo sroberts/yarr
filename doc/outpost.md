@@ -101,8 +101,10 @@ every request has been signed in before it arrives. yarr then:
   the request was sent to. Anything else gets `401`, or `503` if yarr can't
   fetch the keys at all. Outpost sets both variables alongside
   `OUTPOST_AUTH=gateway`; if either is missing, yarr refuses to start. Keys are
-  cached for five minutes and refetched when a token names a new one, and a
-  cached key keeps working while the gateway is unreachable. If you set
+  cached for five minutes and refetched when a token names a new one. While
+  the gateway is unreachable, a cached key keeps working for up to a day after
+  the last successful fetch (Outpost's grace for a retired key); after that,
+  requests get `503` until the keys can be fetched again. If you set
   `public_paths` in the manifest, yarr still refuses those requests, because
   they carry no identity.
 - **can pin its own hostnames.** Outpost doesn't tell a service the name it is

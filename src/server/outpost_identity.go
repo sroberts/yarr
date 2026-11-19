@@ -25,6 +25,11 @@ const (
 	// make yarr fetch the JWKS again, so forged kids can't turn yarr into a
 	// request loop against the gateway.
 	outpostRefetchGap = 10 * time.Second
+	// outpostKeysMaxAge caps how long cached keys keep verifying while the
+	// JWKS can't be fetched. It matches Outpost's KeyGracePeriod: a key
+	// retired since the last good fetch has left the JWKS by then, so past
+	// it yarr refuses (503) rather than trust a key Outpost has dropped.
+	outpostKeysMaxAge = 24 * time.Hour
 	// outpostLeeway absorbs clock skew between the gateway and yarr. Both
 	// run on one machine, so it can be small.
 	outpostLeeway = 5 * time.Second
@@ -213,7 +218,8 @@ func (v *OutpostVerifier) key(kid string) (ed25519.PublicKey, error) {
 	now := v.clock()
 	key, known := v.keys[kid]
 	stale := now.Sub(v.fetched) >= outpostKeysTTL
-	if known && (!stale || v.fetching != nil) {
+	expired := now.Sub(v.fetched) >= outpostKeysMaxAge
+	if known && !expired && (!stale || v.fetching != nil) {
 		v.mu.Unlock()
 		return key, nil
 	}
@@ -241,8 +247,12 @@ func (v *OutpostVerifier) key(kid string) (ed25519.PublicKey, error) {
 	if v.keys == nil {
 		return nil, errKeysUnavailable
 	}
-	// A stale set still verifies while the gateway can't be reached: Outpost
-	// keeps a retired key published for a day.
+	// A stale set still verifies while the gateway can't be reached, but only
+	// for as long as Outpost keeps a retired key published (a day).
+	if age := v.clock().Sub(v.fetched); age >= outpostKeysMaxAge {
+		v.logf("outpost: signing keys last fetched %s ago; refusing until %s is reachable", age.Round(time.Minute), v.JWKSURL)
+		return nil, errKeysUnavailable
+	}
 	if key, ok := v.keys[kid]; ok {
 		return key, nil
 	}

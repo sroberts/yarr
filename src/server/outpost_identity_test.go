@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -257,5 +258,53 @@ func TestOutpostIdentityGuard(t *testing.T) {
 	s.OutpostVerifier = NewOutpostVerifier(testIssuer, jwks.srv.URL, "")
 	if code := do("GET", "/api/status", token); code != http.StatusServiceUnavailable {
 		t.Errorf("JWKS unreachable: got %d, want 503", code)
+	}
+}
+
+// Cached keys outlive a JWKS outage only as long as Outpost keeps a retired
+// key published (#264): past that, the guard says 503, and the first good
+// fetch after the outage restores access.
+func TestOutpostVerifierKeysMaxAge(t *testing.T) {
+	now := time.Unix(1_800_000_000, 0)
+	k1 := newTestKey(t, "k1")
+	jwks := newFakeJWKS(t, k1)
+	v := NewOutpostVerifier(testIssuer, jwks.srv.URL, "")
+	v.now = func() time.Time { return now }
+	verify := func() error {
+		_, err := v.Verify(identityRequest("yarr.tail.ts.net", sign(t, k1, nil, claimsFor("yarr.tail.ts.net", now))))
+		return err
+	}
+
+	if err := verify(); err != nil {
+		t.Fatal(err)
+	}
+	jwks.down.Store(true)
+	now = now.Add(outpostKeysMaxAge - time.Second)
+	if err := verify(); err != nil {
+		t.Errorf("cached key just inside the max age: %v", err)
+	}
+	now = now.Add(time.Second)
+	if err := verify(); !errors.Is(err, errKeysUnavailable) {
+		t.Errorf("cached key at the max age: %v, want errKeysUnavailable", err)
+	}
+
+	// the guard turns it into a 503, not a 401
+	db, err := storage.New(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := NewServer(db, "127.0.0.1:8000")
+	s.OutpostGateway = true
+	s.OutpostVerifier = v
+	rec := httptest.NewRecorder()
+	s.handler().ServeHTTP(rec, identityRequest("yarr.tail.ts.net", sign(t, k1, nil, claimsFor("yarr.tail.ts.net", now))))
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("guard status past the max age: %d, want 503", rec.Code)
+	}
+
+	jwks.down.Store(false)
+	now = now.Add(outpostRefetchGap)
+	if err := verify(); err != nil {
+		t.Errorf("after the JWKS comes back: %v", err)
 	}
 }
