@@ -1124,8 +1124,15 @@ a {
   pointer-events: none;
 }
 #item-list-scroll .selectgroup:has(input:checked)::before,
-#item-list-scroll .selectgroup:has(input:checked) + .selectgroup::before {
+#item-list-scroll .selectgroup:has(input:checked) + .selectgroup::before,
+#item-list-scroll .selectgroup:has(.is-cursor)::before,
+#item-list-scroll .selectgroup:has(.is-cursor) + .selectgroup::before {
   background-color: transparent;
+}
+/* The article just closed keeps its place in hover grey, so j / k visibly
+   resume from it; keyboard focus on it adds the usual ring. */
+#item-list-scroll .selectgroup-label.item-row.is-cursor {
+  background-color: var(--surface-hover);
 }
 @media (hover: hover) {
   #item-list-scroll .selectgroup:hover::before,

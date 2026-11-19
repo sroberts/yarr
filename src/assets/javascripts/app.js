@@ -601,6 +601,8 @@ function rootComponent() { return {
       'items': [],
       'itemsHasMore': true,
       'itemSelected': null,
+      // the article last closed: j/k resume from its row, l reopens it
+      'itemCursor': null,
       'itemSelectedDetails': null,
       'itemSelectedReadability': '',
       'itemSearch': '',
@@ -1113,6 +1115,7 @@ function rootComponent() { return {
         return
       }
       this.itemSelected = null
+      this.itemCursor = null
       this.items = []
       this.itemsHasMore = true
       // the list doesn't wait on the setting: a failed save mustn't blank it
@@ -1123,6 +1126,7 @@ function rootComponent() { return {
     'feedSelected': function(newVal, oldVal) {
       if (oldVal === undefined) return  // do nothing, initial setup
       this.itemSelected = null
+      this.itemCursor = null
       this.items = []
       this.itemsHasMore = true
       this.refreshItems(false)
@@ -1137,6 +1141,7 @@ function rootComponent() { return {
       this.linkCopied = false
       this.itemOffline = false
       this.itemUnavailable = false
+      if (newVal !== null) this.itemCursor = null
       if (newVal === null) {
         this.itemSelectedDetails = null
         // no reader to scroll: j/k fall back to the article list
@@ -2457,16 +2462,37 @@ function rootComponent() { return {
       this.filteredFolderStats = statsFolders
       this.filteredTotalStats = statsTotal || null
     },
-    // navigation helper, navigate relative to selected item
+    // Close the open article but keep its row as the cursor, so j/k resume
+    // from it instead of the top of the list. Focus lands on that row.
+    closeArticle: function() {
+      if (this.itemSelected == null) return
+      var id = this.itemSelected
+      this.itemSelected = null
+      this.itemCursor = id
+      this.$nextTick(function() {
+        var input = document.querySelector('#item-list-scroll input[value="' + id + '"]')
+        if (!input) return
+        input.focus({preventScroll: true})
+        var label = input.closest('label')
+        if (label && label.scrollIntoView) label.scrollIntoView({block: 'nearest'})
+      })
+    },
+    // the cursor's index in the list, or -1 when there is none or it's gone
+    itemCursorIndex: function() {
+      var id = this.itemCursor
+      return id == null ? -1 : this.items.findIndex(function(x) { return x.id === id })
+    },
+    // navigation helper, navigate relative to the open item, else the cursor
     navigateToItem: function(relativePosition) {
       let vm = this
-      if (vm.itemSelected == null) {
+      var from = vm.itemSelected != null ? vm.itemSelected : vm.itemCursor
+      if (from == null) {
         // if no item is selected, select first
         if (vm.items.length !== 0) vm.itemSelected = vm.items[0].id
         return
       }
 
-      var itemPosition = vm.items.findIndex(function(x) { return x.id === vm.itemSelected })
+      var itemPosition = vm.items.findIndex(function(x) { return x.id === from })
       if (itemPosition === -1) {
         if (vm.items.length !== 0) vm.itemSelected = vm.items[0].id
         return

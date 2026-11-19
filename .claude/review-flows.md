@@ -23,7 +23,8 @@ Setup: a fresh DB with at least two feeds that have items
 3. Press `s`. → Article starred (toolbar star toggles on).
 4. Press `r`. → Read state toggles.
 5. Press `f` / `b`. → Article content scrolls a page forward / back.
-6. Press `q`. → Article closes.
+6. Press `q`. → Article closes; its row stays marked (hover grey, focus ring) and keeps focus.
+7. Press `j`. → The article after the closed one opens, not the first in the list. (`k` opens the one before; `l` reopens it.)
 
 ## 4. Column navigation (h / l)
 1. On load press `j`. → Moves articles exactly as in flow 3; no column marker shown.
@@ -57,7 +58,7 @@ Setup: a fresh DB with at least two feeds that have items
 ## 9. Phone layout (390x844)
 1. Open `/`. → Single column. A fresh DB saves `feed: ""` (All Feeds), so it opens on the All Feeds article list with a "‹ Feeds" back button; only a `null` selection shows the feed list first.
 2. Tap a feed, then an article. → Item list, then the reader, one column at a time.
-3. Back buttons return to the previous column.
+3. Back buttons return to the previous column. Back from the reader leaves the article's row marked and in view.
 
 ## 10. Offline and failure
 1. Make `/api` writes fail (in the page, patch `window.fetch` to reject PUTs; `set offline` doesn't block localhost). Star twice. → Sync chip "N changes not saved · Retry"; after repeated failures the "Can't reach yarr" strip appears above the columns without covering any toolbar control.
