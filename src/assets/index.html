@@ -300,28 +300,23 @@
                     </div>
                 </label>
                 <div v-for="folder in foldersWithFeeds">
-                    <label class="selectgroup mt-1"
-                           :class="{'d-none': mustHideFolder(folder)}"
-                           v-if="folder.id"
-                           @mouseenter="hoveredFolder = folder"
-                           @mouseleave="hoveredFolder === folder && (hoveredFolder = null)">
-                        <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected" v-if="folder.id"
+                    <!-- The disclosure is a real button beside the radio's
+                         label, not inside it (a label may hold no other
+                         labelable control), laid over the slot the label
+                         keeps for it. -->
+                    <div class="folder-row mt-1"
+                         :class="{'d-none': mustHideFolder(folder)}"
+                         v-if="folder.id"
+                         @mouseenter="hoveredFolder = folder"
+                         @mouseleave="hoveredFolder === folder && (hoveredFolder = null)">
+                    <label class="selectgroup">
+                        <input type="radio" name="feed" :value="'folder:'+folder.id" v-model="feedSelected"
                                @contextmenu.prevent="openFolderContextMenu(folder, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu'), returnFocus: $event.target})"
                                :aria-label="folder.title + (filteredFolderStats[folder.id] ? ', ' + filteredFolderStats[folder.id] + ' ' + countNoun : '')">
-                        <div class="selectgroup-label d-flex align-items-center w-100" v-if="folder.id"
+                        <div class="selectgroup-label d-flex align-items-center w-100"
                              :class="{'ctx-open': feedContextMenu && feedContextMenu.folder === folder}"
                              @contextmenu.prevent="openFolderContextMenu(folder, $event)">
-                            <span class="icon mr-2"
-                                  role="button"
-                                  tabindex="0"
-                                  :class="{expanded: folder.is_expanded}"
-                                  :aria-expanded="folder.is_expanded ? 'true' : 'false'"
-                                  :aria-label="(folder.is_expanded ? 'Collapse ' : 'Expand ') + folder.title"
-                                  @click.prevent.stop="toggleFolderExpanded(folder)"
-                                  @keydown.enter.prevent.stop="toggleFolderExpanded(folder)"
-                                  @keydown.space.prevent.stop="toggleFolderExpanded(folder)">
-                                {% inline "chevron-right.svg" %}
-                            </span>
+                            <span class="icon mr-2" aria-hidden="true"></span>
                             <span class="flex-fill text-left text-truncate">{{ folder.title }}</span>
                             <span class="counter text-right">{{ filteredFolderStats[folder.id] || '' }}</span>
                             <button type="button"
@@ -332,6 +327,15 @@
                             </button>
                         </div>
                     </label>
+                    <button type="button" class="folder-toggle"
+                            :aria-expanded="folder.is_expanded ? 'true' : 'false'"
+                            :aria-label="(folder.is_expanded ? 'Collapse ' : 'Expand ') + folder.title"
+                            @click="toggleFolderExpanded(folder)"
+                            @keydown.enter.stop
+                            @keydown.space.stop>
+                        <span class="icon" :class="{expanded: folder.is_expanded}">{% inline "chevron-right.svg" %}</span>
+                    </button>
+                    </div>
                     <div v-show="!folder.id || folder.is_expanded" class="mt-1" :class="{'pl-3': folder.id}">
                         <label class="selectgroup"
                               :class="{'d-none': mustHideFeed(feed)}"
