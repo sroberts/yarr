@@ -471,7 +471,7 @@
                        class="selectgroup">
                     <input type="radio" name="item" :value="item.id" v-model="itemSelected"
                            :aria-label="(item.title || 'untitled') + ', ' + ((feedsById[item.feed_id] || {}).title || '') + (item.status == 'unread' ? ', unread' : item.status == 'starred' ? ', starred' : '')">
-                    <div class="selectgroup-label item-row" :class="{'is-unread': item.status == 'unread'}">
+                    <div class="selectgroup-label item-row" :class="{'is-unread': item.status == 'unread', 'is-cursor': itemSelected == null && item.id === itemCursor}">
                         <span class="item-mark" aria-hidden="true">
                             <transition name="indicator">
                                 <span class="icon icon-small" v-if="item.status=='unread'">{% inline "circle-full.svg" %}</span>
@@ -515,7 +515,7 @@
                      v-if="itemSelectedDetails", which is null in exactly this
                      state — so on a phone this pane was the only thing visible
                      and had no focusable element at all. This is the way out. -->
-                <button class="btn btn-default" @click="itemSelected = null">Back to articles</button>
+                <button class="btn btn-default" @click="closeArticle()">Back to articles</button>
             </div>
             <div class="toolbar px-2 d-flex align-items-center" v-if="itemSelectedDetails">
                 <!-- Icon-only controls: every one carries an aria-label (title
@@ -523,7 +523,7 @@
                      touch), and the toggles carry aria-pressed so state isn't
                      conveyed by a swapped glyph alone. -->
                 <button class="toolbar-item mr-1 d-block reader-back"
-                        @click="itemSelected = null"
+                        @click="closeArticle()"
                         title="Back"
                         aria-label="Back to article list">
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
@@ -689,7 +689,7 @@
                 <button class="toolbar-item d-none d-md-inline-flex" @click="navigateToItem(+1)" title="Next Article" aria-label="Next article" aria-keyshortcuts="j" :disabled="!items.length || itemSelected == items[items.length - 1].id">
                     <span class="icon">{% inline "chevron-right.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex reader-close" @click="itemSelected=null" title="Close Article" aria-label="Close article" aria-keyshortcuts="q">
+                <button class="toolbar-item d-none d-md-inline-flex reader-close" @click="closeArticle()" title="Close Article" aria-label="Close article" aria-keyshortcuts="q">
                     <span class="icon">{% inline "x.svg" %}</span>
                 </button>
             </div>

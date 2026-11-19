@@ -97,9 +97,11 @@ var shortcutFunctions = {
     var next = keyColumns[keyColumns.indexOf(vm.keyColumn) + direction]
     if (!next) return
     if (next === 'article' && vm.itemSelected == null) {
-      // nothing open yet: open the first article and step into it
+      // nothing open: reopen the article last closed, else open the first,
+      // and step into it
       if (!vm.items.length) return
-      vm.navigateToItem(+1)
+      if (vm.itemCursorIndex() !== -1) vm.itemSelected = vm.itemCursor
+      else vm.navigateToItem(+1)
     }
     vm.keyColumn = next
   },
@@ -110,12 +112,12 @@ var shortcutFunctions = {
     helperFunctions.scrollContent(-1)
   },
   closeItem: function () {
-    vm.itemSelected = null
+    vm.closeArticle()
   },
   // Esc closes the article too, unless it is closing a menu first
   escapeItem: function () {
     if (vm.feedContextMenu || document.querySelector('.dropdown-menu.show')) return
-    vm.itemSelected = null
+    vm.closeArticle()
   },
   showAll() {
     vm.filterSelected = ''
