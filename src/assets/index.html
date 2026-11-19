@@ -222,7 +222,7 @@
                          screen reader that keeps the arrow keys, can triage too -->
                     <button type="button" class="card-legend-btn" @click="cardSwipeLeft()" aria-keyshortcuts="ArrowLeft"
                             :title="instapaperConfigured ? 'Save to Instapaper and go to the next card (←)' : 'Keep unread and go to the next card (←)'">
-                        <span class="icon mr-1">{% inline "chevron-left.svg" %}</span>{{ instapaperConfigured ? 'Instapaper' : 'Keep unread' }}
+                        <span class="icon mr-1 legend-chevron">{% inline "chevron-left.svg" %}</span><kbd class="legend-kbd mr-1" aria-hidden="true">←</kbd>{{ instapaperConfigured ? 'Instapaper' : 'Keep unread' }}
                     </button>
                     <div class="d-flex align-items-center">
                         <!-- star is the verb swipes can't carry: left and right
@@ -232,19 +232,20 @@
                                 @click="cardSkip()"
                                 title="Leave unread and go to the next card (n)"
                                 aria-keyshortcuts="n">
-                            Not now
+                            Not now<kbd class="legend-kbd ml-1" aria-hidden="true">n</kbd>
                         </button>
                         <button type="button" class="card-star-btn mr-2"
                                 @click="cardStar()"
                                 title="Star and go to the next card (s)"
                                 aria-keyshortcuts="s">
                             <span class="icon">{% inline "star.svg" %}</span>
-                            <span class="card-star-label">Star</span>
+                            <span class="card-star-label">Star</span><kbd class="legend-kbd ml-1" aria-hidden="true">s</kbd>
                         </button>
                         <button v-if="ttsSupported" type="button" class="toolbar-item card-listen-btn"
                                 :class="{active: ttsPlaying}"
                                 @click="toggleListen()"
-                                :title="ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen'"
+                                aria-keyshortcuts="p"
+                                :title="(ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen') + ' (p)'"
                                 :aria-label="ttsPlaying ? (ttsPaused ? 'Resume reading aloud' : 'Pause reading aloud') : 'Listen to article'"
                                 :aria-pressed="ttsPlaying ? 'true' : 'false'">
                             <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
@@ -254,7 +255,7 @@
                     </div>
                     <button type="button" class="card-legend-btn" @click="cardSwipeRight()" aria-keyshortcuts="ArrowRight"
                             title="Mark read and go to the next card (→)">
-                        Mark read<span class="icon ml-1">{% inline "chevron-right.svg" %}</span>
+                        Mark read<kbd class="legend-kbd ml-1" aria-hidden="true">→</kbd><span class="icon ml-1 legend-chevron">{% inline "chevron-right.svg" %}</span>
                     </button>
                 </div>
                 <!-- stats screen -->
@@ -947,13 +948,13 @@
                     </tr>
 
                     <tr><th colspan=2 scope="colgroup" class="shortcut-group">Triage (card mode)</th></tr>
-                    <tr><td><kbd>←</kbd></td>               <td>{{ instapaperConfigured ? 'save to Instapaper and mark read' : 'keep unread' }}</td></tr>
-                    <tr><td><kbd>→</kbd></td>               <td>mark read</td></tr>
+                    <tr><td><kbd>←</kbd><template v-if="instapaperConfigured"> <kbd>I</kbd></template></td>               <td>{{ instapaperConfigured ? 'save to Instapaper and mark read' : 'keep unread' }}</td></tr>
+                    <tr><td><kbd>→</kbd> <kbd>j</kbd> <kbd>r</kbd></td>  <td>mark read</td></tr>
                     <tr><td><kbd>s</kbd></td>               <td>star</td></tr>
                     <tr v-if="instapaperConfigured"><td><kbd>n</kbd></td>               <td>not now (leave unread)</td></tr>
-                    <tr><td><kbd>Enter</kbd></td>           <td>read the article here / back to the card</td></tr>
+                    <tr><td><kbd>Enter</kbd> <kbd>i</kbd></td>  <td>read the article here / back to the card</td></tr>
                     <tr><td><kbd>o</kbd></td>               <td>open original link</td></tr>
-                    <tr><td><kbd>u</kbd></td>               <td>undo last swipe</td></tr>
+                    <tr><td><kbd>u</kbd> <kbd>k</kbd></td>  <td>undo last swipe (back to the previous card)</td></tr>
                     <tr><td><kbd>Esc</kbd></td>             <td>back to the card, then exit triage</td></tr>
                     <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td> <td>leave triage for unread / starred / all</td></tr>
                 </table>

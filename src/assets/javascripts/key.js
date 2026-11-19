@@ -194,6 +194,14 @@ var codebindings = {
 var triageBindings = {
   "ArrowRight": function() { vm.cardSwipeRight() },
   "ArrowLeft":  function() { vm.cardSwipeLeft() },
+  // the list's keys mean the same here, so one grammar carries across:
+  // j / r read the card and move on, k steps back, i reads it here,
+  // I saves to Instapaper (the left swipe, when Instapaper is set up)
+  "j":          function() { vm.cardSwipeRight() },
+  "r":          function() { vm.cardSwipeRight() },
+  "k":          function() { if (vm.cardUndo) vm.undoCardAction() },
+  "i":          function() { vm.cardExpanded ? (vm.cardExpanded = false) : vm.cardTap() },
+  "I":          function() { if (vm.instapaperConfigured) vm.cardSwipeLeft() },
   "Enter":      function() { vm.cardExpanded ? (vm.cardExpanded = false) : vm.cardTap() },
   "s":          function() { vm.cardStar() },
   "n":          function() { vm.cardSkip() },
