@@ -1584,9 +1584,15 @@ function rootComponent() { return {
       return query
     },
     refreshFeeds: function() {
+      // Reloads overlap (startup, a stats poll, a feed edit): the newest one
+      // wins, so an older response landing late can't put back a folder or
+      // feed list that a later reload already replaced. Same guard as
+      // refreshItems' _itemsSeq.
+      var seq = this._feedsSeq = (this._feedsSeq || 0) + 1
       return Promise
         .all([api.folders.list(), api.feeds.list()])
         .then(function(values) {
+          if (seq !== vm._feedsSeq) return
           vm.folders = values[0]
           vm.feeds = values[1]
         })
