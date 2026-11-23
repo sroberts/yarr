@@ -1584,18 +1584,24 @@ function rootComponent() { return {
       return query
     },
     refreshFeeds: function() {
-      // Reloads overlap (startup, a stats poll, a feed edit): the newest one
-      // wins, so an older response landing late can't put back a folder or
+      // Reloads overlap (startup, an applied filter, a feed edit): the newest
+      // one wins, so an older response landing late can't put back a folder or
       // feed list that a later reload already replaced. Same guard as
-      // refreshItems' _itemsSeq.
+      // refreshItems' _itemsSeq. A superseded call settles with the newest
+      // load, so callers chaining on it still see the fresh lists.
       var seq = this._feedsSeq = (this._feedsSeq || 0) + 1
-      return Promise
+      var load = Promise
         .all([api.folders.list(), api.feeds.list()])
         .then(function(values) {
-          if (seq !== vm._feedsSeq) return
+          if (seq !== vm._feedsSeq) return vm._feedsLoad
           vm.folders = values[0]
           vm.feeds = values[1]
+        }, function(err) {
+          if (seq !== vm._feedsSeq) return vm._feedsLoad
+          throw err
         })
+      this._feedsLoad = load
+      return load
     },
     // Remember a view choice on the server. The list never waits on it, and a
     // failed save only means the choice isn't restored next visit, so it is
