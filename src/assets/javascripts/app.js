@@ -1594,14 +1594,31 @@ function rootComponent() { return {
         .all([api.folders.list(), api.feeds.list()])
         .then(function(values) {
           if (seq !== vm._feedsSeq) return vm._feedsLoad
-          vm.folders = values[0]
-          vm.feeds = values[1]
+          vm.applyFeedLists(values[0], values[1])
         }, function(err) {
           if (seq !== vm._feedsSeq) return vm._feedsLoad
           throw err
         })
       this._feedsLoad = load
       return load
+    },
+    // A delete hides a feed or folder at once, but the server keeps it until
+    // the undo toast closes. Any reload in that window (one already in flight,
+    // or an earlier delete's commit) returns it, so pending deletes are
+    // applied again to whatever lands. A folder's feeds go to Uncategorized,
+    // as the server will do on the real delete.
+    applyFeedLists: function(folders, feeds) {
+      var pending = this._pendingDeletes || {feeds: {}, folders: {}}
+      this.folders = folders.filter(function(f) { return !pending.folders[f.id] })
+      this.feeds = feeds.filter(function(f) { return !pending.feeds[f.id] })
+      this.feeds.forEach(function(f) { if (pending.folders[f.folder_id]) f.folder_id = null })
+    },
+    // Mark a feed or folder as deleted locally until its server delete lands
+    // (or is undone): `kind` is 'feeds' or 'folders'. Returns the unmark.
+    markPendingDelete: function(kind, id) {
+      var pending = this._pendingDeletes = this._pendingDeletes || {feeds: {}, folders: {}}
+      pending[kind][id] = true
+      return function() { delete pending[kind][id] }
     },
     // Remember a view choice on the server. The list never waits on it, and a
     // failed save only means the choice isn't restored next visit, so it is
@@ -1952,16 +1969,21 @@ function rootComponent() { return {
     // null), so mirror that locally and put them back on undo.
     deleteFolder: function(folder) {
       var moved = this.folderFeeds(folder)
+      var unmark = this.markPendingDelete('folders', folder.id)
       this.folders = this.folders.filter(function(f) { return f.id !== folder.id })
       moved.forEach(function(feed) { feed.folder_id = null })
       if (this.feedSelected === 'folder:' + folder.id) this.feedSelected = null
       this.showFeedUndo('Deleted folder “' + folder.title + '”', function() {
+        unmark()
         moved.forEach(function(feed) { feed.folder_id = folder.id })
         vm.folders = vm.folders.concat([folder]).sort(function(a, b) {
           return a.title.localeCompare(b.title)
         })
+        // a reload since the delete replaced the feed objects restored above
+        vm.refreshFeeds()
       }, function() {
-        api.folders.delete(folder.id).then(function() {
+        api.folders.delete(folder.id).finally(function() {
+          unmark()
           vm.refreshStats()
           vm.refreshFeeds()
         })
@@ -1991,14 +2013,19 @@ function rootComponent() { return {
     // mis-delete is one click to reverse (the feed is only really gone once the
     // undo window closes). Mirrors the swipe-card deferred-write pattern.
     deleteFeed: function(feed) {
+      var unmark = this.markPendingDelete('feeds', feed.id)
       this.feeds = this.feeds.filter(function(f) { return f.id !== feed.id })
       if (this.feedSelected === 'feed:' + feed.id) this.feedSelected = null
       this.refreshStats()
       this.showFeedUndo('Deleted “' + feed.title + '”', function() {
         // Nothing was deleted server-side; refetch to restore the row.
+        unmark()
         vm.refreshFeeds().then(function() { vm.refreshStats() })
       }, function() {
-        api.feeds.delete(feed.id).then(function() {
+        // unmark once the server has answered either way: a failed delete
+        // leaves the feed there, and the reload shows it again
+        api.feeds.delete(feed.id).finally(function() {
+          unmark()
           vm.refreshStats()
           vm.refreshFeeds()
         })
