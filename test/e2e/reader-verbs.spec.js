@@ -1,8 +1,7 @@
 // @ts-check
 const { test, expect } = require('@playwright/test')
 
-// Reader toolbar tooltips name their key (opening an article marks it read,
-// so its read toggle offers Mark Unread), and the palette carries the open
+// Reader toolbar tooltips name their key, and the palette carries the open
 // article's verbs under the words a reader would type (#262). The e2e DB has
 // no feeds, so the list and reads are stubbed.
 async function openArticle(page) {
@@ -34,8 +33,8 @@ async function palette(page, query) {
 test('reader toolbar: each tooltip names its key', async ({ page }) => {
   await openArticle(page)
   const bar = page.locator('#col-item .toolbar')
-  await expect(bar.getByRole('button', { name: 'Star article' })).toHaveAttribute('title', 'Star (s)')
-  await expect(bar.getByRole('button', { name: 'Mark read' })).toHaveAttribute('title', 'Mark Unread (r)')
+  await expect(bar.getByRole('button', { name: 'Starred', exact: true })).toHaveAttribute('title', 'Star (s)')
+  await expect(bar.getByRole('button', { name: 'Read', exact: true })).toHaveAttribute('title', 'Mark unread (r)')
   await expect(bar.getByRole('button', { name: 'Save to Instapaper' })).toHaveAttribute('title', 'Save to Instapaper (Shift+I)')
   await expect(bar.getByRole('button', { name: 'Next article' })).toHaveAttribute('title', 'Next Article (j)')
   await expect(bar.getByRole('button', { name: 'Close article' })).toHaveAttribute('title', 'Close Article (q)')
