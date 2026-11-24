@@ -2091,6 +2091,16 @@ a {
   opacity: .45;
   cursor: default;
 }
+/* the keep verbs between Previous and Next: square 44px icon targets */
+.reader-nav-verbs { display: flex; align-items: center; }
+.reader-nav-icon { justify-content: center; width: 44px; padding: 0; }
+.reader-nav-icon.active { color: var(--text-primary); }
+/* five 44px targets plus two labels fill a 320px phone: the position label
+   shows only where there's room for it */
+@media (max-width: 399.98px) {
+  .reader-nav .reader-slip-label { display: none; }
+  .reader-nav-btn:not(.reader-nav-icon) { padding: 0 .5rem; }
+}
 .reader-nav-btn:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
