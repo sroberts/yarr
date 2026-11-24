@@ -1788,7 +1788,13 @@ function rootComponent() { return {
           if (item.status == 'read' && !readDuring[item.id]) item.status = 'unread'
         })
       }
-      this.showFeedUndo('Marked ' + name + ' read', function() {
+      // Say how much this hit, so a slip of Shift (R for r) is noticed while
+      // undo is still on screen: "Marked 90 read in all feeds".
+      var count = Object.keys(prevStats).reduce(function(n, id) { return n + prevStats[id] }, 0)
+      var label = count
+        ? 'Marked ' + count + ' read in ' + name
+        : 'Marked ' + name + ' read'
+      this.showFeedUndo(label, function() {
         settle()
         revert()
         Object.keys(prevStats).forEach(function(id) {
