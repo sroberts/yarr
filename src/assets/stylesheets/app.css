@@ -2047,7 +2047,7 @@ a {
 }
 
 /* Reader toolbar groups, separated by space rather than dividers: state
-   (star, read) · reading (appearance, read here, listen) · send (Instapaper,
+   (star, read) · reading (appearance, reader view, listen) · send (Instapaper,
    copy, open). Margin only, so every control keeps one width. Phones fold the
    secondary actions into the overflow menu, so the grouping is desktop-only. */
 @media (min-width: 768px) {

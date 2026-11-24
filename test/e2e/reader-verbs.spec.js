@@ -33,8 +33,8 @@ async function palette(page, query) {
 test('reader toolbar: each tooltip names its key', async ({ page }) => {
   await openArticle(page)
   const bar = page.locator('#col-item .toolbar')
-  await expect(bar.getByRole('button', { name: 'Starred', exact: true })).toHaveAttribute('title', 'Starred (s)')
-  await expect(bar.getByRole('button', { name: 'Read', exact: true })).toHaveAttribute('title', 'Read (r)')
+  await expect(bar.getByRole('button', { name: 'Starred', exact: true })).toHaveAttribute('title', 'Star (s)')
+  await expect(bar.getByRole('button', { name: 'Read', exact: true })).toHaveAttribute('title', 'Mark unread (r)')
   await expect(bar.getByRole('button', { name: 'Save to Instapaper' })).toHaveAttribute('title', 'Save to Instapaper (Shift+I)')
   await expect(bar.getByRole('button', { name: 'Next article' })).toHaveAttribute('title', 'Next Article (j)')
   await expect(bar.getByRole('button', { name: 'Close article' })).toHaveAttribute('title', 'Close Article (q)')

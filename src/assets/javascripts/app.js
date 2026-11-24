@@ -1341,7 +1341,7 @@ function rootComponent() { return {
         {group: 'Actions', label: det && det.status == 'starred' ? 'Unstar article' : 'Star article', hint: 's', enabled: hasItem, run: S.toggleItemStarred},
         {group: 'Actions', label: det && det.status == 'unread' ? 'Mark article read' : 'Mark article unread', hint: 'r', enabled: hasItem, run: S.toggleItemRead},
         {group: 'Actions', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !!det.link && !det.instapaper_saved, run: S.saveToInstapaper},
-        {group: 'Actions', label: 'Read here (readability)', hint: 'i', enabled: hasItem && det && !!det.link, run: S.toggleReadability},
+        {group: 'Actions', label: 'Reader view', hint: 'i', enabled: hasItem && det && !!det.link, run: S.toggleReadability},
         {group: 'Actions', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (hasItem || this.cardMode), run: S.toggleListen},
         {group: 'Actions', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
         {group: 'Actions', label: 'Copy link',              hint: 'c', enabled: hasItem && det && !!det.link, run: S.copyItemLink},

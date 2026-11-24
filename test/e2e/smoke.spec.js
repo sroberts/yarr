@@ -570,10 +570,10 @@ test('reader toolbar: icon controls carry accessible names and toggle state', as
   await star.click()
   await expect(star).toHaveAttribute('aria-pressed', 'true')
 
-  // read/unread: a stable name, pressed carries the state, the tooltip matches
+  // read/unread: a stable name, pressed carries the state, the tooltip names the click
   const read = page.getByRole('button', { name: 'Read', exact: true })
   await expect(read).toHaveAttribute('aria-pressed', 'true')   // starring marks it read
-  await expect(read).toHaveAttribute('title', 'Read (r)')
+  await expect(read).toHaveAttribute('title', 'Mark unread (r)')
 })
 
 test('focus ring follows the selected accent in both themes', async ({ page }) => {
@@ -649,14 +649,14 @@ test('readability: a failed crawl stops the spinner and says so', async ({ page 
   })
   await expect(page.getByRole('heading', { name: 'Crawl Me' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Read here' }).click()
+  await page.getByRole('button', { name: 'Reader view' }).click()
   await expect(page.locator('.app-toast')).toHaveText('Could not extract this page')
   expect(await page.evaluate(() => vm.loading.readability)).toBe(false)
   await expect(page.locator('#col-item .icon-loading')).toHaveCount(0)
 
   // a crawl that resolves without content is also a failure, not a blank pane
   await page.evaluate(() => { api.crawl = function () { return Promise.resolve({}) } })
-  await page.getByRole('button', { name: 'Read here' }).click()
+  await page.getByRole('button', { name: 'Reader view' }).click()
   await expect(page.locator('.app-toast')).toHaveText('Could not extract this page')
   expect(await page.evaluate(() => vm.loading.readability)).toBe(false)
 })
@@ -831,7 +831,7 @@ test('link-less item: every link-dependent reader control reads as disabled', as
   const dimmed = await open.evaluate(el => getComputedStyle(el).opacity)
   expect(Number(dimmed)).toBeLessThan(1)
 
-  await expect(page.locator('#col-item .toolbar button[title="Read Here (i)"]')).toBeDisabled()
+  await expect(page.locator('#col-item .toolbar button[title="Reader view (i)"]')).toBeDisabled()
   await expect(page.locator('#col-item .toolbar button[title="Save to Instapaper (Shift+I)"]')).toBeDisabled()
 
   // the command palette offers the same verdict — it must not drift from the toolbar
@@ -840,7 +840,7 @@ test('link-less item: every link-dependent reader control reads as disabled', as
     .map(c => c.label))
   expect(offered).not.toContain('Copy link')
   expect(offered).not.toContain('Open original link')
-  expect(offered).not.toContain('Read here (readability)')
+  expect(offered).not.toContain('Reader view')
   expect(offered).not.toContain('Save to Instapaper')
 })
 
@@ -912,7 +912,7 @@ test('reader overflow menu: opens by keyboard, acts, and closes', async ({ page 
   // every action that left the toolbar is reachable here
   const menu = page.locator('[data-testid="reader-more"] .dropdown-menu')
   await expect(menu.locator('.dropdown-item')).toHaveText([
-    'Read here', 'Listen', 'Copy link', 'Open link',
+    'Reader view', 'Listen', 'Copy link', 'Open link',
   ])
 
   // Escape closes it and hands focus back to the toggle (not the page)
@@ -936,7 +936,7 @@ test('reader overflow menu: a link-less item disables the same actions the toolb
   await page.locator('[data-testid="reader-more"] > button').click()
 
   const menu = page.locator('[data-testid="reader-more"] .dropdown-menu')
-  await expect(menu.locator('button', { hasText: 'Read here' })).toBeDisabled()
+  await expect(menu.locator('button', { hasText: 'Reader view' })).toBeDisabled()
   await expect(menu.locator('button', { hasText: 'Copy link' })).toBeDisabled()
 
   const open = menu.locator('a.dropdown-item')

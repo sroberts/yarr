@@ -535,19 +535,19 @@
                 </button>
                 <button class="toolbar-item"
                         @click="toggleItemStarred(itemSelectedDetails)"
-                        title="Starred (s)"
+                        :title="itemSelectedDetails.status=='starred' ? 'Unstar (s)' : 'Star (s)'"
                         aria-keyshortcuts="s"
                         aria-label="Starred"
                         :aria-pressed="itemSelectedDetails.status=='starred' ? 'true' : 'false'">
                     <span class="icon marker" v-if="itemSelectedDetails.status=='starred'" >{% inline "star-full.svg" %}</span>
                     <span class="icon" v-else-if="itemSelectedDetails.status!='starred'" >{% inline "star.svg" %}</span>
                 </button>
-                <!-- Both toggles carry a stable state name ("Starred", "Read"),
-                     with aria-pressed saying whether it's on, and the tooltip
-                     matches it. A tooltip naming the next action ("Mark Unread")
-                     contradicted "Mark read, pressed" for a screen reader. -->
+                <!-- Both toggles carry a stable state name ("Starred", "Read")
+                     with aria-pressed saying whether it's on, which is what a
+                     screen reader announces; the tooltip, which only a pointer
+                     sees, names the action the click performs. -->
                 <button class="toolbar-item"
-                        title="Read (r)"
+                        :title="itemSelectedDetails.status=='unread' ? 'Mark read (r)' : 'Mark unread (r)'"
                         aria-keyshortcuts="r"
                         aria-label="Read"
                         :aria-pressed="itemSelectedDetails.status!='unread' ? 'true' : 'false'"
@@ -578,9 +578,9 @@
                         :class="{active: itemSelectedReadability}"
                         :disabled="!itemSelectedDetails.link"
                         @click="toggleReadability()"
-                        title="Read Here (i)"
+                        title="Reader view (i)"
                         aria-keyshortcuts="i"
-                        aria-label="Read here"
+                        aria-label="Reader view"
                         :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
                 </button>
@@ -655,7 +655,7 @@
                             :aria-pressed="itemSelectedReadability ? 'true' : 'false'"
                             @click="toggleReadability()">
                         <span class="icon mr-1">{% inline "book-open.svg" %}</span>
-                        Read here
+                        Reader view
                     </button>
                     <button class="dropdown-item"
                             v-if="ttsSupported"
@@ -943,7 +943,7 @@
                     <tr><td><kbd>s</kbd></td>               <td>mark starred / unstarred</td></tr>
                     <tr><td><kbd>o</kbd></td>               <td>open link</td></tr>
                     <tr><td><kbd>c</kbd></td>               <td>copy link</td></tr>
-                    <tr><td><kbd>i</kbd></td>               <td>read here</td> </tr>
+                    <tr><td><kbd>i</kbd></td>               <td>reader view (the article from its site)</td> </tr>
                     <tr><td><kbd>I</kbd></td>               <td>save to Instapaper</td></tr>
                     <tr><td><kbd>p</kbd></td>               <td>listen to article (play / pause)</td></tr>
                     <tr><td><kbd>f</kbd> <kbd>b</kbd></td>  <td>scroll content forward / backward</td>
