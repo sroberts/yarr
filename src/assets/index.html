@@ -954,6 +954,30 @@
             <div v-else-if="settings=='shortcuts'">
                 <p class="cursor-default" role="heading" aria-level="2"><b>Keyboard Shortcuts</b></p>
 
+                <!-- The reading loop leads: it's what the sheet is opened for.
+                     Two columns where there's room, so it doesn't scroll. -->
+                <div class="shortcut-sheet">
+                <table class="table table-borderless table-sm table-compact m-0 shortcut-table">
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Reading loop</th></tr>
+                    <tr><td><kbd>j</kbd> <kbd>k</kbd></td>  <td>next / prev in the current column (feed, article, or scroll the reader)</td></tr>
+                    <tr><td><kbd>r</kbd></td>               <td>mark read / unread</td></tr>
+                    <tr><td><kbd>s</kbd></td>               <td>star / unstar</td></tr>
+                    <tr><td><kbd>I</kbd></td>               <td>save to Instapaper</td></tr>
+                    <tr><td><kbd>o</kbd></td>               <td>open the original link</td></tr>
+                    <tr><td><kbd>u</kbd></td>               <td>undo the last delete, move or mark all read</td></tr>
+
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Moving around</th></tr>
+                    <tr><td><kbd>h</kbd> <kbd>l</kbd></td>  <td>move to the column left / right</td></tr>
+                    <tr><td><kbd>Enter</kbd> <kbd>Space</kbd></td>  <td>collapse / expand the selected folder (feeds column) or the one under the pointer</td></tr>
+                    <tr><td><kbd>q</kbd> <kbd>Esc</kbd></td>  <td>close article</td></tr>
+                    <tr><td><kbd>f</kbd> <kbd>b</kbd></td>  <td>scroll content forward / backward</td></tr>
+
+                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Articles</th></tr>
+                    <tr><td><kbd>R</kbd></td>               <td>mark all read</td></tr>
+                    <tr><td><kbd>c</kbd></td>               <td>copy link</td></tr>
+                    <tr><td><kbd>i</kbd></td>               <td>reader view (the article from its site)</td></tr>
+                    <tr><td><kbd>p</kbd></td>               <td>listen to article (play / pause)</td></tr>
+                </table>
                 <table class="table table-borderless table-sm table-compact m-0 shortcut-table">
                     <tr><th colspan=2 scope="colgroup" class="shortcut-group">Views</th></tr>
                     <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td>
@@ -962,25 +986,6 @@
                     <tr><td><kbd>/</kbd></td>               <td>focus the search bar</td></tr>
                     <tr><td><kbd>{{ isMac ? '⌘' : 'Ctrl' }}</kbd> <kbd>K</kbd></td>  <td>command palette (feeds &amp; actions)</td></tr>
                     <tr><td><kbd>?</kbd></td>               <td>show keyboard shortcuts</td></tr>
-                    <tr><td><kbd>u</kbd></td>               <td>undo the last delete, move or mark all read</td></tr>
-
-                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Moving around</th></tr>
-                    <tr><td><kbd>j</kbd> <kbd>k</kbd></td>  <td>next / prev in the current column (feed, article, or scroll the reader)</td></tr>
-                    <tr><td><kbd>h</kbd> <kbd>l</kbd></td>  <td>move to the column left / right</td></tr>
-                    <tr><td><kbd>Enter</kbd> <kbd>Space</kbd></td>  <td>collapse / expand the selected folder (feeds column) or the one under the pointer</td></tr>
-                    <tr><td><kbd>q</kbd> <kbd>Esc</kbd></td>  <td>close article</td></tr>
-
-                    <tr><th colspan=2 scope="colgroup" class="shortcut-group">Articles</th></tr>
-                    <tr><td><kbd>R</kbd></td>               <td>mark all read</td></tr>
-                    <tr><td><kbd>r</kbd></td>               <td>mark read / unread</td></tr>
-                    <tr><td><kbd>s</kbd></td>               <td>mark starred / unstarred</td></tr>
-                    <tr><td><kbd>o</kbd></td>               <td>open link</td></tr>
-                    <tr><td><kbd>c</kbd></td>               <td>copy link</td></tr>
-                    <tr><td><kbd>i</kbd></td>               <td>reader view (the article from its site)</td> </tr>
-                    <tr><td><kbd>I</kbd></td>               <td>save to Instapaper</td></tr>
-                    <tr><td><kbd>p</kbd></td>               <td>listen to article (play / pause)</td></tr>
-                    <tr><td><kbd>f</kbd> <kbd>b</kbd></td>  <td>scroll content forward / backward</td>
-                    </tr>
 
                     <tr><th colspan=2 scope="colgroup" class="shortcut-group">Triage (card mode)</th></tr>
                     <tr><td><kbd>←</kbd><template v-if="instapaperConfigured"> <kbd>I</kbd></template></td>               <td>{{ instapaperConfigured ? 'save to Instapaper and mark read' : 'keep unread' }}</td></tr>
@@ -993,6 +998,7 @@
                     <tr><td><kbd>Esc</kbd></td>             <td>back to the card, then exit triage</td></tr>
                     <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td> <td>leave triage for unread / starred / all</td></tr>
                 </table>
+                </div>
             </div>
         </modal>
         <!-- One live region that outlives the toasts: a region created together

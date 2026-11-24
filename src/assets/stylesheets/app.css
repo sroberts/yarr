@@ -761,7 +761,7 @@ select.form-control:not([multiple]):not([size]) {
   flex-shrink: 0;
   font-size: 0.75rem;
   padding: 0.05rem 0.35rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--text-tertiary);
   border-radius: var(--radius-control);
   /* drop the base kbd's dark key: pencil on near-black read at 2.6:1 */
   background: transparent;
@@ -1221,8 +1221,10 @@ a {
 
 /* a menu item's shortcut, quiet at its right edge */
 .menu-kbd {
+  min-width: 0;
   margin-left: auto;
-  padding-left: 1.25rem;
+  padding: 0 0 0 1.25rem;
+  border: 0;
   background: none;
   color: var(--text-tertiary);
   font-size: .75rem;
@@ -1239,6 +1241,31 @@ a {
   border: 1px solid var(--border-strong);
 }
 
+/* One key cap everywhere a key is named (the sheet, empty states, hints):
+   outlined in the theme rather than base.css's fixed dark key, which
+   vanished into the dark theme's panels. The outline uses the tertiary text
+   colour so the cap's edge clears 3:1 against its surface. */
+kbd {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 .35em;
+  border: 1px solid var(--text-tertiary);
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--text-secondary);
+  font: 500 .75rem/1.5 var(--font-mono);
+  text-align: center;
+}
+kbd + kbd { margin-left: .2em; }
+/* one column: the second table's first group gets a group's spacing */
+.shortcut-sheet .shortcut-table + .shortcut-table tr:first-child .shortcut-group { padding-top: 1rem; }
+/* Two columns where the window allows, so the sheet fits without scrolling */
+@media (min-width: 1024px) {
+  .shortcut-sheet .shortcut-table + .shortcut-table tr:first-child .shortcut-group { padding-top: .25rem; }
+  .custom-modal .modal-dialog:has(.shortcut-sheet) { max-width: 860px; }
+  .shortcut-sheet { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2rem; }
+}
+
 /* the shortcut sheet's group headings */
 .shortcut-table .shortcut-group {
   padding-top: 1rem;
@@ -1250,6 +1277,8 @@ a {
 .shortcut-table tr:first-child .shortcut-group { padding-top: .25rem; }
 /* a row's keys stay on one line ("1 2 3", "Ctrl K") */
 .shortcut-table td:first-child { white-space: nowrap; }
+/* both tables share one key column, so descriptions line up when stacked */
+.shortcut-sheet .shortcut-table td:first-child { width: 6.75rem; }
 
 /* the triage legend's two verbs, drawn as the legend but pressable */
 .card-legend-btn {
@@ -1269,8 +1298,9 @@ a {
    the swipe chevrons at the ends, since the arrow says the direction too. */
 .legend-kbd {
   display: none;
+  min-width: 0;
   padding: 0 .3rem;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--text-tertiary);
   border-radius: var(--radius-control);
   background: none;
   color: var(--text-tertiary);
