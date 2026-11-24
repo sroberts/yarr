@@ -1325,48 +1325,64 @@ function rootComponent() { return {
       var feedSel = this.current.type == 'feed'
       var cf = this.current.feed
       var undoLabel = this.feedUndo ? this.feedUndo.label : this.cardUndoLabel
-      var cmds = [
-        {group: 'Actions', label: 'Undo: ' + undoLabel,     hint: 'u', enabled: !!(this.feedUndo || this.cardUndo), run: function() {
+      // Grouped by what they act on, and ordered by where you are: with an
+      // article (or a triage card) open its verbs come first, so ⌘K then
+      // "star" or a glance lands on them, not under feed maintenance.
+      var undo = [
+        {group: 'Undo', label: 'Undo: ' + undoLabel,        hint: 'u', enabled: !!(this.feedUndo || this.cardUndo), run: function() {
           vm.cardUndo ? vm.undoCardAction() : vm.runFeedUndo()
         }},
-        {group: 'Actions', label: 'New feed',               run: function() { vm.showSettings('create') }},
-        {group: 'Actions', label: 'Refresh feeds',          run: function() { vm.fetchAllFeeds() }},
-        {group: 'Actions', label: this.markReadLabel,      hint: 'R', enabled: this.scopeUnread > 0 && !this.cardMode, run: S.markAllRead},
-        {group: 'Actions', label: 'Show unread',            hint: '1', run: S.showUnread},
-        {group: 'Actions', label: 'Show starred',           hint: '2', run: S.showStarred},
-        {group: 'Actions', label: 'Show all',               hint: '3', run: S.showAll},
-        {group: 'Actions', label: 'Triage unread',          hint: '4', enabled: !this.cardMode, run: S.startTriage},
-        // Article verbs name the action a run performs, matching the toolbar
-        // button's title, so typing "star" or "unread" lands on them.
-        {group: 'Actions', label: det && det.status == 'starred' ? 'Unstar article' : 'Star article', hint: 's', enabled: hasItem, run: S.toggleItemStarred},
-        {group: 'Actions', label: det && det.status == 'unread' ? 'Mark article read' : 'Mark article unread', hint: 'r', enabled: hasItem, run: S.toggleItemRead},
-        {group: 'Actions', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !!det.link && !det.instapaper_saved, run: S.saveToInstapaper},
-        {group: 'Actions', label: 'Reader view', hint: 'i', enabled: hasItem && det && !!det.link, run: S.toggleReadability},
-        {group: 'Actions', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (hasItem || this.cardMode), run: S.toggleListen},
-        {group: 'Actions', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
-        {group: 'Actions', label: 'Copy link',              hint: 'c', enabled: hasItem && det && !!det.link, run: S.copyItemLink},
-        {group: 'Actions', label: 'Next article',           hint: 'j', enabled: hasItem && !this.cardMode && this.items.length > 0 && this.itemSelected != this.items[this.items.length - 1].id, run: function() { vm.navigateToItem(+1) }},
-        {group: 'Actions', label: 'Previous article',       hint: 'k', enabled: hasItem && !this.cardMode && this.items.length > 0 && this.itemSelected != this.items[0].id, run: function() { vm.navigateToItem(-1) }},
-        {group: 'Actions', label: 'Close article',          hint: 'q', enabled: hasItem && !this.cardMode, run: function() { vm.closeArticle() }},
-        {group: 'Actions', label: 'Theme: Light',           enabled: this.theme.name !== 'light', run: function() { vm.theme.name = 'light' }},
-        {group: 'Actions', label: 'Theme: Dark',            enabled: this.theme.name !== 'dark', run: function() { vm.theme.name = 'dark' }},
-        {group: 'Actions', label: 'Theme: Auto (system)',   enabled: this.theme.name !== 'auto', run: function() { vm.theme.name = 'auto' }},
-        {group: 'Actions', label: 'Settings',               run: function() { vm.showSettings('settings') }},
-        {group: 'Actions', label: 'Keyboard shortcuts',     hint: '?', run: S.showShortcuts},
-        {group: 'Feed', label: 'Rename feed',            enabled: feedSel, run: function() { vm.renameFeed(vm.current.feed) }},
-        {group: 'Feed', label: 'Change feed link',       enabled: feedSel && !!cf.feed_link, run: function() { vm.updateFeedLink(vm.current.feed) }},
-        {group: 'Feed', label: 'Move feed to new folder', enabled: feedSel, run: function() { vm.moveFeedToNewFolder(vm.current.feed) }},
-        {group: 'Feed', label: 'Move feed out of folder', enabled: feedSel && cf.folder_id != null, run: function() { vm.moveFeedWithUndo(vm.current.feed, null) }},
-        {group: 'Feed', label: 'Delete feed',            enabled: feedSel, run: function() { vm.deleteFeed(vm.current.feed) }},
+      ]
+      // Article verbs name the action a run performs, matching the toolbar
+      // button's title, so typing "star" or "unread" lands on them.
+      var article = [
+        {group: 'Article', label: det && det.status == 'starred' ? 'Unstar article' : 'Star article', hint: 's', enabled: hasItem, run: S.toggleItemStarred},
+        {group: 'Article', label: det && det.status == 'unread' ? 'Mark article read' : 'Mark article unread', hint: 'r', enabled: hasItem, run: S.toggleItemRead},
+        {group: 'Article', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !!det.link && !det.instapaper_saved, run: S.saveToInstapaper},
+        {group: 'Article', label: 'Reader view',            hint: 'i', enabled: hasItem && det && !!det.link, run: S.toggleReadability},
+        {group: 'Article', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (hasItem || this.cardMode), run: S.toggleListen},
+        {group: 'Article', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
+        {group: 'Article', label: 'Copy link',              hint: 'c', enabled: hasItem && det && !!det.link, run: S.copyItemLink},
+        {group: 'Article', label: 'Next article',           hint: 'j', enabled: hasItem && !this.cardMode && this.items.length > 0 && this.itemSelected != this.items[this.items.length - 1].id, run: function() { vm.navigateToItem(+1) }},
+        {group: 'Article', label: 'Previous article',       hint: 'k', enabled: hasItem && !this.cardMode && this.items.length > 0 && this.itemSelected != this.items[0].id, run: function() { vm.navigateToItem(-1) }},
+        {group: 'Article', label: 'Close article',          hint: 'q', enabled: hasItem && !this.cardMode, run: function() { vm.closeArticle() }},
+      ]
+      // the bulk verb sits after the filters it acts within, never on top
+      var view = [
+        {group: 'View', label: 'Show unread',               hint: '1', run: S.showUnread},
+        {group: 'View', label: 'Show starred',              hint: '2', run: S.showStarred},
+        {group: 'View', label: 'Show all',                  hint: '3', run: S.showAll},
+        {group: 'View', label: 'Triage unread',             hint: '4', enabled: !this.cardMode, run: S.startTriage},
+        {group: 'View', label: this.markReadLabel,          hint: 'R', enabled: this.scopeUnread > 0 && !this.cardMode, run: S.markAllRead},
+      ]
+      var feeds = [
+        {group: 'Feeds', label: 'New feed',                 run: function() { vm.showSettings('create') }},
+        {group: 'Feeds', label: 'Refresh feeds',            run: function() { vm.fetchAllFeeds() }},
+      ]
+      var feed = [
+        {group: 'This feed', label: 'Rename feed',            enabled: feedSel, run: function() { vm.renameFeed(vm.current.feed) }},
+        {group: 'This feed', label: 'Change feed link',       enabled: feedSel && !!cf.feed_link, run: function() { vm.updateFeedLink(vm.current.feed) }},
+        {group: 'This feed', label: 'Move feed to new folder', enabled: feedSel, run: function() { vm.moveFeedToNewFolder(vm.current.feed) }},
+        {group: 'This feed', label: 'Move feed out of folder', enabled: feedSel && cf.folder_id != null, run: function() { vm.moveFeedWithUndo(vm.current.feed, null) }},
+        {group: 'This feed', label: 'Delete feed',            enabled: feedSel, run: function() { vm.deleteFeed(vm.current.feed) }},
+      ]
+      var app = [
+        {group: 'App', label: 'Theme: Light',               enabled: this.theme.name !== 'light', run: function() { vm.theme.name = 'light' }},
+        {group: 'App', label: 'Theme: Dark',                enabled: this.theme.name !== 'dark', run: function() { vm.theme.name = 'dark' }},
+        {group: 'App', label: 'Theme: Auto (system)',       enabled: this.theme.name !== 'auto', run: function() { vm.theme.name = 'auto' }},
+        {group: 'App', label: 'Settings',                   run: function() { vm.showSettings('settings') }},
+        {group: 'App', label: 'Keyboard shortcuts',         hint: '?', run: S.showShortcuts},
       ]
       // One "Move feed to <folder>" per other folder, only with a feed selected.
       if (feedSel) {
         this.folders.forEach(function(f) {
           if (f.id == cf.folder_id) return
-          cmds.push({group: 'Feed', label: 'Move feed to ' + f.title, run: function() { vm.moveFeedWithUndo(vm.current.feed, f) }})
+          feed.push({group: 'This feed', label: 'Move feed to ' + f.title, run: function() { vm.moveFeedWithUndo(vm.current.feed, f) }})
         })
       }
-      return cmds
+      return hasItem || this.cardMode
+        ? undo.concat(article, view, feed, feeds, app)
+        : undo.concat(view, feed, feeds, app, article)
     },
     // Feed row actions menu — opened by right-click OR the row's ⋯ button.
     // Positioned fixed (clamped to the viewport) so the overflow:auto feed list
