@@ -856,7 +856,7 @@ const seedReaderItem = (page, id, extra) => page.evaluate(([id, extra]) => {
   vm.itemSelected = id
 }, [id, extra || {}])
 
-test('reader toolbar: phones keep six full-size targets, the rest behind one menu', async ({ page }) => {
+test('reader toolbar: phones keep full-size targets, the keep verbs in the thumb bar, the rest behind one menu', async ({ page }) => {
   // Nine 44px controls need 412px, so they used to be packed down to 32px on
   // every phone — the fit was bought by shrinking targets people press all the
   // time. The four secondary actions now collapse into an overflow menu, and
@@ -877,10 +877,21 @@ test('reader toolbar: phones keep six full-size targets, the rest behind one men
         })
     })
     expect(shown.map(c => c.name), `visible controls at ${width}px`).toEqual([
-      'Back to article list', 'Starred', 'Read', 'Appearance',
-      'Save to Instapaper', 'More actions',
+      'Back to article list', 'Appearance', 'More actions',
     ])
-    for (const c of shown) {
+    // the keep verbs live in the thumb bar under the article instead
+    const thumb = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('#col-item .reader-nav button'))
+        .filter(el => el.getClientRects().length > 0)
+        .map(el => {
+          const r = el.getBoundingClientRect()
+          return { name: el.getAttribute('aria-label') || el.textContent.trim(), w: Math.round(r.width), h: Math.round(r.height), left: Math.round(r.left), right: Math.round(r.right) }
+        })
+    })
+    expect(thumb.map(c => c.name), `thumb bar at ${width}px`).toEqual([
+      'Previous', 'Starred', 'Read', 'Save to Instapaper', 'Next',
+    ])
+    for (const c of shown.concat(thumb)) {
       expect(c.w, `${c.name} width at ${width}px`).toBeGreaterThanOrEqual(44)
       expect(c.h, `${c.name} height at ${width}px`).toBeGreaterThanOrEqual(44)
       expect(c.right, `${c.name} right edge at ${width}px`).toBeLessThanOrEqual(width)
