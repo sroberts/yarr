@@ -52,8 +52,11 @@
     <div id="app" class="d-flex" v-cloak>
         <!-- the reader's article title is the h1 while an item is open -->
         <h1 class="sr-only" v-if="!itemSelected">yarr</h1>
-        <!-- feed list -->
-        <div id="col-feed-list" role="navigation" aria-label="Feeds" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
+        <!-- feed list. In triage this column holds the card and the article
+             column is hidden, so it becomes the page's main landmark (a main
+             can't sit inside a navigation one): screen readers jump to the
+             card with the main-region key instead of finding none. -->
+        <div id="col-feed-list" :role="cardMode ? 'main' : 'navigation'" :aria-label="cardMode ? 'Triage' : 'Feeds'" class="vh-100 position-relative d-flex flex-column flex-shrink-0" :style="{width: feedListWidth+'px'}">
             <drag :width="feedListWidth" @resize="resizeFeedList"></drag>
             <div class="p-2 toolbar view-toolbar d-flex align-items-center">
                 <div class="icon mx-2">{% inline "anchor.svg" %}</div>
