@@ -1347,13 +1347,16 @@ function rootComponent() { return {
         {group: 'Article', label: 'Previous article',       hint: 'k', enabled: hasItem && !this.cardMode && this.items.length > 0 && this.itemSelected != this.items[0].id, run: function() { vm.navigateToItem(-1) }},
         {group: 'Article', label: 'Close article',          hint: 'q', enabled: hasItem && !this.cardMode, run: function() { vm.closeArticle() }},
       ]
-      // the bulk verb sits after the filters it acts within, never on top
       var view = [
         {group: 'View', label: 'Show unread',               hint: '1', run: S.showUnread},
         {group: 'View', label: 'Show starred',              hint: '2', run: S.showStarred},
         {group: 'View', label: 'Show all',                  hint: '3', run: S.showAll},
         {group: 'View', label: 'Triage unread',             hint: '4', enabled: !this.cardMode, run: S.startTriage},
-        {group: 'View', label: this.markReadLabel,          hint: 'R', enabled: this.scopeUnread > 0 && !this.cardMode, run: S.markAllRead},
+      ]
+      // The bulk verb gets a group of its own, after the filters it acts
+      // within, so it never reads as one more way to look at the list.
+      var bulk = [
+        {group: 'Mark read', label: this.markReadLabel,     hint: 'R', enabled: this.scopeUnread > 0 && !this.cardMode, run: S.markAllRead},
       ]
       var feeds = [
         {group: 'Feeds', label: 'New feed',                 run: function() { vm.showSettings('create') }},
@@ -1381,8 +1384,8 @@ function rootComponent() { return {
         })
       }
       return hasItem || this.cardMode
-        ? undo.concat(article, view, feed, feeds, app)
-        : undo.concat(view, feed, feeds, app, article)
+        ? undo.concat(article, view, bulk, feed, feeds, app)
+        : undo.concat(view, bulk, feed, feeds, app, article)
     },
     // Feed row actions menu — opened by right-click OR the row's ⋯ button.
     // Positioned fixed (clamped to the viewport) so the overflow:auto feed list
@@ -1844,7 +1847,7 @@ function rootComponent() { return {
           vm.refreshStats()
           vm.showToast('Couldn’t mark ' + name + ' read', 5000)
         })
-      })
+      }, 10000)  // as long as a delete's: it can clear hundreds at once
     },
     toggleFolderExpanded: function(folder) {
       folder.is_expanded = !folder.is_expanded
