@@ -439,10 +439,12 @@
                     <span class="icon">{% inline "cards.svg" %}</span>
                     Triage
                 </button>
-                <!-- hidden while searching: it would act on the whole feed or
-                     folder, not on the results on screen -->
+                <!-- Unread view only: in Starred or All it would clear articles
+                     that aren't on screen. Hidden while searching too: it would
+                     act on the whole feed or folder, not on the results shown.
+                     R and the palette still reach it from any view. -->
                 <button type="button" class="stack-heading-action"
-                        v-if="scopeUnread && !itemSearch"
+                        v-if="scopeUnread && !itemSearch && filterSelected == 'unread'"
                         @click="markItemsRead()"
                         :aria-label="markReadLabel"
                         title="Mark all read (R)">
