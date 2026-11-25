@@ -138,6 +138,9 @@ html {
   --toast-bg: #111214;
   --toast-edge: #111214;
   --on-toast: #FFFFFF;      /* 18.9:1 */
+  /* behind a dialog: dims the page; the dialog's rim */
+  --scrim: rgba(20, 22, 24, .45);
+  --overlay-edge: var(--border-subtle);
 }
 
 .theme-dark {
@@ -172,6 +175,10 @@ html {
   --toast-bg: #2F3439;
   --toast-edge: #60676E;
   --on-toast: #FFFFFF;      /* 12.6:1 */
+  /* a .45 graphite scrim over a graphite ground changed nothing: dark gets
+     a deeper black one, and dialogs a rim a step stronger than a slip's */
+  --scrim: rgba(0, 0, 0, .6);
+  --overlay-edge: var(--border-strong);
   /* filing-colour fallback for dark when no [data-accent] is present */
   --accent: #8FAAF0;
   --on-accent: #141618;
@@ -657,7 +664,7 @@ select.form-control:not([multiple]):not([size]) {
 /* The scrim dims the page rather than blacking it out: enough to set the
    dialog apart, light enough that you still know where you are. */
 .custom-modal {
-  background-color: rgba(20, 22, 24, 0.45);
+  background-color: var(--scrim);
   overflow-y: auto;
   display: block !important;
 }
@@ -668,6 +675,7 @@ select.form-control:not([multiple]):not([size]) {
   margin-bottom: 1.75rem;
 }
 .custom-modal .modal-content {
+  border-color: var(--overlay-edge);
   display: flex;
   flex-direction: column;
   max-height: calc(100dvh - max(1.75rem, 6vh) - 1.75rem);
@@ -701,7 +709,7 @@ select.form-control:not([multiple]):not([size]) {
   display: flex;
   flex-direction: column;
   background-color: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--overlay-edge);
   border-radius: var(--radius);
   box-shadow: var(--shadow-overlay);
   overflow: hidden;
