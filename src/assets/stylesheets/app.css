@@ -2787,6 +2787,27 @@ body[data-motion="reduce"] *::after {
   .reader-close { display: none !important; }
 }
 
+/* A narrow desk reader column (three columns from 992px leave it ~300px)
+   can't hold the full toolbar: the four secondary actions fold into the
+   same More actions menu phones use, so Prev/Next/Close stay on screen.
+   The toolbar is its own query container; phones already fold by viewport. */
+.reader-toolbar { container: reader-toolbar / inline-size; }
+@container reader-toolbar (max-width: 479.98px) {
+  .reader-toolbar .reader-secondary { display: none !important; }
+  .reader-toolbar .reader-more { display: block !important; }
+}
+/* Narrower still (992-1060px windows): the position label leaves the screen
+   (the stack heading beside it still counts) but not the accessibility tree,
+   and the group gaps close up. */
+@container reader-toolbar (max-width: 359.98px) {
+  .reader-toolbar .reader-slip-label > span {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+  #col-item .reader-toolbar .toolbar-group-start { margin-left: .5rem; }
+  #col-item .reader-toolbar .toolbar-group-start::before { left: -.3rem; }
+}
+
 /* Skip link: off-screen until a keyboard user tabs to it. */
 .skip-link {
   position: fixed;

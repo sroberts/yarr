@@ -522,7 +522,7 @@
                      and had no focusable element at all. This is the way out. -->
                 <button class="btn btn-default" @click="closeArticle()">Back to articles</button>
             </div>
-            <div class="toolbar px-2 d-flex align-items-center" v-if="itemSelectedDetails">
+            <div class="toolbar reader-toolbar px-2 d-flex align-items-center" v-if="itemSelectedDetails">
                 <!-- Icon-only controls: every one carries an aria-label (title
                      alone is a last-resort accessible name and is invisible on
                      touch), and the toggles carry aria-pressed so state isn't
@@ -576,7 +576,7 @@
                      the six controls that stay get real 44px touch targets
                      instead of being packed to 32px. d-md-* keeps the two sets
                      exclusive — a control is never in both places at once. -->
-                <button class="toolbar-item d-none d-md-inline-flex"
+                <button class="toolbar-item reader-secondary d-none d-md-inline-flex"
                         :class="{active: itemSelectedReadability}"
                         :disabled="!itemSelectedDetails.link"
                         @click="toggleReadability()"
@@ -586,7 +586,7 @@
                         :aria-pressed="itemSelectedReadability ? 'true' : 'false'">
                     <span class="icon" :class="{'icon-loading': loading.readability}">{% inline "book-open.svg" %}</span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex"
+                <button class="toolbar-item reader-secondary d-none d-md-inline-flex"
                         v-if="ttsSupported"
                         data-testid="reader-listen"
                         aria-keyshortcuts="p"
@@ -612,7 +612,7 @@
                         <template v-else>{% inline "bookmark.svg" %}</template>
                     </span>
                 </button>
-                <button class="toolbar-item d-none d-md-inline-flex"
+                <button class="toolbar-item reader-secondary d-none d-md-inline-flex"
                         data-testid="reader-copy-link"
                         :disabled="!itemSelectedDetails.link"
                         @click="copyItemLink(itemSelectedDetails)"
@@ -628,21 +628,22 @@
                      nothing to open: drop the href so it stops being a link at
                      all — unfocusable, no navigation — and mark it disabled to
                      match the Copy Link button beside it. -->
-                <a class="toolbar-item d-none d-md-inline-flex"
+                <a class="toolbar-item reader-secondary d-none d-md-inline-flex"
                    :class="{disabled: !itemSelectedDetails.link}"
                    :href="itemSelectedDetails.link || null"
                    :aria-disabled="!itemSelectedDetails.link"
                    rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link (o)" aria-label="Open original link in a new tab" aria-keyshortcuts="o">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
-                <!-- Phone overflow: nine 44px controls need 412px plus padding,
+                <!-- Phone overflow (and a narrow desk reader column, see
+                     .reader-toolbar in app.css): nine 44px controls need 412px plus padding,
                      which no common phone has in portrait. Rather than shrink
                      every target to 32px (what the old packing breakpoints did),
                      the four secondary actions move in here and the six that
                      remain keep full-size targets down to 320px.
                      The toggle carries the readability spinner because the
                      inline button that used to show it isn't rendered here. -->
-                <dropdown class="settings-dropdown d-md-none"
+                <dropdown class="settings-dropdown reader-more d-md-none"
                           toggle-class="toolbar-item px-2"
                           data-testid="reader-more"
                           drop="right"
