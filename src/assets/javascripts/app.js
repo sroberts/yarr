@@ -213,6 +213,24 @@ function resolveTheme(pref) {
   return pref === 'auto' ? systemTheme() : pref
 }
 
+// Articles (and readability output) often open with their own title as a
+// heading; under the reader's title it reads twice. Drop it when it is the
+// first thing in the body and says the same.
+function dropLeadingTitle(html, title) {
+  if (!html || !title) return html
+  var norm = function(t) { return t.replace(/\s+/g, ' ').trim().toLowerCase() }
+  var doc = new DOMParser().parseFromString(html, 'text/html')
+  var h = doc.body.querySelector('h1, h2, h3')
+  if (!h || norm(h.textContent) !== norm(title)) return html
+  var before = doc.createRange()
+  before.setStart(doc.body, 0)
+  before.setEndBefore(h)
+  var lead = before.cloneContents()
+  if (lead.textContent.trim() || lead.querySelector('img, video, iframe, picture')) return html
+  h.remove()
+  return doc.body.innerHTML
+}
+
 function scrollto(target, scroll) {
   var padding = 10
   var targetRect = target.getBoundingClientRect()
@@ -600,6 +618,8 @@ function rootComponent() { return {
       'feedNewChoiceSelected': '',
       'items': [],
       'itemsHasMore': true,
+      // the stack's size when it loaded, if the counts say (see itemFrame)
+      'itemsTotal': null,
       'itemSelected': null,
       // the article last closed: j/k resume from its row, l reopens it
       'itemCursor': null,
@@ -790,11 +810,10 @@ function rootComponent() { return {
     itemSelectedContent: function() {
       if (!this.itemSelected) return ''
 
-      if (this.itemSelectedReadability)
-        return this.itemSelectedReadability
-
+      var details = this.itemSelectedDetails
       // itemSelected leads the fetch of its details; render nothing until they land
-      return (this.itemSelectedDetails && this.itemSelectedDetails.content) || ''
+      var html = this.itemSelectedReadability || (details && details.content) || ''
+      return details ? dropLeadingTitle(html, details.title) : html
     },
     contentImages: function() {
       if (!this.itemSelectedDetails) return []
@@ -825,14 +844,18 @@ function rootComponent() { return {
       // a finished run, not an empty one: zero cards has its own state
       return this.cardMode && this.cardItems.length > 0 && this.cardIndex >= this.cardItems.length && !this.cardLoading
     },
-    // Where the open slip sits in the stack: its position and the length of
-    // the stack loaded so far ("15+" while more can load).
+    // Where the open slip sits in the stack: its position and the stack's
+    // length. Unread and starred stacks know their size from the counts when
+    // they load; otherwise it is the stack loaded so far ("15+" while more can
+    // load).
     itemFrame: function() {
       if (this.itemSelected == null) return null
       var id = this.itemSelected
       var i = this.items.findIndex(function(it) { return it.id == id })
       if (i < 0) return null
-      return {n: i + 1, total: this.items.length + (this.itemsHasMore ? '+' : '')}
+      var total = this.items.length
+      if (this.itemsHasMore) total = this.itemsTotal > total ? this.itemsTotal : total + '+'
+      return {n: i + 1, total: total}
     },
     // The stack's heading line: its name and the filter's count.
     stackHeading: function() {
@@ -991,7 +1014,11 @@ function rootComponent() { return {
         var host = new URL(this.currentCard.link).hostname
         // an address or a LAN name says nothing about where the article is from
         if (/^[\d.]+$|:|^localhost$|\.(local|lan|home|internal)$/i.test(host)) return ''
-        return host.replace(/^www\./, '')
+        host = host.replace(/^www\./, '')
+        // a feed named after its site already says where it is from
+        var feed = this.feedsById[this.currentCard.feed_id]
+        if (feed && feed.title && feed.title.toLowerCase() == host.toLowerCase()) return ''
+        return host
       } catch (e) {
         return ''
       }
@@ -1668,6 +1695,11 @@ function rootComponent() { return {
           vm.items = vm.items.concat(data.list)
         } else {
           vm.items = data.list
+          // read and starred items stay in their stack until it reloads, so
+          // the count when it loads is its length (the counts are computed by
+          // the time the list lands)
+          var head = vm.stackHeading
+          vm.itemsTotal = (query.status == 'unread' || query.status == 'starred') && !query.search && head ? head.n : null
         }
         vm.itemsHasMore = data.has_more
         vm.loading.items = false

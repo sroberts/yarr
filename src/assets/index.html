@@ -112,19 +112,19 @@
                         Refresh feeds
                     </button>
                     <div class="dropdown-divider"></div>
-                    <button class="dropdown-item" @click="openPalette()">
+                    <button class="dropdown-item" @click="openPalette()" aria-keyshortcuts="Meta+K Control+K">
                         <span class="icon mr-1">{% inline "search.svg" %}</span>
                         Command palette
-                        <kbd class="menu-kbd">{{ isMac ? '⌘' : 'Ctrl' }} K</kbd>
+                        <kbd class="menu-kbd" aria-hidden="true">{{ isMac ? '⌘' : 'Ctrl' }} K</kbd>
                     </button>
                     <button class="dropdown-item" @click="showSettings('settings')">
                         <span class="icon mr-1">{% inline "sliders.svg" %}</span>
                         Settings
                     </button>
-                    <button class="dropdown-item" @click="showSettings('shortcuts')">
+                    <button class="dropdown-item" @click="showSettings('shortcuts')" aria-keyshortcuts="?">
                         <span class="icon mr-1">{% inline "help-circle.svg" %}</span>
                         Shortcuts
-                        <kbd class="menu-kbd">?</kbd>
+                        <kbd class="menu-kbd" aria-hidden="true">?</kbd>
                     </button>
                     <!-- a caption, not an item: nothing to press -->
                     <div class="dropdown-divider" v-if="version"></div>
@@ -715,9 +715,9 @@
                     <h1 class="content-title">{{ itemSelectedDetails.title || 'untitled' }}</h1>
                     <div class="content-byline">
                         <button type="button" class="byline-feed" @click="feedSelected = 'feed:'+(feedsById[itemSelectedDetails.feed_id] || {}).id">{{ (feedsById[itemSelectedDetails.feed_id] || {}).title }}</button>
-                        · <time :title="formatDate(itemSelectedDetails.date)">{{ shortDate(itemSelectedDetails.date) }}</time>
-                        <span v-if="readingTime(itemSelectedDetails)"> · {{ readingTime(itemSelectedDetails) }} min</span>
-                        <span v-if="itemOffline"> · offline copy</span>
+                        <span class="byline-part"><time :title="formatDate(itemSelectedDetails.date)">{{ shortDate(itemSelectedDetails.date) }}</time></span>
+                        <span class="byline-part" v-if="readingTime(itemSelectedDetails)">{{ readingTime(itemSelectedDetails) }} min</span>
+                        <span class="byline-part" v-if="itemOffline">offline copy</span>
                     </div>
                     <div v-if="!itemSelectedReadability">
                         <div v-if="contentImages.length">
