@@ -1395,8 +1395,11 @@ kbd + kbd { margin-left: .2em; }
 /* each part carries its separator, so a wrap never strands a dot at a line end */
 .content-byline .byline-part { white-space: nowrap; margin-left: .3em; }
 .content-byline .byline-part::before { content: "·"; margin-right: .3em; }
-/* a phone has no room for one line: the feed gets its own, the date opens the next */
-@media (max-width: 767.98px) {
+/* a narrow article (any phone, and the desk reader column from 992 to about
+   1200px) has no room for one line: the feed gets its own, the date opens
+   the next. Keyed on the article's own width, not the viewport's. */
+#col-item .content-wrapper { container: article / inline-size; }
+@container article (max-width: 27.99rem) {
   .content-byline .byline-feed { display: block; }
   .content-byline .byline-feed + .byline-part { margin-left: 0; }
   .content-byline .byline-feed + .byline-part::before { content: none; }
