@@ -2784,10 +2784,14 @@ body[data-motion="reduce"] *::after {
   .reader-toolbar .reader-secondary { display: none !important; }
   .reader-toolbar .reader-more { display: block !important; }
 }
-/* Narrower still (992-1060px windows): the position label goes (the stack
-   heading beside it still counts) and the group gaps close up. */
+/* Narrower still (992-1060px windows): the position label leaves the screen
+   (the stack heading beside it still counts) but not the accessibility tree,
+   and the group gaps close up. */
 @container reader-toolbar (max-width: 359.98px) {
-  .reader-toolbar .reader-slip-label > span { display: none !important; }
+  .reader-toolbar .reader-slip-label > span {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
   #col-item .reader-toolbar .toolbar-group-start { margin-left: .5rem; }
   #col-item .reader-toolbar .toolbar-group-start::before { left: -.3rem; }
 }
