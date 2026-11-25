@@ -2145,11 +2145,20 @@ kbd + kbd { margin-left: .2em; }
 .reader-nav-verbs { display: flex; align-items: center; }
 .reader-nav-icon { justify-content: center; width: 44px; padding: 0; }
 .reader-nav-icon.active { color: var(--text-primary); }
-/* five 44px targets plus two labels fill a 320px phone: the position label
-   shows only where there's room for it */
+/* five 44px targets plus two labels nearly fill a phone: below 400px the
+   position shrinks to "4/28", and below 360px it shows not at all. Either
+   way the full "Article 4 of 28" stays for screen readers. */
+.slip-compact { display: none; }
 @media (max-width: 399.98px) {
-  .reader-nav .reader-slip-label { display: none; }
+  .reader-nav .slip-full {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
+  .reader-nav .slip-compact { display: inline; }
   .reader-nav-btn:not(.reader-nav-icon) { padding: 0 .5rem; }
+}
+@media (max-width: 359.98px) {
+  .reader-nav .slip-compact { display: none; }
 }
 .reader-nav-btn:focus-visible {
   outline: 2px solid var(--focus-ring);
