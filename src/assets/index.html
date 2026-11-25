@@ -687,7 +687,7 @@
                         Open link
                     </a>
                 </dropdown>
-                <div class="flex-grow-1 reader-slip-label" aria-hidden="true"><span class="d-none d-md-inline-flex align-items-center" v-if="itemFrame">{{ itemFrame.n }} of {{ itemFrame.total }}</span></div>
+                <div class="flex-grow-1 reader-slip-label"><span class="d-none d-md-inline-flex align-items-center" v-if="itemFrame"><span class="sr-only">Article </span>{{ itemFrame.n }} of {{ itemFrame.total }}</span></div>
                 <!-- Prev/Next/Close are desktop-only: on phones the Back chevron
                      and the reader-nav bar under the article cover them, and
                      keeping them here overflowed the toolbar past the viewport
@@ -744,7 +744,9 @@
                     <span class="icon">{% inline "chevron-left.svg" %}</span>
                     Previous
                 </button>
-                <span class="reader-slip-label" v-if="itemFrame" aria-hidden="true">{{ itemFrame.n }} of {{ itemFrame.total }}</span>
+                <!-- the full "4 of 28" is what a screen reader hears; a narrow
+                     phone shows the compact "4/28" (see .slip-compact) -->
+                <span class="reader-slip-label" v-if="itemFrame"><span class="slip-full"><span class="sr-only">Article </span>{{ itemFrame.n }} of {{ itemFrame.total }}</span><span class="slip-compact" aria-hidden="true">{{ itemFrame.n }}/{{ itemFrame.total }}</span></span>
                 <div class="reader-nav-verbs">
                     <button type="button" class="reader-nav-btn reader-nav-icon"
                             @click="toggleItemStarred(itemSelectedDetails)"
