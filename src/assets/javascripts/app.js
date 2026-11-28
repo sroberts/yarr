@@ -634,8 +634,9 @@ function rootComponent() { return {
       'keyColumnShown': false,
       'paletteQuery': '',
       'paletteIndex': 0,
-      // {feed, x, y} while a feed row's right-click menu is open, else null
-      'feedContextMenu': null,
+      // {feed | folder, x, y} while a row's actions menu (right-click or ⋯)
+      // is open, else null
+      'contextMenu': null,
       // the sidebar folder row under the pointer: Enter / Space toggle it (key.js)
       'hoveredFolder': null,
       // {title, value, confirmLabel, onConfirm} while the themed input prompt
@@ -952,6 +953,19 @@ function rootComponent() { return {
     keyColumnAnnouncement: function() {
       if (!this.keyColumnShown || this.cardMode) return ''
       return ({feeds: 'Feeds column', items: 'Articles column', article: 'Article column'})[this.keyColumn]
+    },
+    // The feed or folder whose actions menu is open.
+    contextMenuTarget: function() {
+      var m = this.contextMenu
+      return m ? (m.feed || m.folder) : null
+    },
+    // Its unread count, ignoring the active filter, so Mark read says what it
+    // will do or that there's nothing to. Cached: a folder sums every feed's
+    // stats, and the menu re-renders on each stats poll while it is open.
+    contextMenuUnread: function() {
+      var m = this.contextMenu
+      if (!m) return 0
+      return this.unreadCountForFeeds(m.feed ? [m.feed] : this.folderFeeds(m.folder))
     },
     // the reader's chosen font, shared by the open slip and the triage card
     readingFontClass: function() {
@@ -1382,7 +1396,7 @@ function rootComponent() { return {
       var hasItem = this.itemSelected != null
       var det = this.itemSelectedDetails
       // Feed management (rare maintenance) is scoped to the selected feed here
-      // and via right-click on a feed row — deliberately not persistent chrome.
+      // and via a feed row's actions menu — deliberately not persistent chrome.
       var feedSel = this.current.type == 'feed'
       var cf = this.current.feed
       var undoLabel = this.feedUndo ? this.feedUndo.label : this.cardUndoLabel
@@ -1448,7 +1462,8 @@ function rootComponent() { return {
         ? undo.concat(article, view, bulk, feed, feeds, app)
         : undo.concat(view, bulk, feed, feeds, app, article)
     },
-    // Feed row actions menu — opened by right-click OR the row's ⋯ button.
+    // Row actions menu for a feed or folder — opened by right-click OR the
+    // row's ⋯ button.
     // Positioned fixed (clamped to the viewport) so the overflow:auto feed list
     // can't clip it; closes on any click, scroll, resize, or Escape.
     // `event` is a mouse or keyboard event; keyboard activation has no
@@ -1458,8 +1473,8 @@ function rootComponent() { return {
     openFeedContextMenu: function(feed, event) {
       this.openContextMenu({feed: feed}, event)
     },
-    // Folder rows share the same menu; `feedContextMenu.folder` is set instead
-    // of `.feed`, and the template switches on which one is present.
+    // Folder rows share the same menu; `contextMenu.folder` is set instead
+    // of `.feed`, and the template switches its items on which is present.
     openFolderContextMenu: function(folder, event) {
       this.openContextMenu({folder: folder}, event)
     },
@@ -1473,35 +1488,35 @@ function rootComponent() { return {
         var tr = this._ctxTrigger.getBoundingClientRect()
         x = tr.right; y = tr.bottom
       }
-      this.feedContextMenu = {feed: target.feed, folder: target.folder, x: x || 0, y: y || 0}
+      this.contextMenu = {feed: target.feed, folder: target.folder, x: x || 0, y: y || 0}
       this.$nextTick(function() {
-        var menu = this.$refs.feedContextMenu
+        var menu = this.$refs.contextMenu
         if (!menu) return
         var mw = menu.offsetWidth, mh = menu.offsetHeight
-        var mx = this.feedContextMenu.x, my = this.feedContextMenu.y
+        var mx = this.contextMenu.x, my = this.contextMenu.y
         if (mx + mw > window.innerWidth) mx = Math.max(4, window.innerWidth - mw - 4)
         if (my + mh > window.innerHeight) my = Math.max(4, window.innerHeight - mh - 4)
         menu.style.left = mx + 'px'
         menu.style.top = my + 'px'
         menu.style.visibility = ''
         // Focus the first item so keyboard users land inside the menu, matching
-        // the role="menu" contract that feedContextMenuKey then fulfils.
+        // the role="menu" contract that contextMenuKey then fulfils.
         var first = menu.querySelector('.dropdown-item:not(:disabled):not([aria-disabled="true"])')
         if (first) first.focus(); else menu.focus()
       }.bind(this))
-      document.addEventListener('click', this.closeFeedContextMenu)
-      document.addEventListener('keydown', this.feedContextMenuKey)
-      window.addEventListener('scroll', this.closeFeedContextMenu, true)
-      window.addEventListener('resize', this.closeFeedContextMenu)
+      document.addEventListener('click', this.closeContextMenu)
+      document.addEventListener('keydown', this.contextMenuKey)
+      window.addEventListener('scroll', this.closeContextMenu, true)
+      window.addEventListener('resize', this.closeContextMenu)
     },
-    closeFeedContextMenu: function() {
-      if (!this.feedContextMenu) return
+    closeContextMenu: function() {
+      if (!this.contextMenu) return
       var focusInMenu = this._ctxMenuHasFocus()
-      this.feedContextMenu = null
-      document.removeEventListener('click', this.closeFeedContextMenu)
-      document.removeEventListener('keydown', this.feedContextMenuKey)
-      window.removeEventListener('scroll', this.closeFeedContextMenu, true)
-      window.removeEventListener('resize', this.closeFeedContextMenu)
+      this.contextMenu = null
+      document.removeEventListener('click', this.closeContextMenu)
+      document.removeEventListener('keydown', this.contextMenuKey)
+      window.removeEventListener('scroll', this.closeContextMenu, true)
+      window.removeEventListener('resize', this.closeContextMenu)
       // Return focus to the trigger only if focus was still inside the menu
       // (Escape / arrow nav). When an item was activated, its handler owns focus
       // next (e.g. a prompt modal), so we don't steal it back.
@@ -1509,7 +1524,7 @@ function rootComponent() { return {
       this._ctxTrigger = this._ctxReturn = null
     },
     _ctxMenuHasFocus: function() {
-      var menu = this.$refs.feedContextMenu
+      var menu = this.$refs.contextMenu
       return !!(menu && menu.contains(document.activeElement))
     },
     // Fulfil the role="menu" keyboard contract: arrows / Home / End move focus
@@ -1518,9 +1533,9 @@ function rootComponent() { return {
     // state changes live while stats poll, and a focused button that turns
     // :disabled drops focus to <body>. aria-disabled items stay in the arrow
     // order, as the ARIA menu pattern allows.
-    feedContextMenuKey: function(e) {
-      if (e.key === 'Escape') { e.preventDefault(); this.closeFeedContextMenu(); return }
-      var menu = this.$refs.feedContextMenu
+    contextMenuKey: function(e) {
+      if (e.key === 'Escape') { e.preventDefault(); this.closeContextMenu(); return }
+      var menu = this.$refs.contextMenu
       if (!menu) return
       var items = Array.prototype.slice.call(menu.querySelectorAll('.dropdown-item:not(:disabled)'))
       if (!items.length) return
@@ -1533,13 +1548,13 @@ function rootComponent() { return {
       else if (e.key === 'Tab') next = items[(i + (e.shiftKey ? -1 : 1) + items.length) % items.length]
       if (next) { e.preventDefault(); next.focus() }
     },
-    // Grab the menu's feed (or folder), close, then run the action — so an
+    // Grab the menu's feed or folder, close, then run the action — so an
     // action that opens a prompt/confirm replacement isn't racing the menu
-    // teardown, and the ref survives the close that nulls feedContextMenu.
-    runFeedCtx: function(fn) {
-      var m = this.feedContextMenu
+    // teardown, and the ref survives the close that nulls contextMenu.
+    runContextAction: function(fn) {
+      var m = this.contextMenu
       var target = m && (m.feed || m.folder)
-      this.closeFeedContextMenu()
+      this.closeContextMenu()
       if (target) fn.call(this, target)
       if (target) this.refocusRow((m.feed ? 'feed:' : 'folder:') + target.id)
     },
@@ -1812,17 +1827,12 @@ function rootComponent() { return {
       this.markFeedsRead(this.feeds, {}, 'all feeds')
     },
     // Unread count across a set of feeds, ignoring the active filter, so the
-    // context menu can tell whether "Mark all read" has anything to do.
+    // actions menu and the list heading can tell what Mark read would do.
     unreadCountForFeeds: function(feeds) {
       var stats = this.feedStats
       return feeds.reduce(function(acc, feed) {
         return acc + ((stats[feed.id] && stats[feed.id].unread) || 0)
       }, 0)
-    },
-    // The menu's mark-read item says what it will do, or why it can't.
-    markCtxLabel: function(feeds) {
-      var n = this.unreadCountForFeeds(feeds)
-      return n ? 'Mark ' + n + ' read' : 'No unread'
     },
     folderFeeds: function(folder) {
       return this.feeds.filter(function(f) { return f.folder_id == folder.id })

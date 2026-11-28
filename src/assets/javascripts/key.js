@@ -116,7 +116,7 @@ var shortcutFunctions = {
   },
   // Esc closes the article too, unless it is closing a menu first
   escapeItem: function () {
-    if (vm.feedContextMenu || document.querySelector('.dropdown-menu.show')) return
+    if (vm.contextMenu || document.querySelector('.dropdown-menu.show')) return
     vm.closeArticle()
   },
   showAll() {
@@ -253,7 +253,7 @@ document.addEventListener('keydown',function(event) {
   // Enter / Space; focus on the page or a feed-list row doesn't. The folder
   // row's own chevron handles its keys itself and stops them.
   if ((event.key === 'Enter' || event.key === ' ') && !vm.cardMode &&
-      !vm.feedContextMenu && !document.querySelector('.dropdown-menu.show')) {
+      !vm.contextMenu && !document.querySelector('.dropdown-menu.show')) {
     var focus = event.target
     var focusFree = focus === document.body || focus === document.documentElement ||
       (focus.closest && focus.closest('#feed-list-scroll') &&
@@ -282,7 +282,7 @@ document.addEventListener('keydown',function(event) {
   if (vm.cardMode) {
     // An open menu owns the keys, Esc included: it closes the menu and
     // leaves triage alone, and letters don't triage the card behind it.
-    if (vm.feedContextMenu || document.querySelector('.dropdown-menu.show')) return
+    if (vm.contextMenu || document.querySelector('.dropdown-menu.show')) return
     // A focused control keeps its own keys: Enter/Space press the button or
     // link, the arrows move through the folder picker. Everything else (and the
     // arrows on a clicked legend button) still triages.
