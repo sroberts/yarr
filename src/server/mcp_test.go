@@ -376,8 +376,8 @@ func TestMCPUnsubscribe(t *testing.T) {
 func TestMCPManagementValidation(t *testing.T) {
 	srv, feed, _ := mcpTestServer(t)
 	cases := []struct{ name, args string }{
-		{"subscribe", `{}`},                  // missing url
-		{"unsubscribe", `{"feed_id":99999}`}, // missing feed
+		{"subscribe", `{}`},                                                     // missing url
+		{"unsubscribe", `{"feed_id":99999}`},                                    // missing feed
 		{"rename_feed", fmt.Sprintf(`{"feed_id":%d,"title":""}`, feed.Id)},      // empty title
 		{"move_feed", fmt.Sprintf(`{"feed_id":%d,"folder_id":99999}`, feed.Id)}, // missing folder
 		{"rename_folder", `{"folder_id":99999,"title":"x"}`},                    // missing folder
