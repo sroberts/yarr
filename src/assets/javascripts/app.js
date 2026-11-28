@@ -1008,6 +1008,23 @@ function rootComponent() { return {
       }
       return null
     },
+    // The image's alt text, shown under it as a caption: xkcd keeps its
+    // title-text joke there, out of sight of anyone who can see the image.
+    // Skipped when it only repeats the card's title.
+    cardCaption: function() {
+      var img = this.cardImage
+      if (!img || !img.alt) return ''
+      var norm = function(t) { return t.replace(/\s+/g, ' ').trim().toLowerCase() }
+      return norm(img.alt) === norm(this.currentCard.title || '') ? '' : img.alt.trim()
+    },
+    // What Listen reads for the current card: its title, then its text, or
+    // the image's caption on an image-only card. Empty means nothing to read.
+    cardSpeech: function() {
+      var card = this.currentCard
+      if (!card) return ''
+      var body = this.plainText(card.content) || this.cardCaption
+      return [card.title, body].filter(function(t) { return t && t.trim() }).join('. ')
+    },
     cardDomain: function() {
       if (!this.currentCard || !this.currentCard.link) return ''
       try {
@@ -1292,10 +1309,14 @@ function rootComponent() { return {
       this.ttsPaused = false
     },
     speakCard: function() {
-      var card = this.currentCard
-      if (!card) return
-      var text = ((card.title || '') + '. ' + this.plainText(card.content)).trim()
+      if (!this.currentCard) return
+      var text = this.cardSpeech
       var self = this
+      // a card with nothing to read: the hands-free loop moves past it
+      if (!text) {
+        if (this.ttsPlaying) this.cardListenNext()
+        return
+      }
       // On natural completion, advance to the next card and keep reading until
       // the deck is exhausted — the hands-free triage loop.
       ttsEngine.speak(text, {onend: function() {
@@ -1335,7 +1356,7 @@ function rootComponent() { return {
       if (this.ttsPlaying) {
         this.ttsPaused ? this.resumeListen() : this.pauseListen()
       } else if (this.cardMode) {
-        this.speakCard()
+        if (this.cardSpeech) this.speakCard()
       } else if (this.itemSelected != null) {
         this.speakArticle()
       }
@@ -1367,7 +1388,7 @@ function rootComponent() { return {
         {group: 'Article', label: det && det.status == 'unread' ? 'Mark article read' : 'Mark article unread', hint: 'r', enabled: hasItem, run: S.toggleItemRead},
         {group: 'Article', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !!det.link && !det.instapaper_saved, run: S.saveToInstapaper},
         {group: 'Article', label: 'Reader view',            hint: 'i', enabled: hasItem && det && !!det.link, run: S.toggleReadability},
-        {group: 'Article', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (hasItem || this.cardMode), run: S.toggleListen},
+        {group: 'Article', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (this.ttsPlaying || (this.cardMode ? !!this.cardSpeech : hasItem)), run: S.toggleListen},
         {group: 'Article', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
         {group: 'Article', label: 'Copy link',              hint: 'c', enabled: hasItem && det && !!det.link, run: S.copyItemLink},
         {group: 'Article', label: 'Next article',           hint: 'j', enabled: hasItem && !this.cardMode && this.items.length > 0 && this.itemSelected != this.items[this.items.length - 1].id, run: function() { vm.navigateToItem(+1) }},
