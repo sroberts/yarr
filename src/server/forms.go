@@ -4,6 +4,9 @@ import "github.com/nkanaev/yarr/src/storage"
 
 type ItemUpdateForm struct {
 	Status *storage.ItemStatus `json:"status,omitempty"`
+	// Opened records that the item was opened to read (feed health). Only
+	// true does anything; the first time is kept.
+	Opened *bool `json:"opened,omitempty"`
 }
 
 type FolderCreateForm struct {

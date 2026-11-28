@@ -216,6 +216,10 @@ function resolveTheme(pref) {
 // Articles (and readability output) often open with their own title as a
 // heading; under the reader's title it reads twice. Drop it when it is the
 // first thing in the body and says the same.
+// How long an article stays open before it counts as read on purpose, not
+// passed through with j/k (feed health)
+var OPENED_AFTER_MS = 8000
+
 function dropLeadingTitle(html, title) {
   if (!html || !title) return html
   var norm = function(t) { return t.replace(/\s+/g, ' ').trim().toLowerCase() }
@@ -1190,6 +1194,15 @@ function rootComponent() { return {
     },
     'itemSelected': function(newVal, oldVal) {
       this.stopListen()  // halt any read-aloud when the article changes or closes
+      // j/k open every article they pass, so selecting one isn't reading it:
+      // feed health counts it opened once it has stayed up a while in a
+      // visible tab, or when the reader acts on it (o, i)
+      clearTimeout(this._openedTimer)
+      if (newVal !== null) {
+        this._openedTimer = setTimeout(function() {
+          if (vm.itemSelected === newVal && !document.hidden) vm.noteOpened(newVal)
+        }, OPENED_AFTER_MS)
+      }
       this.itemSelectedReadability = ''
       // the copy-link check belongs to the article you copied, not the next one
       clearTimeout(this._linkCopiedTimer)
@@ -2256,6 +2269,7 @@ function rootComponent() { return {
       })
     },
     toggleReadability: function() {
+      if (this.itemSelected != null) this.noteOpened(this.itemSelected)
       if (this.itemSelectedReadability) {
         this.itemSelectedReadability = null
         return
@@ -2528,6 +2542,7 @@ function rootComponent() { return {
         // nothing to read in place: say so rather than silently doing nothing
         if (!this.currentCard.content) return this.cardOpenOriginal()
         this.cardExpanded = true
+        this.noteOpened(this.currentCard.id)
         return
       }
       var link = event && event.target && event.target.closest && event.target.closest('a[href]')
@@ -2538,8 +2553,19 @@ function rootComponent() { return {
     },
     cardOpenOriginal: function() {
       if (this.currentCard && this.currentCard.link) {
+        this.noteOpened(this.currentCard.id)
         window.open(this.currentCard.link, '_blank', 'noopener,noreferrer')
       }
+    },
+    // Tell the server an article was deliberately opened (feed health weighs
+    // what you open against what arrives). Once per article per session, and
+    // best effort: a lost signal offline costs nothing worth queueing.
+    noteOpened: function(id) {
+      if (id == null) return
+      var noted = this._notedOpened = this._notedOpened || {}
+      if (noted[id]) return
+      noted[id] = true
+      api.items.update(id, {opened: true}).catch(function() { delete noted[id] })
     },
     showSettings: function(settings) {
       this.settings = settings

@@ -186,10 +186,10 @@
                         <div class="triage-card-body" :class="readingFontClass" v-else-if="cardExpanded" v-html="currentCard.content"></div>
                         <div class="triage-card-excerpt triage-card-empty" v-else>No text in the feed’s preview.</div>
                         <div class="triage-card-footer">
-                            <span class="triage-card-hint" v-if="!currentCard.content"><a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop>Open original</a></span>
+                            <span class="triage-card-hint" v-if="!currentCard.content"><a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop="noteOpened(currentCard.id)">Open original</a></span>
                             <span class="triage-card-hint" v-else-if="!cardExpanded"><span class="hint-touch">tap to read here</span><span class="hint-pointer">Enter to read here</span></span>
                             <span class="triage-card-hint" v-else>
-                                <a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop>Open original</a><span class="hint-pointer"> · Esc to go back</span>
+                                <a :href="currentCard.link" v-if="currentCard.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" @click.stop="noteOpened(currentCard.id)">Open original</a><span class="hint-pointer"> · Esc to go back</span>
                             </span>
                             <span class="triage-card-counter">{{ cardIndex + 1 }} of {{ cardItems.length }}</span>
                         </div>
@@ -638,7 +638,8 @@
                    :class="{disabled: !itemSelectedDetails.link}"
                    :href="itemSelectedDetails.link || null"
                    :aria-disabled="!itemSelectedDetails.link"
-                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link (o)" aria-label="Open original link in a new tab" aria-keyshortcuts="o">
+                   rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" title="Open Link (o)" aria-label="Open original link in a new tab" aria-keyshortcuts="o"
+                   @click="itemSelectedDetails.link && noteOpened(itemSelectedDetails.id)">
                     <span class="icon">{% inline "external-link.svg" %}</span>
                 </a>
                 <!-- Phone overflow (and a narrow desk reader column, see
@@ -689,7 +690,8 @@
                        :class="{disabled: !itemSelectedDetails.link}"
                        :href="itemSelectedDetails.link || null"
                        :aria-disabled="!itemSelectedDetails.link"
-                       rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer">
+                       rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer"
+                       @click="itemSelectedDetails.link && noteOpened(itemSelectedDetails.id)">
                         <span class="icon mr-1">{% inline "external-link.svg" %}</span>
                         Open link
                     </a>
