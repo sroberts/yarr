@@ -249,8 +249,9 @@ func (s *Server) handleFilterList(c *router.Context) {
 			return
 		}
 		body.Keyword = strings.TrimSpace(body.Keyword)
-		if !storage.ValidFilterAction(body.Action) || len(body.Keyword) == 0 {
-			c.JSON(http.StatusBadRequest, map[string]string{"error": "Filter needs an action and a keyword."})
+		// no keyword is allowed only for one feed: "everything from this feed"
+		if !storage.ValidFilterAction(body.Action) || (len(body.Keyword) == 0 && body.FeedID == nil) {
+			c.JSON(http.StatusBadRequest, map[string]string{"error": "Filter needs an action, and a keyword or a feed."})
 			return
 		}
 		filter := s.db.CreateFilter(body.Action, body.Keyword, body.FeedID)
@@ -308,7 +309,7 @@ func (s *Server) handleFeedHealth(c *router.Context) {
 		}
 		days = n
 	}
-	c.JSON(http.StatusOK, s.db.FeedHealth(days))
+	c.JSON(http.StatusOK, s.db.FeedHealth(s.db.FeedHealthWindow(days)))
 }
 
 type feedicon struct {

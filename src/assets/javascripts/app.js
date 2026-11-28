@@ -615,6 +615,11 @@ function rootComponent() { return {
       'folders': [],
       'feeds': [],
       'filters': [],
+      // Settings > Feed health: per-feed records from /api/feeds/health,
+      // null until loaded; the look-back window in days
+      'feedHealth': null,
+      'feedHealthDays': 60,
+      'feedHealthFailed': false,
       'filterDraft': {action: 'read', keyword: '', feedId: null, applyNow: false},
       'feedSelected': s.feed,
       'feedListWidth': s.feed_list_width || 300,
@@ -958,6 +963,49 @@ function rootComponent() { return {
       if (!this.keyColumnShown || this.cardMode) return ''
       return ({feeds: 'Feeds column', items: 'Articles column', article: 'Article column'})[this.keyColumn]
     },
+    // Settings > Feed health, grouped: Broken (a fetch error), Quiet
+    // (nothing new in 90 days), Skipped (10+ articles read, none opened,
+    // starred or saved). Each feed in the first group it fits; healthy feeds
+    // aren't listed. Skipped waits for two weeks of recorded opens, and
+    // leaves out feeds already auto-read by a rule.
+    feedHealthReport: function() {
+      var list = this.feedHealth
+      if (!list) return null
+      var byId = this.feedsById
+      var now = Date.now()
+      var DAY = 86400000
+      var since = ((window.app && app.settings && app.settings.feed_health_since) || 0) * 1000
+      var skippedReady = !since || now - since >= 14 * DAY
+      var ruled = {}
+      this.filters.forEach(function(f) { if (!f.keyword && f.feed_id) ruled[f.feed_id] = true })
+      var ago = function(t) {
+        var days = Math.floor((now - t) / DAY)
+        if (days < 60) return days + ' days ago'
+        if (days < 365) return Math.floor(days / 30) + ' months ago'
+        return 'over a year ago'
+      }
+      var broken = [], quiet = [], skipped = []
+      list.forEach(function(h) {
+        var feed = byId[h.feed_id]
+        if (!feed) return
+        if (h.error) return broken.push({feed: feed, reason: h.error})
+        var last = h.last_arrived ? Date.parse(h.last_arrived) : null
+        if (!last) return quiet.push({feed: feed, reason: 'Never had an article', sort: 0})
+        if (now - last >= 90 * DAY) return quiet.push({feed: feed, reason: 'Last new article ' + ago(last), sort: last})
+        var read = h.arrived - h.unread
+        if (skippedReady && !ruled[h.feed_id] && read >= 10 && h.engaged === 0) {
+          skipped.push({feed: feed, reason: read + ' read, none opened', sort: -read})
+        }
+      })
+      var bySort = function(a, b) { return a.sort - b.sort }
+      var title = function(a, b) { return a.feed.title.localeCompare(b.feed.title) }
+      var groups = [
+        {key: 'broken', title: 'Broken', rows: broken.sort(title)},
+        {key: 'quiet', title: 'Quiet', rows: quiet.sort(bySort)},
+        {key: 'skipped', title: 'Skipped', rows: skipped.sort(bySort)},
+      ].filter(function(g) { return g.rows.length })
+      return {groups: groups, skippedReady: skippedReady, readyOn: since ? new Date(since + 14 * DAY) : null}
+    },
     // The feed or folder whose actions menu is open.
     contextMenuTarget: function() {
       var m = this.contextMenu
@@ -1205,6 +1253,9 @@ function rootComponent() { return {
       this.refreshItems(false)
       this.saveSetting({feed: newVal})
       if (this.$refs.itemlist) this.$refs.itemlist.scrollTop = 0
+    },
+    'feedHealthDays': function() {
+      this.loadFeedHealth()
     },
     'itemSelected': function(newVal, oldVal) {
       this.stopListen()  // halt any read-aloud when the article changes or closes
@@ -1618,11 +1669,42 @@ function rootComponent() { return {
       this.$nextTick(function() { if (r && r.run) r.run() })
     },
     // Smart Filters (Settings > Filters): rules that pre-triage items on refresh.
+    loadFeedHealth: function() {
+      this.feedHealthFailed = false
+      var days = this.feedHealthDays
+      return api.feeds.health(days).then(function(list) {
+        if (vm.feedHealthDays === days) vm.feedHealth = list || []
+      }).catch(function() {
+        vm.feedHealthFailed = true
+      })
+    },
+    // Keep the feed, but out of triage: a rule with no keyword for the feed
+    // auto-reads everything it brings, now and from here on. Its articles
+    // still arrive in All and in search; the rule is listed under Filters.
+    feedHealthAutoRead: function(feed) {
+      api.filters.create({action: 'read', keyword: '', feed_id: feed.id, apply_now: true}).then(function(filter) {
+        if (filter && filter.id) vm.filters.push(filter)
+        vm.showToast('“' + feed.title + '” now skips Unread. Remove the rule under Filters to undo.', 5000)
+        vm.refreshStats().then(vm.refreshItems.bind(vm, false))
+      }).catch(function() {
+        vm.showToast('Couldn’t add the rule for “' + feed.title + '”', 5000)
+      })
+    },
+    // See a listed feed for yourself: close Settings onto it.
+    feedHealthOpen: function(feed) {
+      this.settings = ''
+      this.feedSelected = 'feed:' + feed.id
+    },
     loadFilters: function() {
       return api.filters.list().then(function(list) { vm.filters = list || [] })
     },
     filterActionLabel: function(action) {
       return {read: 'Auto-read', star: 'Auto-star', mute: 'Mute'}[action] || action
+    },
+    // A rule with no keyword covers everything from its feed.
+    filterDescription: function(f) {
+      var where = f.feed_id ? 'in ' + ((this.feedsById[f.feed_id] || {}).title || 'a feed') : 'all feeds'
+      return this.filterActionLabel(f.action) + ' · ' + (f.keyword ? 'titles containing “' + f.keyword + '”' : 'everything') + ' · ' + where
     },
     createFilter: function() {
       var draft = this.filterDraft
@@ -2590,6 +2672,7 @@ function rootComponent() { return {
         vm.feedNewChoice = []
         vm.feedNewChoiceSelected = ''
       }
+      if (settings === 'settings') this.loadFeedHealth()
     },
     resizeFeedList: function(width) {
       this.feedListWidth = Math.min(Math.max(200, width), 700)

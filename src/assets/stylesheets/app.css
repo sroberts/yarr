@@ -2721,6 +2721,51 @@ body[data-motion="reduce"] *::after {
 .settings-panel .settings-saved { min-height: 1.2em; color: var(--text-secondary); }
 .settings-panel .settings-section:last-child { margin-bottom: 0; }
 
+/* Feed health: a plain maintenance list, one feed per row, the reason under
+   its name and the fixes at the right; they wrap under it on a phone. */
+.health-group + .health-group { margin-top: 1.25rem; }
+.health-group-title { font-weight: 400; }
+.health-count { font-family: var(--font-mono); font-variant-numeric: tabular-nums; margin-left: .25rem; }
+.health-list { list-style: none; margin: 0; padding: 0; }
+.health-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem .75rem;
+  padding: .55rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.health-row:last-child { border-bottom: 0; }
+.health-text { flex: 1 1 12rem; min-width: 0; }
+.health-feed {
+  display: block;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.health-feed:hover { text-decoration: underline; text-underline-offset: .15em; }
+.health-reason {
+  font-size: var(--text-small);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.health-reason.text-danger { color: var(--status-error); }
+.health-actions { display: flex; gap: .5rem; flex-shrink: 0; }
+.health-actions .btn { padding: .25rem .6rem; font-size: var(--text-small); }
+
 /* On phones let the modal use more width so controls aren't cramped (#86). */
 @media (max-width: 480px) {
   .modal-dialog { margin: 1rem .5rem; max-width: none; }

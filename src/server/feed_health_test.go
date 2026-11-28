@@ -79,3 +79,23 @@ func TestFeedHealthRejectsBadInput(t *testing.T) {
 		t.Errorf("POST: got %d, want 405", rec.Code)
 	}
 }
+
+// Feed health's Auto-read is a rule with no keyword for one feed; with no
+// feed either it would cover everything, so that stays a 400.
+func TestFilterKeywordOptionalOnlyForOneFeed(t *testing.T) {
+	srv, db, item := feedHealthServer(t)
+	post := func(body string) int {
+		rec := httptest.NewRecorder()
+		srv.handler().ServeHTTP(rec, httptest.NewRequest("POST", "/api/filters", strings.NewReader(body)))
+		return rec.Code
+	}
+	if code := post(`{"action":"read","keyword":"  "}`); code != http.StatusBadRequest {
+		t.Errorf("no keyword, no feed: got %d, want 400", code)
+	}
+	if code := post(`{"action":"read","keyword":"","feed_id":` + strconv.FormatInt(item.FeedId, 10) + `,"apply_now":true}`); code != http.StatusCreated {
+		t.Fatalf("no keyword, one feed: got %d, want 201", code)
+	}
+	if got := db.GetItem(item.Id); got.Status != storage.READ {
+		t.Errorf("apply_now left the feed's item %v, want read", got.Status)
+	}
+}

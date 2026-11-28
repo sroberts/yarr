@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"log"
+	"math"
 	"time"
 )
 
@@ -39,6 +40,25 @@ func (s *Storage) MarkItemOpened(id int64) bool {
 		return false
 	}
 	return true
+}
+
+// FeedHealthWindow shortens a requested window to the days since feed
+// health began recording opens (the feed_health_since setting, m14), rounded
+// up: articles from before it have no opens on file, and counting them
+// would call every feed skipped.
+func (s *Storage) FeedHealthWindow(days int) int {
+	since := s.GetSettingsValueInt64("feed_health_since")
+	if since <= 0 {
+		return days
+	}
+	tracked := int(math.Ceil(time.Since(time.Unix(since, 0)).Hours() / 24))
+	if tracked < 1 {
+		tracked = 1
+	}
+	if tracked < days {
+		return tracked
+	}
+	return days
 }
 
 // FeedHealth reports every feed's record over the last `days` days (clamped

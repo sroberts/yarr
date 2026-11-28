@@ -848,7 +848,7 @@
                     <div class="settings-title">Filters</div>
                     <p class="text-muted small mb-2">Rules run on refresh to auto-read, star, or mute items by title. Star beats read beats mute.</p>
                     <div v-for="f in filters" :key="f.id" class="filter-row d-flex align-items-center">
-                        <span class="flex-fill">{{ filterActionLabel(f.action) }} · titles containing “{{ f.keyword }}” · {{ f.feed_id ? 'in ' + ((feedsById[f.feed_id] || {}).title || 'a feed') : 'all feeds' }}</span>
+                        <span class="flex-fill">{{ filterDescription(f) }}</span>
                         <button class="toolbar-item flex-shrink-0" @click="deleteFilter(f)" aria-label="Delete filter" title="Delete filter">
                             <span class="icon">{% inline "x.svg" %}</span>
                         </button>
@@ -930,6 +930,40 @@
                             </a>
                         </div>
                     </div>
+                </div>
+
+                <!-- Feed health (doc/specs/feed-health.md): feeds that cost
+                     triage time for nothing, one plain reason each and the fix
+                     beside it. It reports; it never nags outside Settings. -->
+                <div class="settings-group">
+                    <div class="settings-title" id="set-feed-health">Feed health</div>
+                    <div class="settings-section">
+                        <span class="settings-label" id="set-health-window">Look back</span>
+                        <div class="segmented" role="group" aria-labelledby="set-health-window">
+                            <button v-for="d in [30, 60, 90]" :aria-pressed="(feedHealthDays == d) ? 'true' : 'false'" :class="{active: feedHealthDays == d}" @click.stop="feedHealthDays = d">{{ d }} days</button>
+                        </div>
+                    </div>
+                    <p class="small text-muted mb-0" v-if="feedHealthFailed">Couldn’t check your feeds. <button type="button" class="btn btn-link p-0 small align-baseline" @click="loadFeedHealth()">Try again</button></p>
+                    <p class="small text-muted mb-0" role="status" v-else-if="!feedHealthReport">Checking feeds…</p>
+                    <template v-else>
+                        <section class="health-group" v-for="g in feedHealthReport.groups" :key="g.key" :aria-labelledby="'health-' + g.key">
+                            <div class="settings-label health-group-title" :id="'health-' + g.key">{{ g.title }} <span class="health-count">{{ g.rows.length }}</span></div>
+                            <ul class="health-list">
+                                <li class="health-row" v-for="r in g.rows" :key="r.feed.id">
+                                    <div class="health-text">
+                                        <button type="button" class="health-feed" @click="feedHealthOpen(r.feed)" :title="'Show ' + r.feed.title">{{ r.feed.title }}</button>
+                                        <div class="health-reason" :class="{'text-danger': g.key == 'broken'}">{{ r.reason }}</div>
+                                    </div>
+                                    <div class="health-actions">
+                                        <button type="button" class="btn btn-default" v-if="g.key == 'skipped'" @click="feedHealthAutoRead(r.feed)" :aria-label="'Auto-read ' + r.feed.title" title="Keep it, but mark everything it brings read">Auto-read</button>
+                                        <button type="button" class="btn btn-default" @click="deleteFeed(r.feed)" :aria-label="'Unsubscribe from ' + r.feed.title">Unsubscribe</button>
+                                    </div>
+                                </li>
+                            </ul>
+                        </section>
+                        <p class="small text-muted mb-0" v-if="!feedHealthReport.groups.length">{{ feedHealthReport.skippedReady ? 'Every feed is earning its place.' : 'No broken or quiet feeds.' }}</p>
+                        <p class="small text-muted mt-2 mb-0" v-if="!feedHealthReport.skippedReady && feedHealthReport.readyOn">Feeds you never open show here from {{ feedHealthReport.readyOn.toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) }}, after two weeks of reading.</p>
+                    </template>
                 </div>
             </div>
             <div v-else-if="settings=='create'">
