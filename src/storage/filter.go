@@ -69,13 +69,15 @@ func (s *Storage) ListFilters() []Filter {
 }
 
 // filterMatch reports whether a filter applies to an item's feed and title
-// (case-insensitive substring on the title).
+// (case-insensitive substring on the title). A rule scoped to one feed with
+// no keyword covers everything from that feed (Feed health's "Auto-read");
+// with no feed either, it matches nothing rather than everything.
 func filterMatch(f Filter, feedId int64, title string) bool {
 	if f.FeedId != nil && *f.FeedId != feedId {
 		return false
 	}
 	if f.Keyword == "" {
-		return false
+		return f.FeedId != nil
 	}
 	return strings.Contains(strings.ToLower(title), strings.ToLower(f.Keyword))
 }
@@ -123,11 +125,14 @@ func (s *Storage) ApplyFiltersToUnread() int64 {
 			if f.Action != action {
 				continue
 			}
+			if f.Keyword == "" && f.FeedId == nil {
+				continue // never a rule for everything everywhere
+			}
 			like := "%" + strings.ToLower(f.Keyword) + "%"
 			var res sql.Result
 			var err error
 			if f.FeedId != nil {
-				res, err = s.db.Exec(stmt+` and feed_id = ? and lower(title) like ?`, *f.FeedId, like)
+				res, err = s.db.Exec(stmt+` and feed_id = ? and lower(coalesce(title, '')) like ?`, *f.FeedId, like)
 			} else {
 				res, err = s.db.Exec(stmt+` and lower(title) like ?`, like)
 			}

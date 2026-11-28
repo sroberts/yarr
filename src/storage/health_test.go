@@ -124,3 +124,23 @@ func TestFeedHealthClampsWindow(t *testing.T) {
 		t.Error("a zero window should clamp to one day, not fail")
 	}
 }
+
+// Articles from before feed health began recording opens have none on file,
+// so the window never reaches past that point.
+func TestFeedHealthWindowStartsWhenRecordingBegan(t *testing.T) {
+	db := testDB()
+	if since := db.GetSettingsValueInt64("feed_health_since"); since <= 0 || time.Now().Unix()-since > 60 {
+		t.Fatalf("migration should record when recording began, got %d", since)
+	}
+	if got := db.FeedHealthWindow(60); got != 1 {
+		t.Errorf("recording began just now: window %d, want 1 day", got)
+	}
+	threeDaysAgo := time.Now().Add(-72*time.Hour - time.Hour).Unix()
+	db.db.Exec(`update settings set val = ? where key = 'feed_health_since'`, threeDaysAgo)
+	if got := db.FeedHealthWindow(60); got != 4 {
+		t.Errorf("three days and an hour in: window %d, want 4", got)
+	}
+	if got := db.FeedHealthWindow(2); got != 2 {
+		t.Errorf("a shorter request is kept: got %d, want 2", got)
+	}
+}

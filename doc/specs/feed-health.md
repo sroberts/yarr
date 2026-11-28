@@ -9,13 +9,13 @@
 A Settings section that names the feeds costing you triage time for nothing:
 feeds that are **broken** (fetch errors), **quiet** (nothing new in months), or
 **skipped** (articles keep arriving, and you mark them read without opening any).
-Each comes with the fix beside it: unsubscribe, mute with a Smart Filter, or
-move. Everything is computed locally from your own triage; nothing leaves the
+Each comes with the fix beside it: unsubscribe, or keep it but auto-read
+everything it brings. Everything is computed locally from your own triage; nothing leaves the
 server.
 
 ## 2. Primary user action
 Open Settings → Feed health, read down a short list of feeds with one plain
-reason each ("41 arrived, none opened in 60 days"), and remove or mute the
+reason each ("41 read, none opened"), and unsubscribe from or auto-read the
 noise in one click per feed.
 
 ## 3. Design direction
@@ -31,7 +31,9 @@ noise in one click per feed.
   purpose (`items.date_opened`), and serve each feed's record over a window
   (`GET /api/feeds/health?days=60`). No UI.
 - **Phase 2, the view.** Settings → Feed health: the three groups, the reason
-  line, and the actions.
+  line, and the actions. Recording began with phase 1, so the server never
+  counts articles from before it (`feed_health_since`, migration `m14`), and
+  the view holds Skipped back until two weeks of opens are on file.
 - **Phase 3, MCP.** A `feed_health` tool, so Claude Code or Desktop can prune
   conversationally ("which feeds do I never read?"), with unsubscribe going
   through the existing management tools.
@@ -53,19 +55,26 @@ Over the window (60 days by default; at most 90, the retention limit):
 - **Broken:** the feed has a current fetch error. Shows the error.
 - **Quiet:** nothing has arrived in 90 days (or ever). Shows "Last new article
   4 months ago" or "Never had an article".
-- **Skipped:** at least 10 arrived *and were decided* (no longer unread), and
-  none were opened, starred or saved. Shows "41 arrived, none opened". Unread
-  articles don't count against a feed: you haven't judged them yet.
+- **Skipped:** at least 10 arrived *and were read* (no longer unread), and
+  none were opened, starred or saved. Shows "41 read, none opened". Unread
+  articles don't count against a feed: you haven't judged them yet. Feeds a
+  feed-wide rule already auto-reads aren't listed: you've decided.
 
 A feed is listed once, in the first group it fits. Healthy feeds aren't listed;
 an empty section says "Every feed is earning its place".
 
 ## 7. Actions (phase 2)
 - **Unsubscribe:** the existing delete, with its undo.
-- **Mute:** adds a Smart Filter `mute` rule for the feed, so nothing new
-  reaches triage but the subscription stays (for feeds you want to keep for
-  search, or revisit).
-- **Open feed:** selects it in the list, to judge for yourself.
+- **Auto-read** (Skipped only): adds a Smart Filter `read` rule for the feed
+  with no keyword, which covers everything from that feed, and applies it to
+  the current backlog. The subscription stays and its articles still arrive
+  in All and in search; they just never reach Unread. The rule shows under
+  Filters as "Auto-read · everything · in Firehose", and removing it undoes
+  this. (Mute was the first idea, but dropping articles at ingest is
+  unsubscribing with extra steps.)
+- **The feed's name** closes Settings onto the feed, to judge for yourself.
+- A rule with no keyword is accepted only with a feed; unscoped it would
+  cover everything, so the API refuses it and matching ignores it.
 
 ## 8. Technical notes
 - **Storage:** migration `m13` adds `items.date_opened` (nullable datetime).
@@ -88,4 +97,5 @@ an empty section says "Every feed is earning its place".
 ## Open questions (defaults asserted)
 - Skipped threshold: 10 decided articles, none engaged. Tunable later if real
   data says otherwise.
-- Window: 60 days, a Settings-local choice of 30 / 60 / 90 in phase 2.
+- Window: 60 days by default, with 30 / 60 / 90 in the view ("Look back").
+  Not saved: it's a question you ask, not a preference.

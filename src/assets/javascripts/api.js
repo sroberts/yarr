@@ -57,6 +57,9 @@
       delete: function(id) {
         return api('delete', './api/feeds/' + id)
       },
+      health: function(days) {
+        return api('get', './api/feeds/health' + param({days: days})).then(json)
+      },
       list_items: function(id) {
         return api('get', './api/feeds/' + id + '/items').then(json)
       },

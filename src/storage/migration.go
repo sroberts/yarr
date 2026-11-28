@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -21,6 +22,7 @@ var migrations = []func(*sql.Tx) error{
 	m11_add_instapaper_saved,
 	m12_add_filters,
 	m13_add_item_date_opened,
+	m14_feed_health_since,
 }
 
 var maxVersion = int64(len(migrations))
@@ -358,5 +360,15 @@ func m12_add_filters(tx *sql.Tx) error {
 // arrived: a feed whose articles are always marked read unopened is noise.
 func m13_add_item_date_opened(tx *sql.Tx) error {
 	_, err := tx.Exec(`alter table items add column date_opened datetime`)
+	return err
+}
+
+// When feed health began recording opens (unix seconds). Articles from before
+// it have no opens on record, so counting them would call every feed
+// skipped; the report starts here. Not a user setting: UpdateSettings
+// ignores keys without a default, so a client can't move it.
+func m14_feed_health_since(tx *sql.Tx) error {
+	_, err := tx.Exec(`insert or ignore into settings (key, val) values ('feed_health_since', ?)`,
+		strconv.FormatInt(time.Now().Unix(), 10))
 	return err
 }
