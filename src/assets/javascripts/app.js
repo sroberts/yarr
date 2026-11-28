@@ -1004,18 +1004,29 @@ function rootComponent() { return {
         }
         if (url.protocol !== 'http:' && url.protocol !== 'https:') continue
         if (url.href === this.cardImageFailed) return null
-        return {src: url.href, alt: img.getAttribute('alt') || img.getAttribute('title') || ''}
+        return {src: url.href, alt: img.getAttribute('alt') || '', title: img.getAttribute('title') || ''}
       }
       return null
     },
-    // The image's alt text, shown under it as a caption: xkcd keeps its
-    // title-text joke there, out of sight of anyone who can see the image.
-    // Skipped when it only repeats the card's title.
+    // A caption under an image-only card's image: its hover text first (the
+    // title attribute, written for sighted readers; xkcd keeps its joke
+    // there), else its alt. Skipped when it only repeats the card's title, or
+    // is CMS filler: a file name, a bare "image", a camera's IMG_2034.
     cardCaption: function() {
       var img = this.cardImage
-      if (!img || !img.alt) return ''
+      if (!img) return ''
       var norm = function(t) { return t.replace(/\s+/g, ' ').trim().toLowerCase() }
-      return norm(img.alt) === norm(this.currentCard.title || '') ? '' : img.alt.trim()
+      var title = norm(this.currentCard.title || '')
+      var said = function(t) {
+        var n = norm(t || '')
+        if (n.length < 3 || n === title) return false
+        if (/\.(jpe?g|png|gif|webp|avif|svg|bmp|heic|tiff?)$/.test(n)) return false
+        if (!/\s/.test(n) && /[\d_]/.test(n)) return false
+        return ['image', 'photo', 'picture', 'img', 'untitled', 'graphic', 'figure', 'thumbnail', 'screenshot', 'comic'].indexOf(n) === -1
+      }
+      if (said(img.title)) return img.title.trim()
+      if (said(img.alt)) return img.alt.trim()
+      return ''
     },
     // What Listen reads for the current card: its title, then its text, or
     // the image's caption on an image-only card. Empty means nothing to read.
@@ -1356,7 +1367,9 @@ function rootComponent() { return {
       if (this.ttsPlaying) {
         this.ttsPaused ? this.resumeListen() : this.pauseListen()
       } else if (this.cardMode) {
+        // say why the key did nothing, rather than nothing at all
         if (this.cardSpeech) this.speakCard()
+        else if (this.currentCard && !this.cardDone) this.showToast('Nothing to read aloud on this card', 2500)
       } else if (this.itemSelected != null) {
         this.speakArticle()
       }

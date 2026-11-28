@@ -933,18 +933,20 @@ select.form-control:not([multiple]):not([size]) {
   font-size: 1em;
 }
 /* A heading belongs to the text after it: more room above than below, so
-   it never reads as the last line of the paragraph before. The paragraph
-   that follows drops its own top margin, which would otherwise collapse
-   into the gap and even it out again. */
-.content :is(h1, h2, h3, h4, h5, h6) {
+   it never reads as the last line of the block before. Scoped to the
+   article body, never the slip's own title. The block that follows drops
+   its top margin, which would otherwise collapse into the gap and even it
+   out again; a body that opens on a heading starts where a paragraph would. */
+.content-body :is(h1, h2, h3, h4, h5, h6) {
   margin-top: 1.6em;
   margin-bottom: .4em;
 }
-.content :is(h1, h2, h3, h4, h5, h6) + :is(p, ul, ol) {
+.content-body :is(h1, h2, h3, h4, h5, h6) + :is(p, ul, ol, blockquote, figure, pre) {
   margin-top: 0;
 }
-.content > :is(h1, h2, h3, h4, h5, h6):first-child {
-  margin-top: 0;
+.content-body > :is(h1, h2, h3, h4, h5, h6):first-child,
+.content-body > :first-child > :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-top: 1rem;
 }
 
 .content p {
@@ -1864,7 +1866,11 @@ kbd + kbd { margin-left: .2em; }
   justify-content: flex-start;
   align-items: center;
 }
-/* the image's alt text (xkcd keeps its joke there) as a quiet caption */
+/* the image's hover text or alt (xkcd keeps its joke there) as a quiet caption */
+.card-listen-btn:disabled {
+  /* the icon already rests in graphite; .7 of it read as still live */
+  opacity: .4;
+}
 .triage-card-caption {
   flex-shrink: 0;
   max-width: 60ch;
