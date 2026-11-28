@@ -35,6 +35,7 @@ var keyColumns = ['feeds', 'items', 'article']
 var shortcutFunctions = {
   openItemLink: function() {
     if (vm.itemSelectedDetails && vm.itemSelectedDetails.link) {
+      vm.noteOpened(vm.itemSelectedDetails.id)
       window.open(vm.itemSelectedDetails.link, '_blank', 'noopener,noreferrer')
     }
   },

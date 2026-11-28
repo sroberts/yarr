@@ -351,6 +351,49 @@
         }
       }
     },
+    "/api/feeds/health": {
+      "get": {
+        "summary": "Triage record per feed",
+        "description": "Every feed (including ones with no items) with what arrived over the last `days` days, what is still unread, and what was opened, starred or saved, plus its newest arrival and any fetch error. For finding feeds that are broken, have gone quiet, or are always marked read unopened.",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 60,
+              "minimum": 1,
+              "maximum": 90
+            },
+            "description": "Window length. Clamped to 1..90: items older than 90 days are pruned, so a longer window would count less than it claims."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One entry per feed, ordered by feed id.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedHealth"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`days` is not an integer.",
+            "content": {}
+          },
+          "405": {
+            "description": "Method other than GET.",
+            "content": {}
+          }
+        }
+      }
+    },
     "/api/feeds/{id}/icon": {
       "parameters": [
         {
@@ -639,7 +682,7 @@
         }
       },
       "put": {
-        "summary": "Update an item's status",
+        "summary": "Update an item's status, or record that it was opened",
         "requestBody": {
           "required": true,
           "content": {
@@ -652,7 +695,7 @@
         },
         "responses": {
           "200": {
-            "description": "Updated (empty body). A body with `status` omitted is a no-op that still returns 200.",
+            "description": "Updated (empty body). A body with neither `status` nor `opened: true` is a no-op that still returns 200.",
             "content": {}
           },
           "400": {
@@ -1130,6 +1173,10 @@
               "read",
               "starred"
             ]
+          },
+          "opened": {
+            "type": "boolean",
+            "description": "`true` records that the item was opened to read (in the reader, read in place on a triage card, or at its source), for feed health. The first time is kept; `false` or omitted does nothing. Independent of `status`: opening does not mark read."
           }
         }
       },
@@ -1193,6 +1240,66 @@
           }
         },
         "additionalProperties": true
+      },
+      "FeedHealth": {
+        "type": "object",
+        "description": "From src/storage/health.go FeedHealth. One feed's triage record over the requested window.",
+        "properties": {
+          "feed_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "arrived": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Items that arrived in the window."
+          },
+          "unread": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Of those, still unread (not yet decided)."
+          },
+          "engaged": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Of those, opened, starred, or saved to Instapaper, each item counted once."
+          },
+          "opened": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "starred": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "saved": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Saved to Instapaper."
+          },
+          "last_arrived": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the feed's newest item arrived, at any age; null if it has none."
+          },
+          "error": {
+            "type": "string",
+            "description": "The feed's last fetch error; omitted when it has none."
+          }
+        },
+        "required": [
+          "feed_id",
+          "arrived",
+          "unread",
+          "engaged",
+          "opened",
+          "starred",
+          "saved",
+          "last_arrived"
+        ]
       }
     }
   }

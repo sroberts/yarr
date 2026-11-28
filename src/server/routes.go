@@ -67,6 +67,7 @@ func (s *Server) handler() http.Handler {
 	r.For("/api/feeds", s.handleFeedList)
 	r.For("/api/feeds/refresh", s.handleFeedRefresh)
 	r.For("/api/feeds/errors", s.handleFeedErrors)
+	r.For("/api/feeds/health", s.handleFeedHealth)
 	r.For("/api/feeds/:id/icon", s.handleFeedIcon)
 	r.For("/api/feeds/:id", s.handleFeed)
 	r.For("/api/items", s.handleItemList)
@@ -290,6 +291,26 @@ func (s *Server) handleFeedErrors(c *router.Context) {
 	c.JSON(http.StatusOK, errors)
 }
 
+// handleFeedHealth reports each feed's triage record over the last `days`
+// days (default 60, at most the retention window), for pruning feeds that
+// are broken, gone quiet, or always skipped.
+func (s *Server) handleFeedHealth(c *router.Context) {
+	if c.Req.Method != "GET" {
+		c.Out.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	days := 60
+	if v := c.Req.URL.Query().Get("days"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			c.Out.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		days = n
+	}
+	c.JSON(http.StatusOK, s.db.FeedHealth(days))
+}
+
 type feedicon struct {
 	ctype string
 	bytes []byte
@@ -466,6 +487,9 @@ func (s *Server) handleItem(c *router.Context) {
 		}
 		if body.Status != nil {
 			s.db.UpdateItemStatus(id, *body.Status)
+		}
+		if body.Opened != nil && *body.Opened {
+			s.db.MarkItemOpened(id)
 		}
 		c.Out.WriteHeader(http.StatusOK)
 	} else {

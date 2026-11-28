@@ -20,6 +20,7 @@ var migrations = []func(*sql.Tx) error{
 	m10_add_item_medialinks,
 	m11_add_instapaper_saved,
 	m12_add_filters,
+	m13_add_item_date_opened,
 }
 
 var maxVersion = int64(len(migrations))
@@ -349,5 +350,13 @@ func m12_add_filters(tx *sql.Tx) error {
 		create index if not exists idx_filter_feed_id on filters(feed_id);
 	`
 	_, err := tx.Exec(sql)
+	return err
+}
+
+// When an article was first opened to read (in the reader, read in place on
+// a triage card, or opened at its source). Feed health weighs it against what
+// arrived: a feed whose articles are always marked read unopened is noise.
+func m13_add_item_date_opened(tx *sql.Tx) error {
+	_, err := tx.Exec(`alter table items add column date_opened datetime`)
 	return err
 }
