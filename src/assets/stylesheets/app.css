@@ -932,6 +932,22 @@ select.form-control:not([multiple]):not([size]) {
 .content h6 {
   font-size: 1em;
 }
+/* A heading belongs to the text after it: more room above than below, so
+   it never reads as the last line of the block before. Scoped to the
+   article body, never the slip's own title. The block that follows drops
+   its top margin, which would otherwise collapse into the gap and even it
+   out again; a body that opens on a heading starts where a paragraph would. */
+.content-body :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 1.6em;
+  margin-bottom: .4em;
+}
+.content-body :is(h1, h2, h3, h4, h5, h6) + :is(p, ul, ol, blockquote, figure, pre) {
+  margin-top: 0;
+}
+.content-body > :is(h1, h2, h3, h4, h5, h6):first-child,
+.content-body > :first-child > :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-top: 1rem;
+}
 
 .content p {
   margin-top: 1rem;
@@ -1846,10 +1862,27 @@ kbd + kbd { margin-left: .2em; }
   min-height: 0;
   overflow: hidden;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+/* the image's hover text or alt (xkcd keeps its joke there) as a quiet caption */
+.card-listen-btn:disabled {
+  /* the icon already rests in graphite; .7 of it read as still live */
+  opacity: .4;
+}
+.triage-card-caption {
+  flex-shrink: 0;
+  max-width: 60ch;
+  margin: .6rem 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-small);
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: pretty;
 }
 .triage-card-image img {
+  min-height: 0;
   display: block;
   max-width: 100%;
   max-height: 50vh;

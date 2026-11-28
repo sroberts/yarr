@@ -1004,9 +1004,37 @@ function rootComponent() { return {
         }
         if (url.protocol !== 'http:' && url.protocol !== 'https:') continue
         if (url.href === this.cardImageFailed) return null
-        return {src: url.href, alt: img.getAttribute('alt') || img.getAttribute('title') || ''}
+        return {src: url.href, alt: img.getAttribute('alt') || '', title: img.getAttribute('title') || ''}
       }
       return null
+    },
+    // A caption under an image-only card's image: its hover text first (the
+    // title attribute, written for sighted readers; xkcd keeps its joke
+    // there), else its alt. Skipped when it only repeats the card's title, or
+    // is CMS filler: a file name, a bare "image", a camera's IMG_2034.
+    cardCaption: function() {
+      var img = this.cardImage
+      if (!img) return ''
+      var norm = function(t) { return t.replace(/\s+/g, ' ').trim().toLowerCase() }
+      var title = norm(this.currentCard.title || '')
+      var said = function(t) {
+        var n = norm(t || '')
+        if (n.length < 3 || n === title) return false
+        if (/\.(jpe?g|png|gif|webp|avif|svg|bmp|heic|tiff?)$/.test(n)) return false
+        if (!/\s/.test(n) && /[\d_]/.test(n)) return false
+        return ['image', 'photo', 'picture', 'img', 'untitled', 'graphic', 'figure', 'thumbnail', 'screenshot', 'comic'].indexOf(n) === -1
+      }
+      if (said(img.title)) return img.title.trim()
+      if (said(img.alt)) return img.alt.trim()
+      return ''
+    },
+    // What Listen reads for the current card: its title, then its text, or
+    // the image's caption on an image-only card. Empty means nothing to read.
+    cardSpeech: function() {
+      var card = this.currentCard
+      if (!card) return ''
+      var body = this.plainText(card.content) || this.cardCaption
+      return [card.title, body].filter(function(t) { return t && t.trim() }).join('. ')
     },
     cardDomain: function() {
       if (!this.currentCard || !this.currentCard.link) return ''
@@ -1292,10 +1320,14 @@ function rootComponent() { return {
       this.ttsPaused = false
     },
     speakCard: function() {
-      var card = this.currentCard
-      if (!card) return
-      var text = ((card.title || '') + '. ' + this.plainText(card.content)).trim()
+      if (!this.currentCard) return
+      var text = this.cardSpeech
       var self = this
+      // a card with nothing to read: the hands-free loop moves past it
+      if (!text) {
+        if (this.ttsPlaying) this.cardListenNext()
+        return
+      }
       // On natural completion, advance to the next card and keep reading until
       // the deck is exhausted — the hands-free triage loop.
       ttsEngine.speak(text, {onend: function() {
@@ -1335,7 +1367,9 @@ function rootComponent() { return {
       if (this.ttsPlaying) {
         this.ttsPaused ? this.resumeListen() : this.pauseListen()
       } else if (this.cardMode) {
-        this.speakCard()
+        // say why the key did nothing, rather than nothing at all
+        if (this.cardSpeech) this.speakCard()
+        else if (this.currentCard && !this.cardDone) this.showToast('Nothing to read aloud on this card', 2500)
       } else if (this.itemSelected != null) {
         this.speakArticle()
       }
@@ -1367,7 +1401,7 @@ function rootComponent() { return {
         {group: 'Article', label: det && det.status == 'unread' ? 'Mark article read' : 'Mark article unread', hint: 'r', enabled: hasItem, run: S.toggleItemRead},
         {group: 'Article', label: 'Save to Instapaper',     hint: 'I', enabled: hasItem && det && !!det.link && !det.instapaper_saved, run: S.saveToInstapaper},
         {group: 'Article', label: 'Reader view',            hint: 'i', enabled: hasItem && det && !!det.link, run: S.toggleReadability},
-        {group: 'Article', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (hasItem || this.cardMode), run: S.toggleListen},
+        {group: 'Article', label: this.ttsPlaying ? (this.ttsPaused ? 'Listen: resume' : 'Listen: pause') : 'Listen to article', hint: 'p', enabled: this.ttsSupported && (this.ttsPlaying || (this.cardMode ? !!this.cardSpeech : hasItem)), run: S.toggleListen},
         {group: 'Article', label: 'Open original link',     hint: 'o', enabled: hasItem && det && !!det.link, run: S.openItemLink},
         {group: 'Article', label: 'Copy link',              hint: 'c', enabled: hasItem && det && !!det.link, run: S.copyItemLink},
         {group: 'Article', label: 'Next article',           hint: 'j', enabled: hasItem && !this.cardMode && this.items.length > 0 && this.itemSelected != this.items[this.items.length - 1].id, run: function() { vm.navigateToItem(+1) }},

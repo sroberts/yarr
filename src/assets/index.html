@@ -150,7 +150,7 @@
             <!-- card triage mode -->
             <div id="card-view" class="d-flex flex-column flex-grow-1 border-top" v-if="cardMode">
                 <!-- folder filter -->
-                <div class="card-view-hints card-folder-bar px-4 pt-2 pb-0 d-flex justify-content-center">
+                <div class="card-view-hints card-folder-bar px-4 pt-2 pb-0 d-flex justify-content-center" v-if="folders.length">
                     <span class="card-folder-pick text-muted small">
                         <select class="card-folder-select"
                                 aria-label="Folder to triage"
@@ -181,7 +181,7 @@
                         <div class="triage-card-domain" v-if="cardDomain">{{ cardDomain }}</div>
                         <h2 class="triage-card-title">{{ currentCard.title || 'untitled' }}</h2>
                         <div class="triage-card-excerpt" :class="readingFontClass" v-if="!cardExpanded && cardExcerpt" tabindex="0" role="region" aria-label="Preview">{{ cardExcerpt }}</div>
-                        <div class="triage-card-image" v-else-if="!cardExpanded && cardImage"><img :src="cardImage.src" :alt="cardImage.alt" referrerpolicy="no-referrer" decoding="async" draggable="false" @load="$event.target.naturalWidth <= 2 && (cardImageFailed = cardImage.src)" @error="cardImageFailed = cardImage.src"></div>
+                        <figure class="triage-card-image m-0" v-else-if="!cardExpanded && cardImage"><img :src="cardImage.src" :alt="cardCaption && cardCaption === cardImage.alt ? '' : cardImage.alt" referrerpolicy="no-referrer" decoding="async" draggable="false" @load="$event.target.naturalWidth <= 2 && (cardImageFailed = $event.target.src)" @error="cardImageFailed = $event.target.src"><figcaption class="triage-card-caption" v-if="cardCaption">{{ cardCaption }}</figcaption></figure>
                         <div class="triage-card-excerpt triage-card-empty" v-else-if="!currentCard.content">No preview in the feed.<span v-if="currentCard.link"><span class="hint-touch"> Open the original to read it.</span><span class="hint-pointer"> Press <kbd>o</kbd> to open the original.</span></span></div>
                         <div class="triage-card-body" :class="readingFontClass" v-else-if="cardExpanded" v-html="currentCard.content"></div>
                         <div class="triage-card-excerpt triage-card-empty" v-else>No text in the feed’s preview.</div>
@@ -245,11 +245,12 @@
                             <span class="card-star-label">Star</span><kbd class="legend-kbd ml-1" aria-hidden="true">s</kbd>
                         </button>
                         <button v-if="ttsSupported" type="button" class="toolbar-item card-listen-btn"
+                                :disabled="!ttsPlaying && !cardSpeech"
                                 :class="{active: ttsPlaying}"
                                 @click="toggleListen()"
                                 aria-keyshortcuts="p"
-                                :title="(ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen') + ' (p)'"
-                                :aria-label="ttsPlaying ? (ttsPaused ? 'Resume reading aloud' : 'Pause reading aloud') : 'Listen to article'"
+                                :title="!ttsPlaying && !cardSpeech ? 'Nothing to read aloud' : (ttsPlaying ? (ttsPaused ? 'Resume' : 'Pause') : 'Listen') + ' (p)'"
+                                :aria-label="!ttsPlaying && !cardSpeech ? 'Nothing to read aloud' : ttsPlaying ? (ttsPaused ? 'Resume reading aloud' : 'Pause reading aloud') : 'Listen to article'"
                                 :aria-pressed="ttsPlaying ? 'true' : 'false'">
                             <span class="icon" v-if="!ttsPlaying">{% inline "headphones.svg" %}</span>
                             <span class="icon" v-else-if="ttsPaused">{% inline "play.svg" %}</span>
@@ -512,9 +513,9 @@
             <!-- blank header keeps the top-bar rule continuous across the reading
                  pane when no article is open (matches the other columns' toolbars) -->
             <div class="toolbar reader-blank-toolbar flex-shrink-0" v-if="!itemSelectedDetails"></div>
-            <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted" v-if="!itemSelectedDetails && !itemUnavailable">
+            <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted" v-if="!itemSelectedDetails && !itemUnavailable && !(itemsError && !items.length)">
                 <span class="icon mb-2" style="opacity:.5">{% inline "book-open.svg" %}</span>
-                <p class="mb-1">{{ itemsError && !items.length ? 'Couldn’t load articles' : stackEmpty ? stackEmpty.reader : 'Select an article to read' }}</p>
+                <p class="mb-1">{{ stackEmpty ? stackEmpty.reader : 'Select an article to read' }}</p>
                 <p class="small mb-0"><kbd>j</kbd> / <kbd>k</kbd> to move, <kbd>?</kbd> for shortcuts</p>
             </div>
             <div class="reader-empty flex-grow-1 d-flex flex-column align-items-center justify-content-center text-muted px-4 text-center" v-if="itemUnavailable">
@@ -735,7 +736,7 @@
                         <audio class="w-100" controls v-for="media in contentAudios" :src="media.url"></audio>
                         <video class="w-100" controls v-for="media in contentVideos" :src="media.url"></video>
                     </div>
-                    <div v-html="itemSelectedContent"></div>
+                    <div class="content-body" v-html="itemSelectedContent"></div>
                 </div>
             </div>
             <!-- Phone reader: the triage loop in the thumb zone. Previous and
