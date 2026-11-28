@@ -319,7 +319,7 @@
                                @contextmenu.prevent="openFolderContextMenu(folder, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu'), returnFocus: $event.target})"
                                :aria-label="folder.title + (filteredFolderStats[folder.id] ? ', ' + filteredFolderStats[folder.id] + ' ' + countNoun : '')">
                         <div class="selectgroup-label d-flex align-items-center w-100"
-                             :class="{'ctx-open': feedContextMenu && feedContextMenu.folder === folder}"
+                             :class="{'ctx-open': contextMenu && contextMenu.folder === folder}"
                              @contextmenu.prevent="openFolderContextMenu(folder, $event)">
                             <span class="icon mr-2" aria-hidden="true"></span>
                             <span class="flex-fill text-left text-truncate">{{ folder.title }}</span>
@@ -349,7 +349,7 @@
                                    @contextmenu.prevent="openFeedContextMenu(feed, {currentTarget: $event.target.parentNode.querySelector('.feed-row-menu'), returnFocus: $event.target})"
                                    :aria-label="feed.title + (filteredFeedStats[feed.id] ? ', ' + filteredFeedStats[feed.id] + ' ' + countNoun : '') + (feed_errors[feed.id] ? ', has an error' : '')">
                             <div class="selectgroup-label d-flex align-items-center w-100"
-                                 :class="{'ctx-open': feedContextMenu && feedContextMenu.feed === feed}"
+                                 :class="{'ctx-open': contextMenu && contextMenu.feed === feed}"
                                  @contextmenu.prevent="openFeedContextMenu(feed, $event)">
                                 <span class="icon mr-2" v-if="!feed.has_icon">{% inline "rss.svg" %}</span>
                                 <span class="icon mr-2" v-else><img :src="'./api/feeds/'+feed.id+'/icon'" alt="" loading="lazy"></span>
@@ -1092,87 +1092,77 @@
                 <button type="button" class="app-toast-btn" @click="runFeedUndo()" aria-keyshortcuts="u">Undo<kbd class="toast-kbd d-none d-md-inline-flex">u</kbd></button>
             </div>
         </transition>
-        <!-- Right-click a feed row for its actions. Feed management is rare
-             maintenance, so it lives here and in the command palette (⌘K) rather
-             than as persistent chrome on every row. Positioned fixed at the
-             cursor so the scrolling feed list can't clip it. -->
-        <div class="settings-dropdown feed-context-menu" v-if="feedContextMenu">
-            <div ref="feedContextMenu"
+        <!-- Right-click a feed or folder row (or its ⋯) for its actions. Feed
+             management is rare maintenance, so it lives here and in the command
+             palette (⌘K) rather than as persistent chrome on every row.
+             Positioned fixed at the cursor so the scrolling list can't clip it.
+             One menu: the header and Mark read are shared, the rest switches on
+             whether a feed or a folder is open. -->
+        <div class="settings-dropdown row-context-menu" v-if="contextMenu">
+            <div ref="contextMenu"
                  class="dropdown-menu show"
                  role="menu"
                  tabindex="-1"
-                 :aria-label="'Actions for ' + feedContextMenu.feed.title"
+                 :aria-label="'Actions for ' + contextMenuTarget.title"
                  style="position: fixed; visibility: hidden;"
-                 v-if="feedContextMenu.feed"
                  @click.stop>
-                <header class="dropdown-header" role="presentation">{{ feedContextMenu.feed.title }}</header>
-                <button class="dropdown-item" role="menuitem" :aria-disabled="unreadCountForFeeds([feedContextMenu.feed]) ? null : 'true'" @click="unreadCountForFeeds([feedContextMenu.feed]) && runFeedCtx(markFeedRead)">
+                <header class="dropdown-header" role="presentation">{{ contextMenuTarget.title }}</header>
+                <button class="dropdown-item" role="menuitem" :aria-disabled="contextMenuUnread ? null : 'true'" @click="contextMenuUnread && runContextAction(contextMenu.feed ? markFeedRead : markFolderRead)">
                     <span class="icon mr-1">{% inline "check.svg" %}</span>
-                    {{ markCtxLabel([feedContextMenu.feed]) }}
+                    {{ contextMenuUnread ? 'Mark ' + contextMenuUnread + ' read' : 'No unread' }}
                 </button>
                 <div class="dropdown-divider" role="separator"></div>
-                <a class="dropdown-item" role="menuitem" :href="feedContextMenu.feed.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="feedContextMenu.feed.link" @click="closeFeedContextMenu()">
-                    <span class="icon mr-1">{% inline "globe.svg" %}</span>
-                    Website
-                </a>
-                <a class="dropdown-item" role="menuitem" :href="feedContextMenu.feed.feed_link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="feedContextMenu.feed.feed_link" @click="closeFeedContextMenu()">
-                    <span class="icon mr-1">{% inline "rss.svg" %}</span>
-                    Feed link
-                </a>
-                <div class="dropdown-divider" role="separator" v-if="feedContextMenu.feed.link || feedContextMenu.feed.feed_link"></div>
-                <button class="dropdown-item" role="menuitem" @click="runFeedCtx(renameFeed)">
-                    <span class="icon mr-1">{% inline "edit.svg" %}</span>
-                    Rename
-                </button>
-                <button class="dropdown-item" role="menuitem" @click="runFeedCtx(updateFeedLink)" v-if="feedContextMenu.feed.feed_link">
-                    <span class="icon mr-1">{% inline "link.svg" %}</span>
-                    Change link
-                </button>
-                <div class="dropdown-divider" role="separator"></div>
-                <header class="dropdown-header" role="presentation">Move to…</header>
-                <template v-for="f in folders">
-                    <button class="dropdown-item" role="menuitem" v-if="f.id != feedContextMenu.feed.folder_id" @click="runFeedCtx(feed => moveFeedWithUndo(feed, f))">
-                        <span class="icon mr-1">{% inline "folder.svg" %}</span>
-                        {{ f.title }}
+                <template v-if="contextMenu.feed">
+                    <a class="dropdown-item" role="menuitem" :href="contextMenu.feed.link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="contextMenu.feed.link" @click="closeContextMenu()">
+                        <span class="icon mr-1">{% inline "globe.svg" %}</span>
+                        Website
+                    </a>
+                    <a class="dropdown-item" role="menuitem" :href="contextMenu.feed.feed_link" rel="noopener noreferrer" target="_blank" referrerpolicy="no-referrer" v-if="contextMenu.feed.feed_link" @click="closeContextMenu()">
+                        <span class="icon mr-1">{% inline "rss.svg" %}</span>
+                        Feed link
+                    </a>
+                    <div class="dropdown-divider" role="separator" v-if="contextMenu.feed.link || contextMenu.feed.feed_link"></div>
+                    <button class="dropdown-item" role="menuitem" @click="runContextAction(renameFeed)">
+                        <span class="icon mr-1">{% inline "edit.svg" %}</span>
+                        Rename
+                    </button>
+                    <button class="dropdown-item" role="menuitem" @click="runContextAction(updateFeedLink)" v-if="contextMenu.feed.feed_link">
+                        <span class="icon mr-1">{% inline "link.svg" %}</span>
+                        Change link
+                    </button>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <header class="dropdown-header" role="presentation">Move to…</header>
+                    <template v-for="f in folders">
+                        <button class="dropdown-item" role="menuitem" v-if="f.id != contextMenu.feed.folder_id" @click="runContextAction(feed => moveFeedWithUndo(feed, f))">
+                            <span class="icon mr-1">{% inline "folder.svg" %}</span>
+                            {{ f.title }}
+                        </button>
+                    </template>
+                    <button class="dropdown-item" role="menuitem" @click="runContextAction(feed => moveFeedWithUndo(feed, null))" v-if="contextMenu.feed.folder_id">
+                        <span class="icon mr-1">{% inline "folder-minus.svg" %}</span>
+                        Move out of folder
+                    </button>
+                    <button class="dropdown-item" role="menuitem" @click="runContextAction(moveFeedToNewFolder)">
+                        <span class="icon mr-1">{% inline "folder-plus.svg" %}</span>
+                        New folder
+                    </button>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <button class="dropdown-item text-danger" role="menuitem" @click="runContextAction(deleteFeed)">
+                        <span class="icon mr-1">{% inline "trash.svg" %}</span>
+                        Delete
                     </button>
                 </template>
-                <button class="dropdown-item" role="menuitem" @click="runFeedCtx(feed => moveFeedWithUndo(feed, null))" v-if="feedContextMenu.feed.folder_id">
-                    <span class="icon mr-1">{% inline "folder-minus.svg" %}</span>
-                    Move out of folder
-                </button>
-                <button class="dropdown-item" role="menuitem" @click="runFeedCtx(moveFeedToNewFolder)">
-                    <span class="icon mr-1">{% inline "folder-plus.svg" %}</span>
-                    New folder
-                </button>
-                <div class="dropdown-divider" role="separator"></div>
-                <button class="dropdown-item text-danger" role="menuitem" @click="runFeedCtx(deleteFeed)">
-                    <span class="icon mr-1">{% inline "trash.svg" %}</span>
-                    Delete
-                </button>
-            </div>
-            <div ref="feedContextMenu"
-                 class="dropdown-menu show"
-                 role="menu"
-                 tabindex="-1"
-                 :aria-label="'Actions for ' + feedContextMenu.folder.title"
-                 style="position: fixed; visibility: hidden;"
-                 v-else
-                 @click.stop>
-                <header class="dropdown-header" role="presentation">{{ feedContextMenu.folder.title }}</header>
-                <button class="dropdown-item" role="menuitem" :aria-disabled="unreadCountForFeeds(folderFeeds(feedContextMenu.folder)) ? null : 'true'" @click="unreadCountForFeeds(folderFeeds(feedContextMenu.folder)) && runFeedCtx(markFolderRead)">
-                    <span class="icon mr-1">{% inline "check.svg" %}</span>
-                    {{ markCtxLabel(folderFeeds(feedContextMenu.folder)) }}
-                </button>
-                <div class="dropdown-divider" role="separator"></div>
-                <button class="dropdown-item" role="menuitem" @click="runFeedCtx(renameFolder)">
-                    <span class="icon mr-1">{% inline "edit.svg" %}</span>
-                    Rename
-                </button>
-                <div class="dropdown-divider" role="separator"></div>
-                <button class="dropdown-item text-danger" role="menuitem" @click="runFeedCtx(deleteFolder)">
-                    <span class="icon mr-1">{% inline "trash.svg" %}</span>
-                    Delete
-                </button>
+                <template v-else>
+                    <button class="dropdown-item" role="menuitem" @click="runContextAction(renameFolder)">
+                        <span class="icon mr-1">{% inline "edit.svg" %}</span>
+                        Rename
+                    </button>
+                    <div class="dropdown-divider" role="separator"></div>
+                    <button class="dropdown-item text-danger" role="menuitem" @click="runContextAction(deleteFolder)">
+                        <span class="icon mr-1">{% inline "trash.svg" %}</span>
+                        Delete
+                    </button>
+                </template>
             </div>
         </div>
     </div>
